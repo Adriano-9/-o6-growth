@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CalendarPlus, KanbanSquare, Loader2, Trash2, X } from "lucide-react";
+import { ArrowRight, Beaker, CalendarPlus, KanbanSquare, Loader2, Trash2, X } from "lucide-react";
 import {
   emptyProspectInput,
   PROSPECT_STATUS,
@@ -11,6 +11,9 @@ import {
   ProspectStatus,
 } from "../_lib/types";
 import { promoteToCRM, updateProspect } from "../_lib/api";
+import { auditProspect } from "../_lib/audit-api";
+import { AuditResult } from "../_lib/audit-types";
+import { AuditPanel } from "./AuditPanel";
 
 type Mode = "create" | "edit" | "view";
 
@@ -62,6 +65,29 @@ function Field({
 export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<null | "schedule" | "promote">(null);
+  const [auditing, setAuditing] = useState(false);
+  const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
+  const [auditError, setAuditError] = useState<string | null>(null);
+
+  async function handleAudit() {
+    if (!initial?.site) return;
+    setAuditing(true);
+    setAuditError(null);
+    try {
+      // Ensure URL has protocol
+      let url = initial.site;
+      if (!url.startsWith("http")) {
+        url = "https://" + url;
+      }
+      const result = await auditProspect(initial.id, url);
+      setAuditResult(result);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao auditar site";
+      setAuditError(msg);
+    } finally {
+      setAuditing(false);
+    }
+  }
 
   async function handleScheduleMeeting() {
     if (!initial) return;
@@ -286,43 +312,68 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
           </div>
 
           {mode !== "create" && initial && (
-            <div className="mt-6 rounded-xl border border-brand-cyan/20 bg-brand-cyan/[0.04] p-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-cyan">
-                Próximas etapas
+            <div className="mt-6 space-y-4">
+              {/* Funnel glue buttons */}
+              <div className="rounded-xl border border-brand-cyan/20 bg-brand-cyan/[0.04] p-4">
+                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-cyan">
+                  Próximas etapas
+                </div>
+                <p className="mt-1 text-xs text-zinc-400">
+                  Avance este prospect para a próxima fase do funil.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleScheduleMeeting}
+                    disabled={busy !== null || auditing}
+                    className="inline-flex items-center gap-2 rounded-lg border border-brand-cyan/40 bg-brand-cyan/15 px-3 py-2 text-xs font-bold uppercase tracking-wider text-brand-cyan transition hover:bg-brand-cyan/25 disabled:opacity-40"
+                  >
+                    {busy === "schedule" ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <CalendarPlus className="h-3.5 w-3.5" />
+                    )}
+                    Agendar Reunião
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handlePromoteCRM}
+                    disabled={busy !== null || auditing}
+                    className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-200 transition hover:bg-white/[0.08] disabled:opacity-40"
+                  >
+                    {busy === "promote" ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <KanbanSquare className="h-3.5 w-3.5" />
+                    )}
+                    Promover para CRM
+                    <ArrowRight className="h-3 w-3" />
+                  </button>
+                </div>
               </div>
-              <p className="mt-1 text-xs text-zinc-400">
-                Avance este prospect para a próxima fase do funil.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+
+              {/* Audit button */}
+              {initial.site && (
                 <button
                   type="button"
-                  onClick={handleScheduleMeeting}
-                  disabled={busy !== null}
-                  className="inline-flex items-center gap-2 rounded-lg border border-brand-cyan/40 bg-brand-cyan/15 px-3 py-2 text-xs font-bold uppercase tracking-wider text-brand-cyan transition hover:bg-brand-cyan/25 disabled:opacity-40"
+                  onClick={handleAudit}
+                  disabled={auditing}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-purple-500/40 bg-purple-500/10 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-purple-300 transition hover:bg-purple-500/20 disabled:opacity-40"
                 >
-                  {busy === "schedule" ? (
+                  {auditing ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <CalendarPlus className="h-3.5 w-3.5" />
+                    <Beaker className="h-3.5 w-3.5" />
                   )}
-                  Agendar Reunião
+                  {auditing ? "Auditando..." : "Auditar Site"}
                 </button>
-                <button
-                  type="button"
-                  onClick={handlePromoteCRM}
-                  disabled={busy !== null}
-                  className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-200 transition hover:bg-white/[0.08] disabled:opacity-40"
-                >
-                  {busy === "promote" ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <KanbanSquare className="h-3.5 w-3.5" />
-                  )}
-                  Promover para CRM
-                  <ArrowRight className="h-3 w-3" />
-                </button>
-              </div>
+              )}
             </div>
+          )}
+
+          {/* Audit Panel */}
+          {mode !== "create" && initial && (
+            <AuditPanel audit={auditResult} loading={auditing} error={auditError ?? undefined} />
           )}
 
           {!isView && (
