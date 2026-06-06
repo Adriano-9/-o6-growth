@@ -126,6 +126,8 @@ type StoreContextValue = {
   hydrated: boolean;
   syncing: boolean;
   currentClienteId: string | null;
+  aiOutput: AiOutput | null;
+  aiGeneratedAt: string | null;
 
   setCliente: (next: Cliente) => void;
   setICP: (next: ICP) => void;
@@ -135,6 +137,7 @@ type StoreContextValue = {
   addConcorrente: () => void;
   updateConcorrente: (id: string, patch: Partial<Concorrente>) => void;
   removeConcorrente: (id: string) => void;
+  setAiOutput: (output: AiOutput, generatedAt: string) => void;
 
   createCliente: (initial?: Partial<Cliente>) => Promise<string | null>;
   selectCliente: (id: string | null) => Promise<void>;
@@ -156,6 +159,8 @@ export function OfferBookProvider({ children }: { children: React.ReactNode }) {
   const [currentClienteId, setCurrentClienteIdState] = useState<string | null>(
     null,
   );
+  const [aiOutput, setAiOutputState] = useState<AiOutput | null>(null);
+  const [aiGeneratedAt, setAiGeneratedAtState] = useState<string | null>(null);
 
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout> | null>>({});
   const currentIdRef = useRef<string | null>(null);
@@ -201,10 +206,14 @@ export function OfferBookProvider({ children }: { children: React.ReactNode }) {
       // cliente was deleted elsewhere
       setCurrent(null);
       setState(emptyState);
+      setAiOutputState(null);
+      setAiGeneratedAtState(null);
       return;
     }
 
     const slices = rowToOfferBookSlices(o);
+    setAiOutputState((o?.ai_output as AiOutput | null) ?? null);
+    setAiGeneratedAtState((o?.ai_generated_at as string | null) ?? null);
     setState({
       cliente: rowToCliente(c),
       diagnostico: rowToDiagnostico(d),
@@ -400,6 +409,8 @@ export function OfferBookProvider({ children }: { children: React.ReactNode }) {
       if (!id) {
         setCurrent(null);
         setState(emptyState);
+        setAiOutputState(null);
+        setAiGeneratedAtState(null);
         return;
       }
       setCurrent(id);
@@ -462,6 +473,14 @@ export function OfferBookProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const setAiOutput = useCallback(
+    (output: AiOutput, generatedAt: string) => {
+      setAiOutputState(output);
+      setAiGeneratedAtState(generatedAt);
+    },
+    [],
+  );
+
   const reset = useCallback(() => {
     setState((s) => ({ ...emptyState, cliente: s.cliente }));
   }, []);
@@ -472,6 +491,8 @@ export function OfferBookProvider({ children }: { children: React.ReactNode }) {
       hydrated,
       syncing,
       currentClienteId,
+      aiOutput,
+      aiGeneratedAt,
       setCliente,
       setICP,
       setPsicografia,
@@ -480,6 +501,7 @@ export function OfferBookProvider({ children }: { children: React.ReactNode }) {
       addConcorrente,
       updateConcorrente,
       removeConcorrente,
+      setAiOutput,
       createCliente,
       selectCliente,
       deleteCliente,
@@ -491,6 +513,8 @@ export function OfferBookProvider({ children }: { children: React.ReactNode }) {
       hydrated,
       syncing,
       currentClienteId,
+      aiOutput,
+      aiGeneratedAt,
       setCliente,
       setICP,
       setPsicografia,
@@ -499,6 +523,7 @@ export function OfferBookProvider({ children }: { children: React.ReactNode }) {
       addConcorrente,
       updateConcorrente,
       removeConcorrente,
+      setAiOutput,
       createCliente,
       selectCliente,
       deleteCliente,

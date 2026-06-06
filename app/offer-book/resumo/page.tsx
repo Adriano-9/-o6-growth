@@ -15,6 +15,7 @@ import {
 import { ScoreCard } from "../_components/ScoreCard";
 import { computeScores, scoreTier } from "../_lib/scores";
 import { useOfferBook } from "../_lib/store";
+import { AiGenerateResponse } from "../_lib/ai-types";
 
 function dash(v: string) {
   return v && v.trim().length > 0 ? v : "—";
@@ -40,15 +41,6 @@ const oportunidadeMessages: Record<string, string> = {
     "Diversificar canais e instrumentar CRM corta dependência e melhora previsibilidade.",
   conversao:
     "Cruzar conversão por canal com transformação prometida revela gargalos invisíveis no pitch atual.",
-};
-
-type SinteseAI = {
-  posicionamento: string;
-  diagnosticoCritico: string;
-  ofertaIrresistivel: string;
-  mensagemPrincipal: string;
-  cached?: boolean;
-  generatedAt?: string;
 };
 
 function Section({
@@ -167,9 +159,9 @@ function AICard({
 }
 
 export default function ResumoExecutivoPage() {
-  const { state, hydrated, currentClienteId } = useOfferBook();
+  const { state, hydrated, currentClienteId, aiOutput, aiGeneratedAt, setAiOutput } =
+    useOfferBook();
 
-  const [sintese, setSintese] = useState<SinteseAI | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -179,32 +171,10 @@ export default function ResumoExecutivoPage() {
       setLoading(true);
       setError(null);
       try {
-        const scores = computeScores(state);
-        const body = {
-          clienteId: currentClienteId,
-          cliente: state.cliente,
-          icp: state.icp,
-          psicografia: state.psicografia,
-          oferta: state.oferta,
-          concorrentes: state.concorrentes.map((c) => ({
-            nome: c.nome,
-            posicionamento: c.posicionamento,
-            ofertaPrincipal: c.ofertaPrincipal,
-            ticketEstimado: c.ticketEstimado,
-          })),
-          diagnostico: state.diagnostico,
-          scores: scores.map((s) => ({
-            key: s.key,
-            label: s.label,
-            value: s.value,
-          })),
-          force, // future use — currently cache-by-default
-        };
-
-        const res = await fetch("/api/offer-book/sintese", {
+        const res = await fetch("/api/offer-book/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ clienteId: currentClienteId, state, force }),
         });
 
         if (!res.ok) {
@@ -214,8 +184,8 @@ export default function ResumoExecutivoPage() {
           throw new Error(errBody.error || `Erro ${res.status}`);
         }
 
-        const data = (await res.json()) as SinteseAI;
-        setSintese(data);
+        const data = (await res.json()) as AiGenerateResponse;
+        setAiOutput(data, data.generatedAt);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Erro desconhecido";
         setError(msg);
@@ -224,11 +194,11 @@ export default function ResumoExecutivoPage() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentClienteId, JSON.stringify(state)],
+    [currentClienteId, setAiOutput, JSON.stringify(state)],
   );
 
   useEffect(() => {
-    if (hydrated && currentClienteId && !sintese && !loading) {
+    if (hydrated && currentClienteId && !aiOutput && !loading) {
       void fetchSintese();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -319,11 +289,9 @@ export default function ResumoExecutivoPage() {
               </h2>
               <p className="text-xs text-zinc-400">
                 Gerada por Claude AI a partir dos dados coletados.
-                {sintese?.cached && sintese.generatedAt
-                  ? ` Cache de ${new Date(sintese.generatedAt).toLocaleDateString("pt-BR")}.`
-                  : !loading && sintese
-                    ? " Recém-gerada."
-                    : ""}
+                {aiOutput && aiGeneratedAt
+                  ? ` ${new Date(aiGeneratedAt).toLocaleDateString("pt-BR")}.`
+                  : ""}
               </p>
             </div>
           </div>
@@ -350,28 +318,28 @@ export default function ResumoExecutivoPage() {
           <AICard
             label="Posicionamento Estratégico"
             icon={<Target className="h-3.5 w-3.5" />}
-            text={sintese?.posicionamento ?? ""}
+            text={aiOutput?.sintese.posicionamento ?? ""}
             loading={loading}
             accent="cyan"
           />
           <AICard
             label="Diagnóstico Crítico"
             icon={<AlertTriangle className="h-3.5 w-3.5" />}
-            text={sintese?.diagnosticoCritico ?? ""}
+            text={aiOutput?.sintese.diagnosticoCritico ?? ""}
             loading={loading}
             accent="amber"
           />
           <AICard
             label="Oferta Irresistível"
             icon={<Sparkles className="h-3.5 w-3.5" />}
-            text={sintese?.ofertaIrresistivel ?? ""}
+            text={aiOutput?.sintese.ofertaIrresistivel ?? ""}
             loading={loading}
             accent="emerald"
           />
           <AICard
             label="Mensagem Principal (voz do ICP)"
             icon={<MessageSquareQuote className="h-3.5 w-3.5" />}
-            text={sintese?.mensagemPrincipal ?? ""}
+            text={aiOutput?.sintese.mensagemPrincipal ?? ""}
             loading={loading}
             accent="orange"
           />
