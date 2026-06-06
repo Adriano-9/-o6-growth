@@ -43,7 +43,7 @@ async function fetchPSI(
   try {
     const res = await fetch(
       `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${key}&strategy=${strategy}`,
-      { timeout: 30000 },
+      { signal: AbortSignal.timeout(30000) },
     );
     if (!res.ok) return undefined;
 
@@ -77,7 +77,7 @@ async function fetchAndAnalyzeHTML(
   let contentScore = 0;
 
   try {
-    const res = await fetch(url, { timeout: 30000 });
+    const res = await fetch(url, { signal: AbortSignal.timeout(30000) });
     if (!res.ok) return { seoScore, uxScore, trustScore, conversionScore, contentScore };
 
     const html = await res.text();

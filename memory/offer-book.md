@@ -4,38 +4,54 @@ Decisões técnicas do módulo `/offer-book/*`. Newest on top. Cross-cutting em 
 
 ---
 
-## 2026-06-05 · Sprint 4 — Claude AI em /offer-book/resumo
+## 2026-06-05 · Sprint 4 (v2) — AI Audit Engine unificado (resumo + plano-acao + roadmap)
 
 ### Implementado
-- **Migration `007_offer_book_sintese`** — tabela cache com `cliente_id` (FK), 4 campos texto (`posicionamento`, `diagnostico_critico`, `oferta_irresistivel`, `mensagem_principal`), índice `(cliente_id, created_at desc)`, RLS anon all.
-- **`/api/offer-book/sintese/route.ts`** — POST endpoint:
-  - Recebe state completo (cliente, icp, psicografia, oferta, concorrentes, diagnostico, scores)
-  - Checa cache 7 dias por `cliente_id`
-  - Cache MISS → chama Claude API direto (`fetch` para `/v1/messages`), modelo `claude-sonnet-4-20250514`
-  - Persiste (INSERT — preserva histórico)
-  - `maxDuration = 60`
-- **`resumo/page.tsx`** — removeu `buildSintese()`; agora 4 cards AI com loading skeleton, botão "Atualizar", error state.
-- **`.env.local`** — `ANTHROPIC_API_KEY=` (server-side, sem prefixo NEXT_PUBLIC_)
+- **Migration `007_offer_books_ai_output`** — 3 colunas em `offer_books`: `ai_output JSONB DEFAULT NULL`, `ai_generated_at TIMESTAMPTZ DEFAULT NULL`, `ai_model TEXT DEFAULT NULL`. Sem tabela nova; reutiliza JSONB existente.
+- **`@anthropic-ai/sdk`** — instalado (npm). Substitui `fetch` direto usado em draft anterior.
+- **`app/offer-book/_lib/ai-types.ts`** — tipos `AiSintese`, `AiPrioridade`, `AiFase`, `AiOutput`, `AiGenerateResponse`.
+- **`app/api/offer-book/generate/route.ts`** — POST unificado:
+  - Recebe `{clienteId, state: OfferBookState, force?}`
+  - Cache: se `ai_output` existe em DB e `force=false` → retorna cached imediatamente
+  - Cache MISS ou `force=true` → chama `claude-opus-4-8` com `thinking: {type: "adaptive"}` + `output_config: {effort: "medium"}` + system prompt cacheado (`cache_control: ephemeral`)
+  - Parse JSON (regex `/\{[\s\S]*\}/` para extrair de possível markdown)
+  - Valida shape: `sintese`, `planoAcao`, `roadmap` obrigatórios
+  - UPDATE `offer_books` (não INSERT separado — reutiliza row existente)
+  - Retorna `AiGenerateResponse` com `cached`, `generatedAt`, `tokensUsed`
+- **`store.tsx`** — adicionados `aiOutput: AiOutput | null`, `aiGeneratedAt: string | null`, `setAiOutput()`. Hydration em `loadCliente` lê `ai_output`/`ai_generated_at` do row de `offer_books`. Reset de seleção limpa ambos.
+- **`resumo/page.tsx`** — migrado de `/api/offer-book/sintese` para `/api/offer-book/generate`. 4 AICards leem `aiOutput.sintese.*`. Auto-fetch se `!aiOutput` na hydration. Botão "Atualizar" passa `force=true`.
+- **`plano-acao/page.tsx`** — adicionado botão "Gerar com IA" / "Regenerar". Se `aiOutput.planoAcao.prioridades` → renderiza `PriorityAI`; else → `PriorityDeterministic` (determinístico intacto como fallback).
+- **`roadmap/page.tsx`** — adicionado `"use client"` + `useOfferBook`. Botão "Gerar com IA". Se `aiOutput.roadmap.fases` → renderiza fases AI; else → fases estáticas (fallback intacto).
 
 ### Decisões de design
-- **Sem `@anthropic-ai/sdk`** — `fetch` direto. Bundle leve, zero lock-in.
-- **Prompt 100% pt-BR** com dados literais do cliente (sem placeholder). Restrição final: "Responda APENAS com o JSON".
-- **Cache 7 dias** — síntese muda pouco se dados não mudam. Re-gerar via "Atualizar".
-- **Sem `onConflict` em INSERT** — cada geração nova row, preserva histórico. Query usa `ORDER BY created_at DESC LIMIT 1`.
-- **Fail-soft em erro de persistência** — retorna síntese mesmo se INSERT falha.
-- **Markdown fence stripping** — Claude às vezes embrulha JSON em ` ```json ... ``` ` apesar das instruções.
-- **Validação de campos vazios** — lança erro se qualquer um dos 4 campos vier vazio.
+- **Uma chamada, três seções** — `generate` produz resumo + plano + roadmap de uma vez. Custo ~$0.03/geração em Opus 4.8.
+- **Cache por DB** — `offer_books.ai_output` persiste. Próxima abertura do cliente hidrata do DB sem nova chamada.
+- **Fallback determinístico** — plano-acao e roadmap continuam funcionando sem AI. Usuário pode usar sem `ANTHROPIC_API_KEY`.
+- **`force=true` na regeneração** — o botão "Regenerar" bypassa o cache.
+- **Markdown fence stripping** — regex `/\{[\s\S]*\}/` extrai JSON do response mesmo se Claude embrulhar em fence.
+- **`agenda/page.tsx`** — bug pré-existente corrigido: `useSearchParams` wrapped em `<Suspense>` (Next.js 16 exige).
 
 ### Trade-offs aceitos
-- **Sem streaming** — request bloqueante 5-30s, skeleton durante. Considerar `stream=true` no futuro.
-- **Sem versionamento de prompt** — caches antigas continuam válidas mesmo se prompt mudar.
-- **Sem rate limiting** — confia no Anthropic rate limit (50 req/min Tier 1).
+- **Sem streaming** — blocking request 10-60s dependendo da thinking. Skeleton durante. Considerar streaming no futuro se latência for reclamação.
+- **`fetch` bloqueante no server** — `maxDuration` não definida nesta route; padrão Vercel Pro = 60s. Opus 4.8 com adaptive thinking pode exceder. Adicionar `export const maxDuration = 120` se necessário.
+- **`// eslint-disable` em `useCallback` deps** — `JSON.stringify(state)` nas deps é workaround para `state` objeto complexo. Aceitável para este padrão de uso.
+
+### Custo estimado
+| Modelo | Input ~1.400tok | Output ~900tok | Por geração |
+|---|---|---|---|
+| claude-opus-4-8 | $0.007 | $0.023 | **~$0.030** |
+Frente ao ticket médio R$2.500+, custo negligível.
 
 ### Paths tocados
-- `app/api/offer-book/sintese/route.ts` (novo)
-- `app/offer-book/resumo/page.tsx` (refatorado — buildSintese removido)
-- `.env.local` (+ ANTHROPIC_API_KEY)
-- DB: `offer_book_sintese` table
+- `app/offer-book/_lib/ai-types.ts` (novo)
+- `app/api/offer-book/generate/route.ts` (novo)
+- `app/offer-book/_lib/store.tsx` (+ aiOutput, setAiOutput, hydration)
+- `app/offer-book/resumo/page.tsx` (URL migrada, usa store)
+- `app/offer-book/plano-acao/page.tsx` (AI priorities + botão)
+- `app/offer-book/roadmap/page.tsx` (client component + AI fases + botão)
+- `app/agenda/page.tsx` (Suspense fix)
+- `.env.local` (comentário atualizado)
+- DB: migration `007_offer_books_ai_output` aplicada
 
 ---
 

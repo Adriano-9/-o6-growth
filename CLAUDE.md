@@ -205,6 +205,13 @@ Plan → Magic MCP → Build → Review → Update CLAUDE.md
 
 ## Lições aprendidas (append-only)
 
+### 2026-06-05 · Sprint 4 — AI Audit Engine unificado
+- **Contexto**: Resumo, plano-acao e roadmap tinham templates hardcoded sem dados do cliente. Roadmap era 100% estático igual para todos.
+- **Decisão**: Rota unificada `POST /api/offer-book/generate` (claude-opus-4-8, adaptive thinking) gera as 3 seções em uma chamada ~$0.03. Persiste em `offer_books.ai_output` JSONB (migration 007).
+- **Padrão estabelecido**: Cache-by-default (`force=false` serve DB), `force=true` regenera. Fallback determinístico intacto se `ai_output = null` — sistema funciona sem API key.
+- **Anti-padrão evitado**: 3 routes separadas = 3× custo + 3× latência. Uma call, três seções.
+- **Fix colateral**: `useSearchParams` em `agenda/page.tsx` sem `<Suspense>` quebrava `next build` no Next.js 16. Corrigido.
+
 ### 2026-06-04 · Apify > Serper para Brasil
 - **Contexto**: Sprint 2 implementou Serper.dev Maps (`/api/places`). Sprint 3 migrou para Apify (`/api/apify-search`).
 - **Por quê**: Serper retornava lixo regional, sem `city`/`state` estruturados, sem `endereco` completo. Apify Actor `compass/crawler-google-places` retorna campos prontos.

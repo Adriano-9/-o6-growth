@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CalendarDays, CheckCircle2, Clock, Target, X, XCircle } from "lucide-react";
 import {
@@ -68,6 +68,14 @@ type DrawerState =
   | { mode: "edit"; meeting: Meeting };
 
 export default function AgendaPage() {
+  return (
+    <Suspense>
+      <AgendaInner />
+    </Suspense>
+  );
+}
+
+function AgendaInner() {
   const searchParams = useSearchParams();
   const pendingProspectId = searchParams.get("prospectId");
   const pendingProspectEmpresa = searchParams.get("empresa") ?? "";
