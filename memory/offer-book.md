@@ -4,6 +4,41 @@ Decisões técnicas do módulo `/offer-book/*`. Newest on top. Cross-cutting em 
 
 ---
 
+## 2026-06-05 · Sprint 4 — Claude AI em /offer-book/resumo
+
+### Implementado
+- **Migration `007_offer_book_sintese`** — tabela cache com `cliente_id` (FK), 4 campos texto (`posicionamento`, `diagnostico_critico`, `oferta_irresistivel`, `mensagem_principal`), índice `(cliente_id, created_at desc)`, RLS anon all.
+- **`/api/offer-book/sintese/route.ts`** — POST endpoint:
+  - Recebe state completo (cliente, icp, psicografia, oferta, concorrentes, diagnostico, scores)
+  - Checa cache 7 dias por `cliente_id`
+  - Cache MISS → chama Claude API direto (`fetch` para `/v1/messages`), modelo `claude-sonnet-4-20250514`
+  - Persiste (INSERT — preserva histórico)
+  - `maxDuration = 60`
+- **`resumo/page.tsx`** — removeu `buildSintese()`; agora 4 cards AI com loading skeleton, botão "Atualizar", error state.
+- **`.env.local`** — `ANTHROPIC_API_KEY=` (server-side, sem prefixo NEXT_PUBLIC_)
+
+### Decisões de design
+- **Sem `@anthropic-ai/sdk`** — `fetch` direto. Bundle leve, zero lock-in.
+- **Prompt 100% pt-BR** com dados literais do cliente (sem placeholder). Restrição final: "Responda APENAS com o JSON".
+- **Cache 7 dias** — síntese muda pouco se dados não mudam. Re-gerar via "Atualizar".
+- **Sem `onConflict` em INSERT** — cada geração nova row, preserva histórico. Query usa `ORDER BY created_at DESC LIMIT 1`.
+- **Fail-soft em erro de persistência** — retorna síntese mesmo se INSERT falha.
+- **Markdown fence stripping** — Claude às vezes embrulha JSON em ` ```json ... ``` ` apesar das instruções.
+- **Validação de campos vazios** — lança erro se qualquer um dos 4 campos vier vazio.
+
+### Trade-offs aceitos
+- **Sem streaming** — request bloqueante 5-30s, skeleton durante. Considerar `stream=true` no futuro.
+- **Sem versionamento de prompt** — caches antigas continuam válidas mesmo se prompt mudar.
+- **Sem rate limiting** — confia no Anthropic rate limit (50 req/min Tier 1).
+
+### Paths tocados
+- `app/api/offer-book/sintese/route.ts` (novo)
+- `app/offer-book/resumo/page.tsx` (refatorado — buildSintese removido)
+- `.env.local` (+ ANTHROPIC_API_KEY)
+- DB: `offer_book_sintese` table
+
+---
+
 ## 2026-06-03 · v1.3 commercial fechada (Supabase + multi-cliente + PDF)
 
 ### Multi-cliente

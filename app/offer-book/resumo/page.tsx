@@ -1,13 +1,19 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
   ArrowUpRight,
   ClipboardList,
   FileText,
+  Loader2,
+  MessageSquareQuote,
+  RefreshCw,
+  Sparkles,
+  Target,
 } from "lucide-react";
 import { ScoreCard } from "../_components/ScoreCard";
-import { computeScores, scoreTier, ScoreDef } from "../_lib/scores";
+import { computeScores, scoreTier } from "../_lib/scores";
 import { useOfferBook } from "../_lib/store";
 
 function dash(v: string) {
@@ -34,6 +40,15 @@ const oportunidadeMessages: Record<string, string> = {
     "Diversificar canais e instrumentar CRM corta dependência e melhora previsibilidade.",
   conversao:
     "Cruzar conversão por canal com transformação prometida revela gargalos invisíveis no pitch atual.",
+};
+
+type SinteseAI = {
+  posicionamento: string;
+  diagnosticoCritico: string;
+  ofertaIrresistivel: string;
+  mensagemPrincipal: string;
+  cached?: boolean;
+  generatedAt?: string;
 };
 
 function Section({
@@ -100,8 +115,125 @@ function ListItem({
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// AI Section — 4 cards gerados pelo Claude
+// ─────────────────────────────────────────────────────────────
+
+function AICard({
+  label,
+  icon,
+  text,
+  loading,
+  accent,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  text: string;
+  loading: boolean;
+  accent: "cyan" | "amber" | "emerald" | "orange";
+}) {
+  const accentStyles = {
+    cyan: "border-brand-cyan/30 bg-brand-cyan/[0.05] text-brand-cyan",
+    amber: "border-amber-300/30 bg-amber-300/[0.05] text-amber-200",
+    emerald: "border-emerald-400/30 bg-emerald-400/[0.05] text-emerald-300",
+    orange: "border-brand-orange/30 bg-brand-orange/[0.05] text-brand-orange",
+  } as const;
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <div
+          className={`grid h-7 w-7 place-items-center rounded-md border ${accentStyles[accent]}`}
+        >
+          {icon}
+        </div>
+        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
+          {label}
+        </div>
+      </div>
+      {loading ? (
+        <div className="space-y-2">
+          <div className="h-3 w-full animate-pulse rounded bg-white/[0.06]" />
+          <div className="h-3 w-11/12 animate-pulse rounded bg-white/[0.06]" />
+          <div className="h-3 w-9/12 animate-pulse rounded bg-white/[0.06]" />
+        </div>
+      ) : (
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
+          {text}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function ResumoExecutivoPage() {
-  const { state, hydrated } = useOfferBook();
+  const { state, hydrated, currentClienteId } = useOfferBook();
+
+  const [sintese, setSintese] = useState<SinteseAI | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSintese = useCallback(
+    async (force = false) => {
+      if (!currentClienteId) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const scores = computeScores(state);
+        const body = {
+          clienteId: currentClienteId,
+          cliente: state.cliente,
+          icp: state.icp,
+          psicografia: state.psicografia,
+          oferta: state.oferta,
+          concorrentes: state.concorrentes.map((c) => ({
+            nome: c.nome,
+            posicionamento: c.posicionamento,
+            ofertaPrincipal: c.ofertaPrincipal,
+            ticketEstimado: c.ticketEstimado,
+          })),
+          diagnostico: state.diagnostico,
+          scores: scores.map((s) => ({
+            key: s.key,
+            label: s.label,
+            value: s.value,
+          })),
+          force, // future use — currently cache-by-default
+        };
+
+        const res = await fetch("/api/offer-book/sintese", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          const errBody = (await res.json().catch(() => ({}))) as {
+            error?: string;
+          };
+          throw new Error(errBody.error || `Erro ${res.status}`);
+        }
+
+        const data = (await res.json()) as SinteseAI;
+        setSintese(data);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Erro desconhecido";
+        setError(msg);
+      } finally {
+        setLoading(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentClienteId, JSON.stringify(state)],
+  );
+
+  useEffect(() => {
+    if (hydrated && currentClienteId && !sintese && !loading) {
+      void fetchSintese();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, currentClienteId]);
+
   if (!hydrated) return null;
 
   const scores = computeScores(state);
@@ -109,9 +241,7 @@ export default function ResumoExecutivoPage() {
 
   const sortedAsc = [...scores].sort((a, b) => a.value - b.value);
   const gargalos = sortedAsc.filter((s) => s.value < 60).slice(0, 3);
-  const oportunidades = sortedAsc
-    .filter((s) => s.value < 80)
-    .slice(0, 3);
+  const oportunidades = sortedAsc.filter((s) => s.value < 80).slice(0, 3);
 
   const overall = Math.round(
     scores.reduce((sum, s) => sum + s.value, 0) / scores.length,
@@ -170,15 +300,91 @@ export default function ResumoExecutivoPage() {
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {scores.map((s) => (
-              <ScoreCard
-                key={s.key}
-                label={s.label}
-                value={s.value}
-              />
+              <ScoreCard key={s.key} label={s.label} value={s.value} />
             ))}
           </div>
         </div>
       </div>
+
+      {/* ─── AI Synthesis Section ─── */}
+      <section className="mb-6 rounded-2xl border border-brand-cyan/20 bg-brand-cyan/[0.03] p-6">
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-lg border border-brand-cyan/30 bg-brand-cyan/[0.08] text-brand-cyan">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">
+                Síntese Estratégica
+              </h2>
+              <p className="text-xs text-zinc-400">
+                Gerada por Claude AI a partir dos dados coletados.
+                {sintese?.cached && sintese.generatedAt
+                  ? ` Cache de ${new Date(sintese.generatedAt).toLocaleDateString("pt-BR")}.`
+                  : !loading && sintese
+                    ? " Recém-gerada."
+                    : ""}
+              </p>
+            </div>
+          </div>
+          {!loading && !!currentClienteId && (
+            <button
+              type="button"
+              onClick={() => void fetchSintese(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-zinc-300 transition hover:bg-white/[0.08]"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Atualizar
+            </button>
+          )}
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
+            <div className="font-bold">Falha ao gerar síntese AI</div>
+            <div className="mt-1 text-xs text-red-300">{error}</div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <AICard
+            label="Posicionamento Estratégico"
+            icon={<Target className="h-3.5 w-3.5" />}
+            text={sintese?.posicionamento ?? ""}
+            loading={loading}
+            accent="cyan"
+          />
+          <AICard
+            label="Diagnóstico Crítico"
+            icon={<AlertTriangle className="h-3.5 w-3.5" />}
+            text={sintese?.diagnosticoCritico ?? ""}
+            loading={loading}
+            accent="amber"
+          />
+          <AICard
+            label="Oferta Irresistível"
+            icon={<Sparkles className="h-3.5 w-3.5" />}
+            text={sintese?.ofertaIrresistivel ?? ""}
+            loading={loading}
+            accent="emerald"
+          />
+          <AICard
+            label="Mensagem Principal (voz do ICP)"
+            icon={<MessageSquareQuote className="h-3.5 w-3.5" />}
+            text={sintese?.mensagemPrincipal ?? ""}
+            loading={loading}
+            accent="orange"
+          />
+        </div>
+
+        {loading && (
+          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-zinc-500">
+            <Loader2 className="h-3 w-3 animate-spin text-brand-cyan" />
+            Claude está analisando {scores.length} indicadores e{" "}
+            {Object.values(state.cliente).filter(Boolean).length} campos…
+          </div>
+        )}
+      </section>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Section
@@ -262,15 +468,6 @@ export default function ResumoExecutivoPage() {
                 label="Conversão Atual"
                 value={diagnostico.conversaoAtual}
               />
-              <div className="md:col-span-2">
-                <Consolidated
-                  label="Síntese"
-                  value={
-                    buildSintese(scores, cliente.empresa) ||
-                    "Preencha os módulos para gerar a síntese."
-                  }
-                />
-              </div>
             </div>
           </Section>
         </div>
@@ -290,15 +487,4 @@ function Consolidated({ label, value }: { label: string; value: string }) {
       </div>
     </div>
   );
-}
-
-function buildSintese(scores: ScoreDef[], empresa: string): string {
-  const meaningful = scores.filter((s) => s.value > 0);
-  if (meaningful.length === 0) return "";
-
-  const worst = [...meaningful].sort((a, b) => a.value - b.value)[0];
-  const best = [...meaningful].sort((a, b) => b.value - a.value)[0];
-  const empresaLabel = empresa.trim() || "A operação";
-
-  return `${empresaLabel} apresenta seu maior ponto de fragilidade em ${worst.label} (${worst.value}/100), enquanto ${best.label} (${best.value}/100) é hoje o eixo mais consolidado. O movimento de maior alavancagem está em reduzir a distância entre o pior e o melhor indicador para abrir teto de receita sem aumentar volume de leads.`;
 }

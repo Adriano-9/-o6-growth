@@ -20,6 +20,7 @@ import {
   emptyConcorrente,
   emptyState,
 } from "./types";
+import { AiOutput } from "./ai-types";
 import { getSupabase } from "./supabase";
 
 const CURRENT_KEY = "o6.offer-book.current";
