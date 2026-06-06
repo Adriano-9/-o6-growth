@@ -1,95 +1,173 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabase } from "@/app/offer-book/_lib/supabase";
 import { computeScores, scoreTier } from "@/app/offer-book/_lib/scores";
 import { OfferBookState } from "@/app/offer-book/_lib/types";
 import { AiOutput, AiGenerateResponse } from "@/app/offer-book/_lib/ai-types";
 
+export const maxDuration = 120;
+
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
 
-const SYSTEM_PROMPT = `Voce e um consultor de crescimento comercial senior especializado em clinicas medicas, estetica, odontologia, fisioterapia e escritorios de advocacia no Brasil.
-Ticket medio: R$1.500-R$8.000. Ciclo consultivo. Dor principal: aquisicao e conversao de leads qualificados.
-Analise os dados do Offer Book e gere um diagnostico executivo personalizado.
-Regras: use os dados reais do cliente; nunca use linguagem generica de SaaS; seja especifico ao nicho e cidade; cite os numeros reais declarados.
-Retorne SOMENTE JSON valido sem markdown, sem texto fora do JSON.`;
+const SYSTEM_PROMPT = `Voce e um consultor estrategico senior especializado em clinicas medicas, estetica, odontologia, fisioterapia e escritorios de advocacia no Brasil. Seu trabalho e diagnosticar o negocio e entregar um plano cirurgico de crescimento comercial.
+
+Contexto de mercado: ticket medio R$1.500-R$8.000, ciclo consultivo, dor principal e aquisicao e conversao de leads qualificados. Concorrencia local intensa. Decisao de compra emocional com racionalizacao posterior.
+
+Regras inegociaveis:
+- Use SEMPRE os dados reais declarados pelo cliente — nome da empresa, cidade, nicho especifico, numeros de conversao, tempo de resposta
+- NUNCA use linguagem generica de SaaS ("transforme", "escale", "otimize" sem contexto)
+- Cite os numeros exatos quando disponíveis ("seus 8% de conversao", "suas 30 leads/mes")
+- Cada recomendacao deve ser especifica ao nicho E a cidade declarada
+- O diagnostico critico deve identificar O UNICO maior gargalo, nao uma lista
+- A oferta irresistivel deve ser reescrita em primeira pessoa do cliente ideal
+- Retorne SOMENTE JSON valido. Sem markdown, sem texto fora do JSON.`;
 
 function buildPrompt(state: OfferBookState): string {
   const scores = computeScores(state);
   const { cliente, icp, psicografia, oferta, concorrentes, diagnostico } = state;
 
-  const global = Math.round(scores.reduce((s, x) => s + x.value, 0) / scores.length);
+  const globalScore = Math.round(
+    scores.reduce((s, x) => s + x.value, 0) / scores.length,
+  );
 
-  const scoreLines = scores
+  const scoreLinesStr = scores
     .map(
       (s) =>
-        `- ${s.label}: ${s.value}/100 (${scoreTier(s.value) === "low" ? "Critico" : scoreTier(s.value) === "mid" ? "Atencao" : "Saudavel"})`,
+        `- ${s.label}: ${s.value}/100 (${
+          scoreTier(s.value) === "low"
+            ? "CRITICO"
+            : scoreTier(s.value) === "mid"
+              ? "ATENCAO"
+              : "SAUDAVEL"
+        }) — ${s.description}`,
     )
     .join("\n");
+
+  const worstScores = [...scores].sort((a, b) => a.value - b.value).slice(0, 3);
+  const worstStr = worstScores
+    .map((s) => `${s.label} (${s.value}/100)`)
+    .join(", ");
 
   const concorrentesStr =
     concorrentes.length > 0
       ? concorrentes
           .map(
             (c) =>
-              `${c.nome}: ${c.posicionamento || c.ofertaPrincipal || "sem info"} (ticket ~${c.ticketEstimado || "?"})`,
+              `${c.nome}${c.posicionamento ? ` — posicionamento: "${c.posicionamento}"` : ""}${
+                c.ofertaPrincipal ? ` — oferta: "${c.ofertaPrincipal}"` : ""
+              }${c.ticketEstimado ? ` — ticket ~${c.ticketEstimado}` : ""}`,
           )
-          .join(" | ")
-      : "Nenhum mapeado";
+          .join("\n  ")
+      : "Nenhum concorrente mapeado";
 
-  return `CLIENTE: ${cliente.empresa || "sem nome"}
-Nicho: ${cliente.nicho || "-"} | Cidade: ${cliente.cidade || "-"}, ${cliente.estado || "-"} | Ticket medio: R$ ${cliente.ticketMedio || "-"}
-Fonte de leads: ${cliente.fonteLeads || "-"}
+  const ticketStr =
+    diagnostico.ticketMedio || cliente.ticketMedio || "não declarado";
 
-DIAGNOSTICO:
-Leads/mes: ${diagnostico.leadsMes || "-"} | Conversao atual: ${diagnostico.conversaoAtual || "-"}
-Tempo resposta ao lead: ${diagnostico.tempoResposta || "-"}
-Origem dos leads: ${diagnostico.origemLeads || "-"}
-CRM: ${diagnostico.crm || "-"} | Vendedores: ${diagnostico.vendedores || "-"}
+  const leadsStr = diagnostico.leadsMes
+    ? `${diagnostico.leadsMes} leads/mes`
+    : "volume não declarado";
 
-ICP:
-Perfil: ${icp.profissao || "-"}, ${icp.idade || "-"}, renda ${icp.renda || "-"}
-Problema principal: ${icp.problemaPrincipal || "-"}
-Objetivo principal: ${icp.objetivoPrincipal || "-"}
+  const convStr = diagnostico.conversaoAtual || "nao declarada";
 
-PSICOGRAFIA:
-Medos: ${psicografia.medos || "-"}
-Objecoes: ${psicografia.objecoes || "-"}
-Desejos/Gatilhos: ${psicografia.desejos || "-"}
+  return `DADOS DO CLIENTE
+Empresa: ${cliente.empresa || "sem nome"}
+Nicho: ${cliente.nicho || "nao declarado"}
+Cidade/Estado: ${cliente.cidade || "?"}, ${cliente.estado || "?"}
+Site: ${cliente.site || "sem site"}
+Ticket medio: R$ ${ticketStr}
+Fonte de leads declarada: ${cliente.fonteLeads || "nao declarada"}
 
-OFERTA:
-Produto: ${oferta.produto || "-"}
-Transformacao prometida: ${oferta.transformacao || "-"}
-Mecanismo unico: ${oferta.mecanismoUnico || "-"}
-Garantia: ${oferta.garantia || "-"} | Prova: ${oferta.prova || "-"}
-Diferenciais: ${oferta.diferencial || "-"}
+DIAGNOSTICO OPERACIONAL
+Leads/mes: ${leadsStr}
+Conversao atual: ${convStr}
+Tempo de resposta ao lead: ${diagnostico.tempoResposta || "nao declarado"}
+Origem dos leads (detalhe): ${diagnostico.origemLeads || "nao declarado"}
+CRM em uso: ${diagnostico.crm || "nao declarado"}
+Equipe de vendas: ${diagnostico.vendedores || "nao declarado"}
 
-CONCORRENTES: ${concorrentesStr}
+ICP (Cliente Ideal)
+Perfil: ${icp.profissao || "?"}, ${icp.idade || "?"}, renda ${icp.renda || "?"}
+Momento de vida: ${icp.momentoVida || "?"}
+Problema principal: ${icp.problemaPrincipal || "nao declarado"}
+Objetivo principal: ${icp.objetivoPrincipal || "nao declarado"}
 
-SCORES (0-100):
-${scoreLines}
-Score global: ${global}/100
+PSICOGRAFIA
+Desejos/gatilhos: ${psicografia.desejos || "nao declarado"}
+Medos antes de comprar: ${psicografia.medos || "nao declarado"}
+Objecoes tipicas: ${psicografia.objecoes || "nao declarado"}
+Frustracoes com o mercado: ${psicografia.frustracoes || "nao declarado"}
 
-Gere exatamente este JSON:
+OFERTA
+Produto/servico: ${oferta.produto || "nao declarado"}
+Ticket do produto: ${oferta.ticket || "nao declarado"}
+Transformacao prometida: ${oferta.transformacao || "nao declarado"}
+Mecanismo unico: ${oferta.mecanismoUnico || "nao declarado"}
+Diferencial: ${oferta.diferencial || "nao declarado"}
+Garantia: ${oferta.garantia || "nao declarado"}
+Prova social: ${oferta.prova || "nao declarado"}
+
+CONCORRENTES MAPEADOS (${concorrentes.length} total)
+  ${concorrentesStr}
+
+SCORES CALCULADOS (0-100)
+${scoreLinesStr}
+Score global: ${globalScore}/100
+Tres piores: ${worstStr}
+
+INSTRUCAO
+Gere exatamente este JSON preenchendo todos os campos com analise especifica para ${cliente.empresa || "esta empresa"} em ${cliente.nicho || "este nicho"} em ${cliente.cidade || "esta cidade"}:
 {
   "sintese": {
-    "posicionamento": "1-2 frases sobre o posicionamento atual de ${cliente.empresa || "a empresa"} e o que precisa mudar — especifico ao nicho e cidade",
-    "diagnosticoCritico": "1-2 frases sobre o principal gargalo operacional detectado pelos scores — use os dados reais declarados",
-    "ofertaIrresistivel": "1-2 frases sobre como a oferta precisa ser reposicionada para este ICP especifico",
-    "mensagemPrincipal": "1 frase na voz do cliente ideal descrevendo o que ele sente antes de ser atendido — use os medos e objecoes reais"
+    "posicionamento": "1-2 frases diagnosticando o posicionamento atual de ${cliente.empresa || "a empresa"} versus os ${concorrentes.length} concorrentes mapeados — o que os diferencia hoje e por que isso nao e suficiente para dominar ${cliente.cidade || "o mercado local"}",
+    "diagnosticoCritico": "1-2 frases identificando O UNICO maior gargalo operacional — use os dados reais: ${leadsStr}, conversao ${convStr}, tempo de resposta ${diagnostico.tempoResposta || "nao declarado"}",
+    "ofertaIrresistivel": "1-2 frases reescrevendo a oferta de ${oferta.produto || "o produto"} do ponto de vista do ICP — como ela elimina '${icp.problemaPrincipal || "o problema principal"}' de forma unica",
+    "mensagemPrincipal": "1 frase na voz do cliente ideal (${icp.profissao || "cliente"} em ${cliente.cidade || "?"}) descrevendo o que ele sente ANTES de ser atendido — use os medos '${psicografia.medos || "nao declarados"}'"
   },
   "planoAcao": {
     "prioridades": [
-      {"rank": 1, "area": "nome do score mais fraco", "titulo": "acao especifica em linguagem do nicho do cliente", "corpo": "contexto real com dados do cliente — por que esta acao agora", "metrica": "KPI mensuravel com numero ou percentual", "prazo": "30 dias"},
-      {"rank": 2, "area": "nome do segundo score mais fraco", "titulo": "acao especifica", "corpo": "contexto real", "metrica": "KPI mensuravel", "prazo": "60 dias"},
-      {"rank": 3, "area": "nome do terceiro score mais fraco", "titulo": "acao especifica", "corpo": "contexto real", "metrica": "KPI mensuravel", "prazo": "90 dias"}
+      {"rank": 1, "area": "${worstScores[0]?.label ?? "Area critica"}", "titulo": "acao especifica com verbo imperativo referenciando o nicho ${cliente.nicho || "do cliente"}", "corpo": "por que esta acao agora — cite o dado real que justifica (ex: score ${worstScores[0]?.value ?? 0}/100)", "metrica": "KPI mensuravel com numero ou percentual especifico para este negocio", "prazo": "30 dias"},
+      {"rank": 2, "area": "${worstScores[1]?.label ?? "Segunda area"}", "titulo": "acao especifica", "corpo": "contexto real com dados do cliente", "metrica": "KPI mensuravel", "prazo": "60 dias"},
+      {"rank": 3, "area": "${worstScores[2]?.label ?? "Terceira area"}", "titulo": "acao especifica", "corpo": "contexto real", "metrica": "KPI mensuravel", "prazo": "90 dias"}
     ]
   },
   "roadmap": {
     "fases": [
-      {"numero": 1, "titulo": "titulo da fase para ${cliente.empresa || "a empresa"}", "horizonte": "Mes 1-2", "foco": "tema central desta fase", "itens": ["entregavel especifico 1", "entregavel especifico 2", "entregavel especifico 3"]},
-      {"numero": 2, "titulo": "titulo da segunda fase", "horizonte": "Mes 3-4", "foco": "tema central", "itens": ["entregavel 1", "entregavel 2", "entregavel 3"]},
-      {"numero": 3, "titulo": "titulo da terceira fase", "horizonte": "Mes 5-6", "foco": "tema central", "itens": ["entregavel 1", "entregavel 2", "entregavel 3"]}
+      {"numero": 1, "titulo": "titulo da fase 1 especifico para ${cliente.empresa || "a empresa"}", "horizonte": "Mes 1-2", "foco": "tema central derivado do pior score (${worstScores[0]?.label ?? "area critica"})", "itens": ["entregavel concreto 1 no nicho ${cliente.nicho || "do cliente"}", "entregavel concreto 2", "entregavel concreto 3", "entregavel concreto 4"]},
+      {"numero": 2, "titulo": "titulo da fase 2", "horizonte": "Mes 3-4", "foco": "tema central do segundo gargalo", "itens": ["entregavel 1", "entregavel 2", "entregavel 3", "entregavel 4"]},
+      {"numero": 3, "titulo": "titulo da fase 3", "horizonte": "Mes 5-6", "foco": "consolidacao e previsibilidade", "itens": ["entregavel 1", "entregavel 2", "entregavel 3", "entregavel 4"]}
     ]
+  },
+  "strategic": {
+    "curtoPrazo": {
+      "horizonte": "0-30 dias",
+      "objetivo": "objetivo mensuravel especifico para ${cliente.empresa || "a empresa"} no primeiro mes",
+      "acoes": [
+        {"acao": "acao especifica 1 no contexto de ${cliente.nicho || "o nicho"}", "impacto": "impacto esperado com numero", "responsavel": "cargo ou perfil responsavel"},
+        {"acao": "acao especifica 2", "impacto": "impacto esperado", "responsavel": "cargo"},
+        {"acao": "acao especifica 3", "impacto": "impacto esperado", "responsavel": "cargo"}
+      ]
+    },
+    "medioPrazo": {
+      "horizonte": "30-90 dias",
+      "objetivo": "objetivo mensuravel para o trimestre",
+      "acoes": [
+        {"acao": "acao 1", "impacto": "impacto", "responsavel": "cargo"},
+        {"acao": "acao 2", "impacto": "impacto", "responsavel": "cargo"},
+        {"acao": "acao 3", "impacto": "impacto", "responsavel": "cargo"}
+      ]
+    },
+    "longoPrazo": {
+      "horizonte": "90-180 dias",
+      "objetivo": "objetivo de posicionamento estrategico para ${cliente.empresa || "a empresa"} em ${cliente.cidade || "o mercado"}",
+      "acoes": [
+        {"acao": "acao 1", "impacto": "impacto", "responsavel": "cargo"},
+        {"acao": "acao 2", "impacto": "impacto", "responsavel": "cargo"},
+        {"acao": "acao 3", "impacto": "impacto", "responsavel": "cargo"}
+      ]
+    },
+    "potencialReceita": "estimativa de receita potencial em 6 meses baseada em ${leadsStr} × ticket ${ticketStr} com a conversao alvo especifica",
+    "principalGargalo": "nome do gargalo mais critico em 1 frase",
+    "diferencial": "o que diferencia ${cliente.empresa || "a empresa"} de forma genuina dos ${concorrentes.length} concorrentes mapeados"
   }
 }`;
 }
@@ -100,12 +178,37 @@ function validateAiOutput(raw: unknown): raw is AiOutput {
   if (!o.sintese || typeof o.sintese !== "object") return false;
   if (!o.planoAcao || typeof o.planoAcao !== "object") return false;
   if (!o.roadmap || typeof o.roadmap !== "object") return false;
+  if (!o.strategic || typeof o.strategic !== "object") return false;
   const s = o.sintese as Record<string, unknown>;
   if (typeof s.posicionamento !== "string") return false;
   const pa = o.planoAcao as Record<string, unknown>;
   if (!Array.isArray(pa.prioridades)) return false;
   const rm = o.roadmap as Record<string, unknown>;
   if (!Array.isArray(rm.fases)) return false;
+  return true;
+}
+
+function validateAiOutputLenient(raw: unknown): raw is AiOutput {
+  if (!raw || typeof raw !== "object") return false;
+  const o = raw as Record<string, unknown>;
+  if (!o.sintese || typeof o.sintese !== "object") return false;
+  if (!o.planoAcao || typeof o.planoAcao !== "object") return false;
+  if (!o.roadmap || typeof o.roadmap !== "object") return false;
+  const pa = o.planoAcao as Record<string, unknown>;
+  if (!Array.isArray(pa.prioridades)) return false;
+  const rm = o.roadmap as Record<string, unknown>;
+  if (!Array.isArray(rm.fases)) return false;
+  // strategic is optional in lenient mode — fill with defaults if missing
+  if (!o.strategic) {
+    (o as Record<string, unknown>).strategic = {
+      curtoPrazo: { horizonte: "0-30 dias", objetivo: "", acoes: [] },
+      medioPrazo: { horizonte: "30-90 dias", objetivo: "", acoes: [] },
+      longoPrazo: { horizonte: "90-180 dias", objetivo: "", acoes: [] },
+      potencialReceita: "",
+      principalGargalo: "",
+      diferencial: "",
+    };
+  }
   return true;
 }
 
@@ -132,13 +235,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-  const sb = createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false },
-  });
+  const sb = getSupabase();
+  if (!sb) {
+    return NextResponse.json({ error: "Supabase nao configurado" }, { status: 503 });
+  }
 
-  // Return cached output if available and not forcing regeneration
   if (!force) {
     const { data: existing } = await sb
       .from("offer_books")
@@ -148,10 +249,11 @@ export async function POST(req: NextRequest) {
 
     if (existing?.ai_output) {
       const cached = existing.ai_output as AiOutput;
-      if (validateAiOutput(cached)) {
+      if (validateAiOutput(cached) || validateAiOutputLenient(cached)) {
         const response: AiGenerateResponse = {
           ...cached,
-          generatedAt: (existing.ai_generated_at as string) ?? new Date().toISOString(),
+          generatedAt:
+            (existing.ai_generated_at as string) ?? new Date().toISOString(),
           tokensUsed: 0,
           model: (existing.ai_model as string) ?? "cached",
           cached: true,
@@ -161,17 +263,12 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Generate with Claude
   const userPrompt = buildPrompt(state);
 
-  let rawText: string;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const params: any = {
+    const message = await anthropic.messages.create({
       model: "claude-opus-4-8",
-      max_tokens: 2048,
-      thinking: { type: "adaptive" },
-      output_config: { effort: "medium" },
+      max_tokens: 4096,
       system: [
         {
           type: "text",
@@ -180,31 +277,26 @@ export async function POST(req: NextRequest) {
         },
       ],
       messages: [{ role: "user", content: userPrompt }],
-    };
-
-    const message = await anthropic.messages.create(params);
+    });
 
     const textBlock = message.content.find((b) => b.type === "text");
     if (!textBlock || textBlock.type !== "text") {
       throw new Error("Resposta do Claude sem bloco de texto");
     }
-    rawText = textBlock.text;
+    const rawText = textBlock.text;
 
-    // Persist token usage
     const tokensUsed =
       (message.usage?.input_tokens ?? 0) + (message.usage?.output_tokens ?? 0);
     const generatedAt = new Date().toISOString();
 
-    // Parse JSON (Claude may wrap in markdown fences)
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("JSON nao encontrado na resposta do Claude");
 
     const parsed: unknown = JSON.parse(jsonMatch[0]);
-    if (!validateAiOutput(parsed)) {
+    if (!validateAiOutputLenient(parsed)) {
       throw new Error("Estrutura JSON invalida — campos obrigatorios ausentes");
     }
 
-    // Persist to Supabase
     const { error: updateErr } = await sb
       .from("offer_books")
       .update({

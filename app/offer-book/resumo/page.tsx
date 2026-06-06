@@ -11,6 +11,8 @@ import {
   RefreshCw,
   Sparkles,
   Target,
+  TrendingUp,
+  Zap,
 } from "lucide-react";
 import { ScoreCard } from "../_components/ScoreCard";
 import { computeScores, scoreTier } from "../_lib/scores";
@@ -30,6 +32,10 @@ const gargaloMessages: Record<string, string> = {
     "Canais de aquisição pouco mapeados — dependência ou falta de visibilidade sobre origem dos leads.",
   conversao:
     "Conversão atual frágil ou não mensurada — diagnóstico cruzado com transformação prometida está incompleto.",
+  potencial:
+    "Potencial de crescimento baixo — ticket, volume de leads ou ICP mal definidos limitam o teto.",
+  eficiencia:
+    "Baixa eficiência comercial — falta prova social, garantia robusta ou inteligência competitiva.",
 };
 
 const oportunidadeMessages: Record<string, string> = {
@@ -41,6 +47,10 @@ const oportunidadeMessages: Record<string, string> = {
     "Diversificar canais e instrumentar CRM corta dependência e melhora previsibilidade.",
   conversao:
     "Cruzar conversão por canal com transformação prometida revela gargalos invisíveis no pitch atual.",
+  potencial:
+    "Com ICP definido e ticket acima de R$2.000, o potencial de escala é alto — priorizar qualificação.",
+  eficiencia:
+    "Mapear concorrentes e adicionar prova social aumenta a eficiência de conversão sem aumentar volume.",
 };
 
 function Section({
@@ -107,10 +117,6 @@ function ListItem({
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// AI Section — 4 cards gerados pelo Claude
-// ─────────────────────────────────────────────────────────────
-
 function AICard({
   label,
   icon,
@@ -151,8 +157,82 @@ function AICard({
         </div>
       ) : (
         <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
-          {text}
+          {text || "—"}
         </p>
+      )}
+    </div>
+  );
+}
+
+function StrategicBlock({
+  label,
+  horizonte,
+  objetivo,
+  acoes,
+  loading,
+  accent,
+}: {
+  label: string;
+  horizonte: string;
+  objetivo: string;
+  acoes: { acao: string; impacto: string; responsavel: string }[];
+  loading: boolean;
+  accent: "red" | "amber" | "cyan";
+}) {
+  const styles = {
+    red: {
+      border: "border-red-500/20",
+      bg: "bg-red-500/[0.03]",
+      badge: "bg-red-500/15 text-red-300 border-red-500/20",
+      dot: "bg-red-400",
+    },
+    amber: {
+      border: "border-amber-300/20",
+      bg: "bg-amber-300/[0.03]",
+      badge: "bg-amber-300/15 text-amber-200 border-amber-300/20",
+      dot: "bg-amber-300",
+    },
+    cyan: {
+      border: "border-brand-cyan/20",
+      bg: "bg-brand-cyan/[0.03]",
+      badge: "bg-brand-cyan/15 text-brand-cyan border-brand-cyan/20",
+      dot: "bg-brand-cyan",
+    },
+  };
+  const s = styles[accent];
+
+  return (
+    <div className={`rounded-xl border ${s.border} ${s.bg} p-5`}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="text-sm font-black uppercase tracking-tight text-white">{label}</div>
+        <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${s.badge}`}>
+          {horizonte}
+        </span>
+      </div>
+      {loading ? (
+        <div className="space-y-2">
+          <div className="h-3 w-full animate-pulse rounded bg-white/[0.06]" />
+          <div className="h-3 w-3/4 animate-pulse rounded bg-white/[0.06]" />
+        </div>
+      ) : (
+        <>
+          {objetivo && (
+            <p className="mb-3 text-sm leading-relaxed text-zinc-300">{objetivo}</p>
+          )}
+          {acoes.length > 0 && (
+            <ul className="space-y-2">
+              {acoes.map((a, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-zinc-400">
+                  <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${s.dot}`} />
+                  <span>
+                    <strong className="text-zinc-200">{a.acao}</strong>
+                    {a.impacto ? ` — ${a.impacto}` : ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );
@@ -218,6 +298,8 @@ export default function ResumoExecutivoPage() {
   );
   const overallTier = scoreTier(overall);
 
+  const strategic = aiOutput?.strategic;
+
   return (
     <div className="mx-auto w-full max-w-6xl">
       <div className="mb-10 flex items-start gap-4">
@@ -268,7 +350,7 @@ export default function ResumoExecutivoPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-3 gap-3 md:grid-cols-6">
             {scores.map((s) => (
               <ScoreCard key={s.key} label={s.label} value={s.value} />
             ))}
@@ -348,11 +430,81 @@ export default function ResumoExecutivoPage() {
         {loading && (
           <div className="mt-4 flex items-center justify-center gap-2 text-xs text-zinc-500">
             <Loader2 className="h-3 w-3 animate-spin text-brand-cyan" />
-            Claude está analisando {scores.length} indicadores e{" "}
-            {Object.values(state.cliente).filter(Boolean).length} campos…
+            Claude está analisando {scores.length} indicadores…
           </div>
         )}
       </section>
+
+      {/* ─── Strategic Engine (3 time horizons) ─── */}
+      {(loading || strategic) && (
+        <section className="mb-6 rounded-2xl border border-white/10 bg-zinc-900/40 p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-lg border border-white/10 bg-white/[0.03] text-brand-cyan">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">
+                Engine Estratégico
+              </h2>
+              <p className="text-xs text-zinc-500">
+                Recomendações por horizonte temporal — 0-30d · 30-90d · 90-180d
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <StrategicBlock
+              label="Curto Prazo"
+              horizonte={strategic?.curtoPrazo.horizonte ?? "0-30 dias"}
+              objetivo={strategic?.curtoPrazo.objetivo ?? ""}
+              acoes={strategic?.curtoPrazo.acoes ?? []}
+              loading={loading}
+              accent="red"
+            />
+            <StrategicBlock
+              label="Médio Prazo"
+              horizonte={strategic?.medioPrazo.horizonte ?? "30-90 dias"}
+              objetivo={strategic?.medioPrazo.objetivo ?? ""}
+              acoes={strategic?.medioPrazo.acoes ?? []}
+              loading={loading}
+              accent="amber"
+            />
+            <StrategicBlock
+              label="Longo Prazo"
+              horizonte={strategic?.longoPrazo.horizonte ?? "90-180 dias"}
+              objetivo={strategic?.longoPrazo.objetivo ?? ""}
+              acoes={strategic?.longoPrazo.acoes ?? []}
+              loading={loading}
+              accent="cyan"
+            />
+          </div>
+
+          {(strategic?.potencialReceita || loading) && (
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/[0.03] p-4">
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">
+                  Potencial de Receita (6 meses)
+                </div>
+                {loading ? (
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-white/[0.06]" />
+                ) : (
+                  <p className="text-sm text-zinc-200">{strategic?.potencialReceita}</p>
+                )}
+              </div>
+              <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
+                  Diferencial Genuíno
+                </div>
+                {loading ? (
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-white/[0.06]" />
+                ) : (
+                  <p className="text-sm text-zinc-200">{strategic?.diferencial || "—"}</p>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Section
@@ -437,6 +589,20 @@ export default function ResumoExecutivoPage() {
                 value={diagnostico.conversaoAtual}
               />
             </div>
+
+            {strategic?.principalGargalo && (
+              <div className="mt-4 flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/[0.04] p-4">
+                <Zap className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-red-300">
+                    Principal Gargalo (AI)
+                  </div>
+                  <p className="mt-1 text-sm text-zinc-200">
+                    {strategic.principalGargalo}
+                  </p>
+                </div>
+              </div>
+            )}
           </Section>
         </div>
       </div>
@@ -450,8 +616,8 @@ function Consolidated({ label, value }: { label: string; value: string }) {
       <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
         {label}
       </div>
-      <div className="mt-1 text-sm leading-relaxed text-zinc-200 whitespace-pre-wrap">
-        {dash(value)}
+      <div className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
+        {value && value.trim().length > 0 ? value : "—"}
       </div>
     </div>
   );

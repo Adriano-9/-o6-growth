@@ -4,6 +4,58 @@ Decisões técnicas do módulo `/offer-book/*`. Newest on top. Cross-cutting em 
 
 ---
 
+## 2026-06-05 · Sprint 5 — 6 Scores + Strategic Engine (AI horizons)
+
+### 2 novos scores em `_lib/scores.ts`
+- **`potencialScore`**: ticket (R$500=10pts, R$5000+=50pts) + ICP fill ratio × 0.3 + leads/mês volume.
+- **`eficienciaScore`**: campos de oferta (prova/garantia/diferencial) × 0.4 + concorrentes mapeados (10pts cada, max 30) + psicografia fields × 0.3.
+- `ScoreKey` type expandido: `velocidade | oferta | aquisicao | conversao | potencial | eficiencia`.
+- `computeScores()` retorna array de 6 `ScoreDef`.
+
+### Novo tipo `AiStrategic` em `_lib/ai-types.ts`
+```typescript
+AiStrategic = {
+  curtoPrazo: { horizonte: "0-30 dias"; objetivo; acoes: AiRecomendacao[] }
+  medioPrazo: { horizonte: "30-90 dias"; objetivo; acoes: AiRecomendacao[] }
+  longoPrazo: { horizonte: "90-180 dias"; objetivo; acoes: AiRecomendacao[] }
+  potencialReceita: string
+  principalGargalo: string
+  diferencial: string
+}
+```
+`AiOutput` expandido com `strategic: AiStrategic`.
+
+### `/api/offer-book/generate` — criticamente corrigido e expandido
+- **Bug crítico corrigido**: `thinking: { type: "adaptive" }` (tipo inválido) e `output_config: { effort: "medium" }` (parâmetro inexistente) removidos. Usava params que quebravam silenciosamente.
+- **Bug crítico corrigido**: `getSupabase()` retornava `null` em server context (guard `typeof window === "undefined"` removido de `supabase.ts`).
+- **`maxDuration = 120`** adicionado (Vercel timeout seguro para Opus 4.8).
+- **`max_tokens` 2048 → 4096** para acomodar seção `strategic` adicional.
+- **`validateAiOutputLenient()`**: fallback backward-compat — preenche `strategic` vazio se output cacheado antigo não tem a seção.
+- **Prompt**: cita dados reais do cliente (`seus X% de conversão`, `suas Y leads/mês`), usa nome/cidade/nicho. Regra explícita: "NUNCA use linguagem genérica de SaaS".
+- **`cache_control: { type: "ephemeral" }`** no system message — a SDK do Anthropic aceita nativamente, `@ts-expect-error` foi desnecessário e removido no build.
+
+### `resumo/page.tsx` — expanded layout
+- Grid de scores: `md:grid-cols-4` → `grid-cols-3 md:grid-cols-6`.
+- `StrategicBlock` component: badge horizonte + objetivo + bullets de ações.
+- "Engine Estratégico": 3 cards (Curto Prazo red, Médio Prazo amber, Longo Prazo cyan).
+- "Potencial de Receita" + "Diferencial Genuíno" em grid 2-col.
+- "Principal Gargalo (AI)" no bloco de Diagnóstico Consolidado.
+
+### `plano-acao/page.tsx` + `print/page.tsx`
+- Adicionadas entradas para `potencial` e `eficiencia` no record `actionByScore`.
+- Sem elas, `actionByScore[score.key]` seria `undefined` para os 2 novos scores → runtime error.
+
+### Paths tocados (Sprint 5)
+- `app/offer-book/_lib/ai-types.ts` (expandido: AiStrategic, AiRecomendacao)
+- `app/offer-book/_lib/scores.ts` (2 novos scores, ScoreKey expandido)
+- `app/offer-book/_lib/supabase.ts` (bug crítico: server-side null fix)
+- `app/api/offer-book/generate/route.ts` (bugs corrigidos + strategic section)
+- `app/offer-book/resumo/page.tsx` (6-score grid + StrategicBlock UI)
+- `app/offer-book/plano-acao/page.tsx` (2 entradas novas no actionByScore)
+- `app/print/page.tsx` (idem)
+
+---
+
 ## 2026-06-05 · Sprint 4 (v2) — AI Audit Engine unificado (resumo + plano-acao + roadmap)
 
 ### Implementado

@@ -4,6 +4,63 @@ Decisões técnicas do módulo `/crm`. Newest on top. Cross-cutting em [`o6.md`]
 
 ---
 
+## 2026-06-05 · Sprint 6 — Follow-up Engine + Message Templates + Commercial Dashboard
+
+### Migration `008_crm_followup` (aplicada)
+Altera `crm_leads`, adiciona 2 novas tabelas:
+- **`crm_leads` novos campos**: `responsavel TEXT DEFAULT ''`, `proxima_acao TEXT DEFAULT ''`, `data_proxima_acao TIMESTAMPTZ`, `notas TEXT DEFAULT ''`, `status_pagamento TEXT CHECK (pendente|cobrado|pago|cancelado) DEFAULT 'pendente'`
+- **`crm_stage_history`**: `id UUID PK`, `lead_id FK→crm_leads ON DELETE CASCADE`, `stage_from TEXT`, `stage_to TEXT`, `changed_at TIMESTAMPTZ`. Índices em `lead_id` e `changed_at DESC`. RLS anon all.
+- **`crm_message_templates`**: `id UUID PK`, `stage TEXT`, `tipo TEXT CHECK (whatsapp|email)`, `titulo TEXT`, `conteudo TEXT`, `is_default BOOLEAN`. Índice em `(stage, tipo)`. RLS anon all.
+
+### Follow-up Engine
+- Overdue detection: `isOverdue(lead)` → `dataProximaAcao` < now E stage não é Fechado/Perdido.
+- Overdue badge: pulsing red dot no lead card. Contador de overdue por coluna (badge vermelho no header da coluna).
+- Drawer tab "Follow-up": responsavel, proxima_acao, data_proxima_acao (datetime-local), notas, status_pagamento.
+
+### Stage History
+- `createLead` → INSERT em `crm_stage_history` com `stage_from=''`, `stage_to=lead.stage`.
+- `updateLead(id, patch, prevStage?)` → se stage mudou, INSERT em history.
+- `moveLead(id, toStage, ..., fromStage?)` → se stage mudou, INSERT em history.
+- Drawer tab "Histórico" mostra timeline ordenada por `changed_at ASC`.
+- `listStageHistory(leadId)` em `_lib/api.ts`.
+
+### Message Templates
+- Default templates hardcoded em TypeScript (`DEFAULT_TEMPLATES` em `crm/page.tsx`) — 7 stages × 2 tipos = 14 templates. Zero dependência de DB no estado zero.
+- DB overrides via `crm_message_templates`: se existe registro para `(stage, tipo)`, sobrescreve o default.
+- `TemplateCard` component: exibe resolvido (substitui `{nome}` / `{empresa}`), modo edição inline, botão "Copiar" com feedback "Copiado!".
+- `upsertMessageTemplate()` — INSERT ou UPDATE by `id`.
+- Tab "Templates" no drawer carrega templates do DB ao abrir.
+
+### Commercial Dashboard (view toggle Kanban ↔ Dashboard)
+- Toggle com ícones `ClipboardList` e `LayoutDashboard`.
+- **4 KPIs**: Receita Realizada, Pipeline Potencial, Novos (7 dias), Follow-ups Vencidos.
+- **Funil de conversão**: barra horizontal para cada stage, width proporcional ao máximo.
+- **Taxas de conversão por etapa**: grid 6 cards (stages adjacentes), cor por tier (≥50% verde, ≥25% âmbar, <25% vermelho).
+- **Receita potencial por etapa**: tabela `(stage, count, total valor)` — só linhas não-zeradas.
+- Tudo computed via `useMemo` client-side — nenhuma query extra.
+
+### Tabs no Drawer (edit mode only)
+4 tabs: **Dados** (form original) · **Follow-up** (campos novos) · **Templates** (WhatsApp + email) · **Histórico** (timeline).
+- Cada tab tem seu próprio `<form onSubmit>` chamando o mesmo `handleSubmit`.
+- Lazy-load: histórico e templates só buscam do DB quando o tab é aberto.
+
+### Funnel Glue — Lead Fechado → Cliente
+- Quando `stage === "Fechado"` e sem `clienteId`, CTA "Converter para Cliente" aparece na aba Dados.
+- `convertToCliente(lead)` em `_lib/api.ts`: cria `clientes` + `diagnosticos` + `offer_books` rows, UPDATE `crm_leads.cliente_id`. Retorna `clienteId`.
+- Redireciona para `/offer-book/clientes` com `localStorage["o6.offer-book.current"]` pré-setado.
+
+### TypeScript fix no useEffect do Drawer
+- Depois que `key={drawerKey}` foi implementado (monta componente fresh a cada abertura), o useEffect que sincronizava `input` com `drawer.input` ficou redundante.
+- TypeScript TS5 strict narrow: `else` branch após `if (drawerMode === "closed")` → `drawer.mode` não pode ser `"closed"`, então `drawer.mode === "closed"` nesse branch é type error.
+- Solução: simplificar o effect para só tratar o close case; useState initializer cuida da inicialização na montagem.
+
+### Trade-offs
+- Templates só suportam 2 variáveis (`{nome}`, `{empresa}`) agora. Extensível adicionando substitutions no `resolved` sem migração.
+- Score sync CRM ↔ Offer Book (G4) não implementado neste sprint — considerado Sprint 7. Infraestrutura está pronta (campo `clienteId` + `computeScores` importável).
+- `status_pagamento` visível no drawer mas sem KPI dedicado na view Kanban. KPI "Receita Realizada" usa stage=Fechado como proxy.
+
+---
+
 ## 2026-06-03 · v1.0 inicial (Kanban + DnD + KPIs)
 
 ### 7 etapas canônicas

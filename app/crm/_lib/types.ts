@@ -10,6 +10,8 @@ export const STAGES = [
 
 export type Stage = (typeof STAGES)[number];
 
+export type StatusPagamento = "pendente" | "cobrado" | "pago" | "cancelado";
+
 export type Lead = {
   id: string;
   clienteId: string | null;
@@ -24,6 +26,12 @@ export type Lead = {
   valor: number;
   sortOrder: number;
   data: string;
+  // Follow-up fields (Sprint 6)
+  responsavel: string;
+  proximaAcao: string;
+  dataProximaAcao: string | null;
+  notas: string;
+  statusPagamento: StatusPagamento;
   createdAt: string;
   updatedAt: string;
 };
@@ -47,6 +55,11 @@ export const emptyLeadInput = (stage: Stage = "Novo Lead"): LeadInput => ({
   stage,
   valor: 0,
   data: new Date().toISOString(),
+  responsavel: "",
+  proximaAcao: "",
+  dataProximaAcao: null,
+  notas: "",
+  statusPagamento: "pendente",
 });
 
 export function rowToLead(r: Record<string, unknown>): Lead {
@@ -64,6 +77,11 @@ export function rowToLead(r: Record<string, unknown>): Lead {
     valor: Number(r.valor ?? 0),
     sortOrder: Number(r.sort_order ?? 0),
     data: (r.data as string) ?? "",
+    responsavel: (r.responsavel as string) ?? "",
+    proximaAcao: (r.proxima_acao as string) ?? "",
+    dataProximaAcao: (r.data_proxima_acao as string | null) ?? null,
+    notas: (r.notas as string) ?? "",
+    statusPagamento: ((r.status_pagamento as StatusPagamento) ?? "pendente"),
     createdAt: (r.created_at as string) ?? "",
     updatedAt: (r.updated_at as string) ?? "",
   };
@@ -83,5 +101,39 @@ export function leadToRow(l: Partial<LeadInput> & { sortOrder?: number }) {
   if (l.valor !== undefined) row.valor = l.valor;
   if (l.sortOrder !== undefined) row.sort_order = l.sortOrder;
   if (l.data !== undefined) row.data = l.data;
+  if (l.responsavel !== undefined) row.responsavel = l.responsavel;
+  if (l.proximaAcao !== undefined) row.proxima_acao = l.proximaAcao;
+  if (l.dataProximaAcao !== undefined)
+    row.data_proxima_acao = l.dataProximaAcao;
+  if (l.notas !== undefined) row.notas = l.notas;
+  if (l.statusPagamento !== undefined)
+    row.status_pagamento = l.statusPagamento;
   return row;
 }
+
+export type StageHistoryEntry = {
+  id: string;
+  leadId: string;
+  stageFrom: string;
+  stageTo: string;
+  changedAt: string;
+};
+
+export function rowToStageHistory(r: Record<string, unknown>): StageHistoryEntry {
+  return {
+    id: r.id as string,
+    leadId: r.lead_id as string,
+    stageFrom: (r.stage_from as string) ?? "",
+    stageTo: (r.stage_to as string) ?? "",
+    changedAt: (r.changed_at as string) ?? "",
+  };
+}
+
+export type MessageTemplate = {
+  id: string;
+  stage: string;
+  tipo: "whatsapp" | "email";
+  titulo: string;
+  conteudo: string;
+  isDefault: boolean;
+};

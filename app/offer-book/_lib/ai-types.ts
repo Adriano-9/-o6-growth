@@ -22,10 +22,38 @@ export type AiFase = {
   itens: string[];
 };
 
+export type AiRecomendacao = {
+  acao: string;
+  impacto: string;
+  responsavel: string;
+};
+
+export type AiStrategic = {
+  curtoPrazo: {
+    horizonte: "0-30 dias";
+    objetivo: string;
+    acoes: AiRecomendacao[];
+  };
+  medioPrazo: {
+    horizonte: "30-90 dias";
+    objetivo: string;
+    acoes: AiRecomendacao[];
+  };
+  longoPrazo: {
+    horizonte: "90-180 dias";
+    objetivo: string;
+    acoes: AiRecomendacao[];
+  };
+  potencialReceita: string;
+  principalGargalo: string;
+  diferencial: string;
+};
+
 export type AiOutput = {
   sintese: AiSintese;
   planoAcao: { prioridades: AiPrioridade[] };
   roadmap: { fases: AiFase[] };
+  strategic: AiStrategic;
 };
 
 export type AiGenerateResponse = AiOutput & {

@@ -12,7 +12,6 @@ function fillRatio(values: string[]): number {
 
 /**
  * Score de velocidade — deriva do tempo médio de resposta ao lead.
- * Parsing simples por palavra-chave; sem IA.
  */
 export function velocidadeScore(state: OfferBookState): number {
   const raw = state.diagnostico.tempoResposta.trim().toLowerCase();
@@ -48,7 +47,7 @@ export function velocidadeScore(state: OfferBookState): number {
 }
 
 /**
- * Score de oferta — completude dos 7 campos de oferta + densidade textual.
+ * Score de oferta — completude dos 7 campos + densidade textual.
  */
 export function ofertaScore(state: OfferBookState): number {
   const o = state.oferta;
@@ -112,11 +111,72 @@ export function conversaoScore(state: OfferBookState): number {
   return clamp(fieldsFilled * 0.75 + conversionBonus);
 }
 
+/**
+ * Score de potencial de crescimento — cruza ticket, volume de leads e
+ * maturidade do ICP (quanto mais definido, maior o potencial de escalar).
+ */
+export function potencialScore(state: OfferBookState): number {
+  const { cliente, icp, psicografia, diagnostico } = state;
+
+  // Ticket médio normalizado (R$500 = 10pts, R$5000+ = 50pts)
+  const ticketRaw = parseFloat(
+    (diagnostico.ticketMedio || cliente.ticketMedio).replace(/\D/g, "") || "0",
+  );
+  let ticketPts = 0;
+  if (ticketRaw >= 5000) ticketPts = 50;
+  else if (ticketRaw >= 2000) ticketPts = 35;
+  else if (ticketRaw >= 1000) ticketPts = 20;
+  else if (ticketRaw >= 500) ticketPts = 10;
+
+  // ICP bem definido (problema, objetivo, perfil) = mercado mensurável
+  const icpFields = [
+    icp.profissao,
+    icp.problemaPrincipal,
+    icp.objetivoPrincipal,
+    psicografia.desejos,
+    psicografia.objecoes,
+  ];
+  const icpPts = fillRatio(icpFields) * 0.3;
+
+  // Volume de leads declarado
+  const leads = parseInt(diagnostico.leadsMes.replace(/\D/g, "") || "0", 10);
+  let leadsPts = 0;
+  if (leads >= 100) leadsPts = 20;
+  else if (leads >= 50) leadsPts = 15;
+  else if (leads >= 20) leadsPts = 10;
+  else if (leads > 0) leadsPts = 5;
+
+  return clamp(ticketPts + icpPts + leadsPts);
+}
+
+/**
+ * Score de eficiência comercial — cruza prova social, garantia e diferencial
+ * com concorrentes mapeados. Empresa que conhece seus concorrentes e tem
+ * prova sólida converte mais eficientemente.
+ */
+export function eficienciaScore(state: OfferBookState): number {
+  const { oferta, concorrentes, psicografia } = state;
+
+  // Prova + garantia robustas
+  const ofertaPts = fillRatio([oferta.prova, oferta.garantia, oferta.diferencial]) * 0.4;
+
+  // Concorrentes mapeados (mais mapeados = mais inteligência de mercado)
+  const concorrPts = Math.min(30, concorrentes.length * 10);
+
+  // Objeções e medos mapeados (quanto mais conhece o ICP, mais eficiente)
+  const psicoFields = [psicografia.objecoes, psicografia.medos, psicografia.frustracoes];
+  const psicoPts = fillRatio(psicoFields) * 0.3;
+
+  return clamp(ofertaPts + concorrPts + psicoPts);
+}
+
 export type ScoreKey =
   | "velocidade"
   | "oferta"
   | "aquisicao"
-  | "conversao";
+  | "conversao"
+  | "potencial"
+  | "eficiencia";
 
 export type ScoreDef = {
   key: ScoreKey;
@@ -150,6 +210,18 @@ export function computeScores(state: OfferBookState): ScoreDef[] {
       label: "Conversão",
       description: "Conversão atual cruzada com transformação prometida.",
       value: conversaoScore(state),
+    },
+    {
+      key: "potencial",
+      label: "Potencial",
+      description: "Potencial de crescimento: ticket × volume × ICP definido.",
+      value: potencialScore(state),
+    },
+    {
+      key: "eficiencia",
+      label: "Eficiência",
+      description: "Prova social, garantia e inteligência competitiva.",
+      value: eficienciaScore(state),
     },
   ];
 }

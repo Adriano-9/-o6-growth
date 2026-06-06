@@ -61,6 +61,16 @@ const actionByScore: Record<
     body:
       "Cruzar conversão por canal com transformação prometida, redesenhar pitch e quebrar objeções no script.",
   },
+  potencial: {
+    title: "Ampliar potencial de crescimento.",
+    body:
+      "Definir ICP com precisão, mapear volume de leads e ajustar ticket médio para maximizar o teto de escala.",
+  },
+  eficiencia: {
+    title: "Aumentar eficiência comercial.",
+    body:
+      "Adicionar prova social, garantia robusta e mapear concorrentes para converter mais com o mesmo volume de leads.",
+  },
 };
 
 const phases = [

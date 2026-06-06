@@ -2,9 +2,12 @@ import { getSupabase } from "@/app/offer-book/_lib/supabase";
 import {
   Lead,
   LeadInput,
+  MessageTemplate,
   Stage,
+  StageHistoryEntry,
   leadToRow,
   rowToLead,
+  rowToStageHistory,
 } from "./types";
 
 export type ClienteOption = {
@@ -31,7 +34,6 @@ export async function createLead(input: LeadInput): Promise<Lead | null> {
   const sb = getSupabase();
   if (!sb) return null;
 
-  // place at the end of the target column
   const { data: maxRows } = await sb
     .from("crm_leads")
     .select("sort_order")
@@ -52,12 +54,23 @@ export async function createLead(input: LeadInput): Promise<Lead | null> {
     console.error("[crm] createLead failed", error);
     return null;
   }
-  return rowToLead(data as Record<string, unknown>);
+
+  const lead = rowToLead(data as Record<string, unknown>);
+
+  // Log initial stage
+  await sb.from("crm_stage_history").insert({
+    lead_id: lead.id,
+    stage_from: "",
+    stage_to: lead.stage,
+  });
+
+  return lead;
 }
 
 export async function updateLead(
   id: string,
   patch: Partial<LeadInput> & { sortOrder?: number },
+  prevStage?: Stage,
 ): Promise<void> {
   const sb = getSupabase();
   if (!sb) return;
@@ -65,7 +78,19 @@ export async function updateLead(
     .from("crm_leads")
     .update(leadToRow(patch))
     .eq("id", id);
-  if (error) console.error("[crm] updateLead failed", error);
+  if (error) {
+    console.error("[crm] updateLead failed", error);
+    return;
+  }
+
+  // Log stage change if it changed
+  if (prevStage && patch.stage && prevStage !== patch.stage) {
+    await sb.from("crm_stage_history").insert({
+      lead_id: id,
+      stage_from: prevStage,
+      stage_to: patch.stage,
+    });
+  }
 }
 
 export async function deleteLead(id: string): Promise<void> {
@@ -80,11 +105,11 @@ export async function moveLead(
   toStage: Stage,
   toIndex: number,
   allLeads: Lead[],
+  fromStage?: Stage,
 ): Promise<void> {
   const sb = getSupabase();
   if (!sb) return;
 
-  // Recompute sort order for the destination column after insertion
   const destOthers = allLeads
     .filter((l) => l.stage === toStage && l.id !== id)
     .sort((a, b) => a.sortOrder - b.sortOrder);
@@ -94,15 +119,12 @@ export async function moveLead(
     stage: toStage,
   });
 
-  // Renumber 0..n-1
   const updates = destOthers.map((l, idx) => ({
     id: l.id,
     sort_order: idx,
     stage: toStage,
   }));
 
-  // Batch updates: Supabase JS doesn't expose multi-update via PK list cleanly,
-  // so we issue parallel updates. Fine for typical kanban sizes.
   await Promise.all(
     updates.map((u) =>
       sb
@@ -111,6 +133,29 @@ export async function moveLead(
         .eq("id", u.id),
     ),
   );
+
+  // Log stage change
+  if (fromStage && fromStage !== toStage) {
+    await sb.from("crm_stage_history").insert({
+      lead_id: id,
+      stage_from: fromStage,
+      stage_to: toStage,
+    });
+  }
+}
+
+export async function listStageHistory(
+  leadId: string,
+): Promise<StageHistoryEntry[]> {
+  const sb = getSupabase();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from("crm_stage_history")
+    .select("*")
+    .eq("lead_id", leadId)
+    .order("changed_at", { ascending: true });
+  if (error || !data) return [];
+  return (data as Record<string, unknown>[]).map(rowToStageHistory);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -121,10 +166,8 @@ export async function convertToCliente(lead: Lead): Promise<string | null> {
   const sb = getSupabase();
   if (!sb) return null;
 
-  // Se já tem cliente vinculado, só retorna o id existente
   if (lead.clienteId) return lead.clienteId;
 
-  // INSERT em clientes
   const { data: inserted, error: insertErr } = await sb
     .from("clientes")
     .insert({
@@ -144,7 +187,6 @@ export async function convertToCliente(lead: Lead): Promise<string | null> {
 
   const clienteId = inserted.id as string;
 
-  // Criar rows vazias em diagnosticos e offer_books (espelha createCliente do store)
   await Promise.all([
     sb.from("diagnosticos").insert({ cliente_id: clienteId }),
     sb.from("offer_books").insert({
@@ -156,7 +198,6 @@ export async function convertToCliente(lead: Lead): Promise<string | null> {
     }),
   ]);
 
-  // UPDATE lead.cliente_id
   await sb
     .from("crm_leads")
     .update({ cliente_id: clienteId })
@@ -177,4 +218,54 @@ export async function listClienteOptions(): Promise<ClienteOption[]> {
     id: r.id,
     empresa: r.empresa || "Sem nome",
   }));
+}
+
+// ─────────────────────────────────────────────────────────────
+// Message templates
+// ─────────────────────────────────────────────────────────────
+
+export async function listMessageTemplates(
+  stage: string,
+): Promise<MessageTemplate[]> {
+  const sb = getSupabase();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from("crm_message_templates")
+    .select("*")
+    .eq("stage", stage)
+    .order("tipo", { ascending: true });
+  if (error || !data) return [];
+  return (data as Record<string, unknown>[]).map((r) => ({
+    id: r.id as string,
+    stage: r.stage as string,
+    tipo: r.tipo as "whatsapp" | "email",
+    titulo: (r.titulo as string) ?? "",
+    conteudo: (r.conteudo as string) ?? "",
+    isDefault: Boolean(r.is_default),
+  }));
+}
+
+export async function upsertMessageTemplate(
+  t: Omit<MessageTemplate, "id"> & { id?: string },
+): Promise<void> {
+  const sb = getSupabase();
+  if (!sb) return;
+  const row = {
+    stage: t.stage,
+    tipo: t.tipo,
+    titulo: t.titulo,
+    conteudo: t.conteudo,
+    is_default: t.isDefault,
+  };
+  if (t.id) {
+    await sb.from("crm_message_templates").update(row).eq("id", t.id);
+  } else {
+    await sb.from("crm_message_templates").insert(row);
+  }
+}
+
+export async function deleteMessageTemplate(id: string): Promise<void> {
+  const sb = getSupabase();
+  if (!sb) return;
+  await sb.from("crm_message_templates").delete().eq("id", id);
 }

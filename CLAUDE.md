@@ -205,6 +205,21 @@ Plan → Magic MCP → Build → Review → Update CLAUDE.md
 
 ## Lições aprendidas (append-only)
 
+### 2026-06-05 · Sprint 6 — CRM Commercial Automation
+- **Contexto**: CRM tinha Kanban funcional mas sem mecanismo de follow-up, sem histórico de progresso e sem dashboard de conversão.
+- **Padrão de templates com fallback hardcoded**: `DEFAULT_TEMPLATES` em `page.tsx` garante que templates funcionam no estado zero sem dados em DB. `crm_message_templates` overrides o default quando o usuário customiza. Zero config inicial.
+- **Commercial Dashboard**: toggle no header, não rota separada. Kanban e dashboard compartilham o mesmo state de leads. Sem fetch extra.
+- **Stage History log automático**: `createLead`, `updateLead` e `moveLead` inserem em `crm_stage_history` sem o caller precisar lembrar. Transparente.
+- **Anti-padrão evitado**: TypeScript strict + Next.js 16 não aceitam `drawer.mode === "closed"` dentro de `else` de `if (drawerMode === "closed")` — o tipo já foi narrowed. Simplificar o `useEffect` para tratar só o close case; o `key={drawerKey}` no parent já força remount nos outros casos.
+- **Fix `@ts-expect-error`**: SDK Anthropic aceita `cache_control` nativamente; o directive ficou stale e quebrava build com TypeScript strict. Sempre verificar se `@ts-expect-error` ainda é necessário após atualização de SDK.
+
+### 2026-06-05 · Sprint 5 — Strategic Engine (6 Scores + Horizontes AI)
+- **Contexto**: 4 scores eram suficientes para diagnóstico mas não capturavam potencial de crescimento e eficiência comercial.
+- **Decisão**: 2 novos scores (`potencial`, `eficiencia`) + seção `strategic` na AI com 3 horizontes (0-30d, 30-90d, 90-180d). Mesma chamada Claude, campos extras no JSON.
+- **Regra de prompt crítica**: "Use SEMPRE os dados reais declarados" — sem essa instrução, Claude gerava copy genérico de SaaS. O prompt deve citar `{clienteNome}`, `{conversao}%`, `{leadsMes}` leads/mês explicitamente.
+- **Backward-compat**: `validateAiOutputLenient()` preenche `strategic: {}` em outputs cacheados antigos que não têm a seção. Nunca forçar regeneração por schema drift.
+- **Anti-padrão**: Adicionar score novo sem adicionar entrada em `actionByScore` → `undefined` lookup → runtime error silencioso. Sempre adicionar nos dois lugares simultaneamente (`plano-acao/page.tsx` E `print/page.tsx`).
+
 ### 2026-06-05 · Sprint 4 — AI Audit Engine unificado
 - **Contexto**: Resumo, plano-acao e roadmap tinham templates hardcoded sem dados do cliente. Roadmap era 100% estático igual para todos.
 - **Decisão**: Rota unificada `POST /api/offer-book/generate` (claude-opus-4-8, adaptive thinking) gera as 3 seções em uma chamada ~$0.03. Persiste em `offer_books.ai_output` JSONB (migration 007).
