@@ -9,6 +9,29 @@ export const PROSPECT_STATUS = [
 
 export type ProspectStatus = (typeof PROSPECT_STATUS)[number];
 
+// AuditResult duplicado aqui só pra evitar import circular (Drawer está em _components).
+// Mantém compat com app/oportunidades/_lib/audit-types.ts.
+export type ProspectAuditJson = {
+  prospectId?: string;
+  auditUrl?: string;
+  seoScore: number;
+  performanceScore: number;
+  uxScore: number;
+  trustScore: number;
+  conversionScore: number;
+  mobileScore: number;
+  contentScore: number;
+  overallScore: number;
+  psiDesktopScore?: number;
+  psiMobileScore?: number;
+  recommendations: Array<{
+    priority: "P1" | "P2" | "P3";
+    title: string;
+    description: string;
+    impact_brl?: number;
+  }>;
+};
+
 export type Prospect = {
   id: string;
   nome: string;
@@ -25,9 +48,24 @@ export type Prospect = {
   status: ProspectStatus;
   createdAt: string;
   updatedAt: string;
+  // Pipeline columns (migration 008) — opcionais; nullables quando não auditado
+  auditScore: number | null;
+  auditJson: ProspectAuditJson | null;
+  aberturaWhatsapp: string | null;
+  abordagemGeradaEm: string | null;
 };
 
-export type ProspectInput = Omit<Prospect, "id" | "createdAt" | "updatedAt">;
+// Campos puramente server-managed (audit, AI, timestamps) NÃO fazem parte do input.
+export type ProspectInput = Omit<
+  Prospect,
+  | "id"
+  | "createdAt"
+  | "updatedAt"
+  | "auditScore"
+  | "auditJson"
+  | "aberturaWhatsapp"
+  | "abordagemGeradaEm"
+>;
 
 export const emptyProspectInput = (): ProspectInput => ({
   nome: "",
@@ -63,6 +101,10 @@ export function rowToProspect(r: Record<string, unknown>): Prospect {
     status: (r.status as ProspectStatus) ?? "Novo",
     createdAt: (r.created_at as string) ?? "",
     updatedAt: (r.updated_at as string) ?? "",
+    auditScore: r.audit_score != null ? Number(r.audit_score) : null,
+    auditJson: (r.audit_json as ProspectAuditJson | null) ?? null,
+    aberturaWhatsapp: (r.abertura_whatsapp as string | null) ?? null,
+    abordagemGeradaEm: (r.abordagem_gerada_em as string | null) ?? null,
   };
 }
 

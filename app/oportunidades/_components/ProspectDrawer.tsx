@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Beaker, CalendarPlus, KanbanSquare, Loader2, Trash2, X } from "lucide-react";
+import { ArrowRight, Beaker, CalendarPlus, Check, Copy, KanbanSquare, Loader2, MessageCircle, Sparkles, Trash2, X } from "lucide-react";
 import {
   emptyProspectInput,
   PROSPECT_STATUS,
@@ -68,6 +68,56 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
   const [auditing, setAuditing] = useState(false);
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [auditError, setAuditError] = useState<string | null>(null);
+
+  const [generating, setGenerating] = useState(false);
+  const [abordagem, setAbordagem] = useState<string | null>(null);
+  const [abordagemError, setAbordagemError] = useState<string | null>(null);
+  const [abordagemScore, setAbordagemScore] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function handleGerarAbordagem(force = false) {
+    if (!initial) return;
+    setGenerating(true);
+    setAbordagemError(null);
+    try {
+      const res = await fetch("/api/prospects/pipeline", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prospect_id: initial.id, force }),
+      });
+
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error || `Erro ${res.status}`);
+      }
+
+      const data = (await res.json()) as {
+        abertura: string;
+        auditScore: number;
+        audit: AuditResult;
+        cached: boolean;
+      };
+      setAbordagem(data.abertura);
+      setAbordagemScore(data.auditScore);
+      setAuditResult(data.audit);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao gerar abordagem";
+      setAbordagemError(msg);
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function handleCopy() {
+    if (!abordagem) return;
+    try {
+      await navigator.clipboard.writeText(abordagem);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard pode falhar em contexto sem HTTPS — ignora */
+    }
+  }
 
   async function handleAudit() {
     if (!initial?.site) return;
@@ -154,6 +204,20 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
           }
         : emptyProspectInput(),
     );
+    // Hidrata cached abordagem/audit, se houver
+    setAbordagem(initial?.aberturaWhatsapp ?? null);
+    setAbordagemScore(initial?.auditScore ?? null);
+    setAuditResult(
+      initial?.auditJson
+        ? ({
+            ...initial.auditJson,
+            prospectId: initial.auditJson.prospectId ?? initial.id,
+            auditUrl: initial.auditJson.auditUrl ?? initial.site,
+          } as AuditResult)
+        : null,
+    );
+    setAbordagemError(null);
+    setAuditError(null);
   }, [initial?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const patch = (p: Partial<ProspectInput>) =>
@@ -352,21 +416,108 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
                 </div>
               </div>
 
-              {/* Audit button */}
+              {/* Audit + Gerar Abordagem buttons */}
               {initial.site && (
-                <button
-                  type="button"
-                  onClick={handleAudit}
-                  disabled={auditing}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-purple-500/40 bg-purple-500/10 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-purple-300 transition hover:bg-purple-500/20 disabled:opacity-40"
-                >
-                  {auditing ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Beaker className="h-3.5 w-3.5" />
-                  )}
-                  {auditing ? "Auditando..." : "Auditar Site"}
-                </button>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={handleAudit}
+                    disabled={auditing || generating}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-purple-500/40 bg-purple-500/10 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-purple-300 transition hover:bg-purple-500/20 disabled:opacity-40"
+                  >
+                    {auditing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Beaker className="h-3.5 w-3.5" />
+                    )}
+                    {auditing ? "Auditando..." : "Auditar Site"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleGerarAbordagem(!!abordagem)}
+                    disabled={generating || auditing}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-40"
+                  >
+                    {generating ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5" />
+                    )}
+                    {generating
+                      ? "Gerando..."
+                      : abordagem
+                        ? "Regerar Abordagem"
+                        : "Gerar Abordagem"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Abordagem WhatsApp gerada por Claude */}
+          {mode !== "create" && initial && (abordagem || generating || abordagemError) && (
+            <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/[0.04] p-4">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="grid h-7 w-7 place-items-center rounded-md border border-emerald-400/30 bg-emerald-400/10 text-emerald-300">
+                    <MessageCircle className="h-3.5 w-3.5" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-200">
+                      Abordagem WhatsApp
+                    </div>
+                    {abordagemScore != null && !generating && (
+                      <div className="mt-0.5 text-[10px] text-zinc-500">
+                        Audit score:{" "}
+                        <span
+                          className={
+                            abordagemScore >= 70
+                              ? "font-bold text-emerald-300"
+                              : abordagemScore >= 40
+                                ? "font-bold text-amber-300"
+                                : "font-bold text-red-300"
+                          }
+                        >
+                          {abordagemScore}/100
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {abordagem && !generating && (
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-200 transition hover:bg-white/[0.08]"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-3 w-3 text-emerald-300" />
+                        Copiado
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3" />
+                        Copiar
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+              {generating ? (
+                <div className="space-y-2 py-1">
+                  <div className="h-3 w-full animate-pulse rounded bg-white/[0.06]" />
+                  <div className="h-3 w-11/12 animate-pulse rounded bg-white/[0.06]" />
+                  <div className="h-3 w-10/12 animate-pulse rounded bg-white/[0.06]" />
+                </div>
+              ) : abordagemError ? (
+                <p className="rounded-md border border-red-500/20 bg-red-500/[0.06] p-2 text-xs text-red-200">
+                  {abordagemError}
+                </p>
+              ) : (
+                <p className="whitespace-pre-wrap rounded-md border border-white/[0.06] bg-zinc-950/40 p-3 text-sm leading-relaxed text-zinc-100">
+                  {abordagem}
+                </p>
               )}
             </div>
           )}

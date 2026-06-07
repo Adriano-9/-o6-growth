@@ -10,11 +10,18 @@ const BRL = new Intl.NumberFormat("pt-BR", {
   maximumFractionDigits: 0,
 });
 
+const LEADS_MAX = 10_000;
+const TICKET_MAX = 100_000;
+
+// Extracts only the first number in the string — avoids absurd values when
+// fields contain descriptive text like "30–80 leads/mês em campanhas ativas…"
+// which the old strip-all-non-digits approach turned into trillions.
 function parseNumber(input: string): number {
   if (!input) return 0;
-  const cleaned = input
-    .replace(/[^\d,.-]/g, "")
-    .replace(/\.(?=\d{3}(\D|$))/g, "")
+  const m = input.match(/\d[\d.,]*/);
+  if (!m) return 0;
+  const cleaned = m[0]
+    .replace(/\.(?=\d{3}(?:[^\d]|$))/g, "")
     .replace(",", ".");
   const n = parseFloat(cleaned);
   return Number.isFinite(n) && n > 0 ? n : 0;
@@ -22,10 +29,19 @@ function parseNumber(input: string): number {
 
 function parsePercent(input: string): number {
   if (!input) return 0;
-  const cleaned = input.replace(/[^\d,.-]/g, "").replace(",", ".");
+  const m = input.match(/\d[\d.,]*/);
+  if (!m) return 0;
+  const cleaned = m[0].replace(",", ".");
   const n = parseFloat(cleaned);
   if (!Number.isFinite(n) || n <= 0) return 0;
   return n > 1 ? n / 100 : n;
+}
+
+// Returns the parsed number as a clean string when the raw value is long
+// descriptive text, so the input field doesn't display a wall of text.
+function toDisplayVal(raw: string, parsed: number): string {
+  if (/^\d[\d.,]*%?$/.test(raw.trim())) return raw;
+  return parsed > 0 ? String(parsed) : "";
 }
 
 /**
@@ -120,15 +136,27 @@ export default function ROIPage() {
   const ticket = d.ticketMedio || state.cliente.ticketMedio;
   const conversao = d.conversaoAtual;
 
-  const setLeads = (v: string) => setDiagnostico({ ...d, leadsMes: v });
-  const setTicket = (v: string) => setDiagnostico({ ...d, ticketMedio: v });
+  // Sanitize on write: store only the numeric part typed by the user.
+  const setLeads = (v: string) => setDiagnostico({ ...d, leadsMes: v.replace(/[^\d.,]/g, "") });
+  const setTicket = (v: string) => setDiagnostico({ ...d, ticketMedio: v.replace(/[^\d.,]/g, "") });
   const setConversao = (v: string) =>
-    setDiagnostico({ ...d, conversaoAtual: v });
+    setDiagnostico({ ...d, conversaoAtual: v.replace(/[^\d.,%]/g, "") });
 
-  const leadsN = parseNumber(leads);
-  const ticketN = parseNumber(ticket);
-  const convN = parsePercent(conversao);
-  const targetN = targetConversion(convN);
+  const leadsRaw  = parseNumber(leads);
+  const ticketRaw = parseNumber(ticket);
+  const convN     = parsePercent(conversao);
+  const targetN   = targetConversion(convN);
+
+  // Threshold guards — if parsed value exceeds reasonable bounds it came
+  // from descriptive text, not a real number; treat as missing.
+  const leadsN  = leadsRaw  > 0 && leadsRaw  <= LEADS_MAX  ? leadsRaw  : 0;
+  const ticketN = ticketRaw > 0 && ticketRaw <= TICKET_MAX ? ticketRaw : 0;
+  const valid   = leadsN > 0 && ticketN > 0 && convN > 0;
+
+  // Clean display values for the input fields (avoids showing a wall of text).
+  const leadsDisplay   = toDisplayVal(leads, leadsRaw);
+  const ticketDisplay  = toDisplayVal(ticket, ticketRaw);
+  const convDisplay    = toDisplayVal(conversao, convN * 100);
 
   const receitaAtual = useMemo(
     () => leadsN * convN * ticketN,
@@ -176,20 +204,20 @@ export default function ROIPage() {
         <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
           <NumField
             label="Leads por mês"
-            value={leads}
+            value={leadsDisplay}
             onChange={setLeads}
             placeholder="Ex.: 200"
           />
           <NumField
             label="Ticket médio"
-            value={ticket}
+            value={ticketDisplay}
             onChange={setTicket}
             placeholder="Ex.: 2500"
             hint="Em R$ — sem moeda."
           />
           <NumField
             label="Conversão atual"
-            value={conversao}
+            value={convDisplay}
             onChange={setConversao}
             placeholder="Ex.: 12%"
             hint={
@@ -204,33 +232,33 @@ export default function ROIPage() {
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         <MetricCard
           label="Receita Atual"
-          value={BRL.format(receitaAtual)}
+          value={valid ? BRL.format(receitaAtual) : "—"}
           tone="neutral"
           icon={<Wallet className="h-4 w-4" />}
           hint={
-            leadsN && convN && ticketN
+            valid
               ? `${leadsN} leads × ${(convN * 100).toFixed(1)}% × ${BRL.format(ticketN)}`
               : "Preencha os três campos acima."
           }
         />
         <MetricCard
           label="Receita Potencial"
-          value={BRL.format(receitaPotencial)}
+          value={valid ? BRL.format(receitaPotencial) : "—"}
           tone="accent"
           icon={<TrendingUp className="h-4 w-4" />}
           hint={
-            leadsN && convN && ticketN
+            valid
               ? `${leadsN} leads × ${(targetN * 100).toFixed(0)}% × ${BRL.format(ticketN)}`
               : "—"
           }
         />
         <MetricCard
           label="Ganho Estimado"
-          value={BRL.format(ganho)}
+          value={valid ? BRL.format(ganho) : "—"}
           tone="good"
           icon={<ArrowUpRight className="h-4 w-4" />}
           hint={
-            ganho > 0
+            valid && ganho > 0
               ? `+${ganhoPct}% sobre a receita atual.`
               : "Sem ganho calculável com os dados atuais."
           }

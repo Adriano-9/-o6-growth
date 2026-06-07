@@ -168,6 +168,23 @@ Gere exatamente este JSON preenchendo todos os campos com analise especifica par
     "potencialReceita": "estimativa de receita potencial em 6 meses baseada em ${leadsStr} × ticket ${ticketStr} com a conversao alvo especifica",
     "principalGargalo": "nome do gargalo mais critico em 1 frase",
     "diferencial": "o que diferencia ${cliente.empresa || "a empresa"} de forma genuina dos ${concorrentes.length} concorrentes mapeados"
+  },
+  "insightsOcultos": {
+    "medosOcultos": ["4-5 medos que o ICP (${icp.profissao || "cliente ideal"}) NAO declara mas tem antes de comprar de ${cliente.empresa || "a empresa"} — vao alem dos medos listados em '${psicografia.medos || "nao declarado"}'. Pense em medo de julgamento social, medo de admitir vulnerabilidade, medo de ser enganado por um nicho que ele nao entende. Cada item em 1 frase, na primeira pessoa do ICP."],
+    "desejosOcultos": ["4-5 desejos que o ICP NAO admite publicamente mas sente — vao alem dos desejos declarados em '${psicografia.desejos || "nao declarado"}'. Pense em status, validacao, ser invejado, recuperar algo perdido, sentir-se especial. Cada item em 1 frase, na primeira pessoa."],
+    "objecoesEmocionais": ["4-5 objecoes emocionais (NAO racionais como 'caro' ou 'falta tempo') que travam a compra. Pense em medo de arrependimento, medo do julgamento de familiares, vergonha do problema, sensacao de que nao merece. Cada item em 1 frase."],
+    "crencasLimitantes": ["4-5 crencas limitantes que o ICP carrega sobre ${cliente.nicho || "este tipo de servico"} ou sobre si mesmo. Pense em 'isso nao funciona pra mim', 'ja tentei tudo', 'no meu caso e diferente', 'so resolve com cirurgia/processo dificil'. Cada item em 1 frase."],
+    "padroesLinguagem": ["4-5 expressoes ou termos que ESTE ICP especificamente usa quando descreve o problema. Use o tom real do ${icp.profissao || "cliente"} em ${cliente.cidade || "?"} — gírias regionais, jargao do nicho, eufemismos. Cada item em 1 frase entre aspas."],
+    "arquetiposDominantes": [
+      {"nome": "nome do arquetipo (ex: Buscador, Cuidador Cansado, Realizador Frustrado)", "descricao": "1-2 frases descrevendo este arquetipo no contexto do nicho ${cliente.nicho || "do cliente"} e como ele se manifesta no comportamento de compra"},
+      {"nome": "segundo arquetipo", "descricao": "1-2 frases"}
+    ],
+    "gatilhosCompra": [
+      {"gatilho": "nome do gatilho psicologico (ex: Prova social local, Escassez de horario, Autoridade do especialista)", "quando": "momento exato ou cenario em que este gatilho funciona melhor para o ICP de ${cliente.empresa || "a empresa"}"},
+      {"gatilho": "segundo gatilho", "quando": "contexto especifico"},
+      {"gatilho": "terceiro gatilho", "quando": "contexto"},
+      {"gatilho": "quarto gatilho", "quando": "contexto"}
+    ]
   }
 }`;
 }
@@ -207,6 +224,18 @@ function validateAiOutputLenient(raw: unknown): raw is AiOutput {
       potencialReceita: "",
       principalGargalo: "",
       diferencial: "",
+    };
+  }
+  // insightsOcultos é opcional — caches antigos não têm. Preenche com defaults vazios.
+  if (!o.insightsOcultos) {
+    (o as Record<string, unknown>).insightsOcultos = {
+      medosOcultos: [],
+      desejosOcultos: [],
+      objecoesEmocionais: [],
+      crencasLimitantes: [],
+      padroesLinguagem: [],
+      arquetiposDominantes: [],
+      gatilhosCompra: [],
     };
   }
   return true;
@@ -268,7 +297,7 @@ export async function POST(req: NextRequest) {
   try {
     const message = await anthropic.messages.create({
       model: "claude-opus-4-8",
-      max_tokens: 4096,
+      max_tokens: 6144,
       system: [
         {
           type: "text",

@@ -49,11 +49,32 @@ export type AiStrategic = {
   diferencial: string;
 };
 
+export type AiArquetipo = {
+  nome: string;
+  descricao: string;
+};
+
+export type AiGatilho = {
+  gatilho: string;
+  quando: string;
+};
+
+export type AiInsightsOcultos = {
+  medosOcultos: string[];
+  desejosOcultos: string[];
+  objecoesEmocionais: string[];
+  crencasLimitantes: string[];
+  padroesLinguagem: string[];
+  arquetiposDominantes: AiArquetipo[];
+  gatilhosCompra: AiGatilho[];
+};
+
 export type AiOutput = {
   sintese: AiSintese;
   planoAcao: { prioridades: AiPrioridade[] };
   roadmap: { fases: AiFase[] };
   strategic: AiStrategic;
+  insightsOcultos: AiInsightsOcultos;
 };
 
 export type AiGenerateResponse = AiOutput & {

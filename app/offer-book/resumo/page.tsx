@@ -5,13 +5,21 @@ import {
   AlertTriangle,
   ArrowUpRight,
   ClipboardList,
+  Eye,
   FileText,
+  Flame,
+  Frown,
+  Heart,
   Loader2,
+  Lock,
   MessageSquareQuote,
+  Quote,
   RefreshCw,
+  ShieldAlert,
   Sparkles,
   Target,
   TrendingUp,
+  Users,
   Zap,
 } from "lucide-react";
 import { ScoreCard } from "../_components/ScoreCard";
@@ -238,6 +246,117 @@ function StrategicBlock({
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// Insights Ocultos — sub-components
+// ─────────────────────────────────────────────────────────────
+
+function InsightList({
+  label,
+  icon,
+  items,
+  loading,
+  accent,
+  quoted = false,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  items: string[];
+  loading: boolean;
+  accent: "rose" | "fuchsia" | "amber" | "indigo" | "cyan";
+  quoted?: boolean;
+}) {
+  const accentStyles = {
+    rose: "border-rose-400/30 bg-rose-400/[0.06] text-rose-300",
+    fuchsia: "border-fuchsia-400/30 bg-fuchsia-400/[0.06] text-fuchsia-300",
+    amber: "border-amber-300/30 bg-amber-300/[0.06] text-amber-200",
+    indigo: "border-indigo-400/30 bg-indigo-400/[0.06] text-indigo-300",
+    cyan: "border-brand-cyan/30 bg-brand-cyan/[0.06] text-brand-cyan",
+  } as const;
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <div
+          className={`grid h-7 w-7 place-items-center rounded-md border ${accentStyles[accent]}`}
+        >
+          {icon}
+        </div>
+        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
+          {label}
+        </div>
+      </div>
+      {loading ? (
+        <div className="space-y-2">
+          <div className="h-3 w-full animate-pulse rounded bg-white/[0.06]" />
+          <div className="h-3 w-11/12 animate-pulse rounded bg-white/[0.06]" />
+          <div className="h-3 w-10/12 animate-pulse rounded bg-white/[0.06]" />
+          <div className="h-3 w-9/12 animate-pulse rounded bg-white/[0.06]" />
+        </div>
+      ) : items.length === 0 ? (
+        <p className="text-xs italic text-zinc-500">
+          Nenhum insight gerado ainda — clique em &ldquo;Atualizar&rdquo; para regenerar.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {items.map((it, i) => (
+            <li
+              key={i}
+              className="flex items-start gap-2 text-sm leading-relaxed text-zinc-200"
+            >
+              <span
+                className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${accentStyles[accent].split(" ")[2]?.replace("text-", "bg-") ?? "bg-zinc-400"}`}
+              />
+              <span className={quoted ? "italic" : ""}>
+                {quoted && !it.startsWith('"') ? `"${it}"` : it}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ArquetipoCard({
+  nome,
+  descricao,
+}: {
+  nome: string;
+  descricao: string;
+}) {
+  return (
+    <div className="rounded-lg border border-violet-400/20 bg-violet-400/[0.04] p-4">
+      <div className="mb-1 text-sm font-bold uppercase tracking-tight text-violet-200">
+        {nome}
+      </div>
+      <p className="text-xs leading-relaxed text-zinc-300">{descricao}</p>
+    </div>
+  );
+}
+
+function GatilhoCard({
+  gatilho,
+  quando,
+}: {
+  gatilho: string;
+  quando: string;
+}) {
+  return (
+    <div className="rounded-lg border border-orange-400/20 bg-orange-400/[0.04] p-4">
+      <div className="mb-1 flex items-center gap-2">
+        <Flame className="h-3.5 w-3.5 text-orange-300" />
+        <div className="text-sm font-bold text-orange-200">{gatilho}</div>
+      </div>
+      <p className="text-xs leading-relaxed text-zinc-400">
+        <span className="font-semibold uppercase tracking-wider text-[10px] text-zinc-500">
+          Quando:
+        </span>{" "}
+        {quando}
+      </p>
+    </div>
+  );
+}
+
 export default function ResumoExecutivoPage() {
   const { state, hydrated, currentClienteId, aiOutput, aiGeneratedAt, setAiOutput } =
     useOfferBook();
@@ -299,6 +418,16 @@ export default function ResumoExecutivoPage() {
   const overallTier = scoreTier(overall);
 
   const strategic = aiOutput?.strategic;
+  const insights = aiOutput?.insightsOcultos;
+  const hasAnyInsight =
+    !!insights &&
+    (insights.medosOcultos.length > 0 ||
+      insights.desejosOcultos.length > 0 ||
+      insights.objecoesEmocionais.length > 0 ||
+      insights.crencasLimitantes.length > 0 ||
+      insights.padroesLinguagem.length > 0 ||
+      insights.arquetiposDominantes.length > 0 ||
+      insights.gatilhosCompra.length > 0);
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -503,6 +632,117 @@ export default function ResumoExecutivoPage() {
               </div>
             </div>
           )}
+        </section>
+      )}
+
+      {/* ─── Insights Ocultos (AI psychographic deep-dive) ─── */}
+      {(loading || hasAnyInsight) && (
+        <section className="mb-6 rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-500/[0.04] to-fuchsia-500/[0.03] p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-lg border border-violet-400/30 bg-violet-400/[0.08] text-violet-300">
+              <Eye className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">
+                Insights Ocultos
+              </h2>
+              <p className="text-xs text-zinc-400">
+                O que o ICP <em>não</em> declara mas influencia toda decisão de compra.
+              </p>
+            </div>
+          </div>
+
+          {/* 5 listas: medos, desejos, objeções emocionais, crenças, padrões */}
+          <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <InsightList
+              label="Medos Ocultos"
+              icon={<ShieldAlert className="h-3.5 w-3.5" />}
+              items={insights?.medosOcultos ?? []}
+              loading={loading}
+              accent="rose"
+            />
+            <InsightList
+              label="Desejos Ocultos"
+              icon={<Heart className="h-3.5 w-3.5" />}
+              items={insights?.desejosOcultos ?? []}
+              loading={loading}
+              accent="fuchsia"
+            />
+            <InsightList
+              label="Objeções Emocionais"
+              icon={<Frown className="h-3.5 w-3.5" />}
+              items={insights?.objecoesEmocionais ?? []}
+              loading={loading}
+              accent="amber"
+            />
+            <InsightList
+              label="Crenças Limitantes"
+              icon={<Lock className="h-3.5 w-3.5" />}
+              items={insights?.crencasLimitantes ?? []}
+              loading={loading}
+              accent="indigo"
+            />
+            <InsightList
+              label="Padrões de Linguagem"
+              icon={<Quote className="h-3.5 w-3.5" />}
+              items={insights?.padroesLinguagem ?? []}
+              loading={loading}
+              accent="cyan"
+              quoted
+            />
+          </div>
+
+          {/* Arquétipos dominantes */}
+          <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.02] p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="grid h-7 w-7 place-items-center rounded-md border border-violet-400/30 bg-violet-400/[0.08] text-violet-300">
+                <Users className="h-3.5 w-3.5" />
+              </div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
+                Arquétipos Dominantes
+              </div>
+            </div>
+            {loading ? (
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <div className="h-16 animate-pulse rounded bg-white/[0.06]" />
+                <div className="h-16 animate-pulse rounded bg-white/[0.06]" />
+              </div>
+            ) : (insights?.arquetiposDominantes ?? []).length === 0 ? (
+              <p className="text-xs italic text-zinc-500">Nenhum arquétipo identificado ainda.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                {insights!.arquetiposDominantes.map((a, i) => (
+                  <ArquetipoCard key={i} nome={a.nome} descricao={a.descricao} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Gatilhos de compra */}
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="grid h-7 w-7 place-items-center rounded-md border border-orange-400/30 bg-orange-400/[0.08] text-orange-300">
+                <Flame className="h-3.5 w-3.5" />
+              </div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
+                Gatilhos de Compra
+              </div>
+            </div>
+            {loading ? (
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <div className="h-20 animate-pulse rounded bg-white/[0.06]" />
+                <div className="h-20 animate-pulse rounded bg-white/[0.06]" />
+              </div>
+            ) : (insights?.gatilhosCompra ?? []).length === 0 ? (
+              <p className="text-xs italic text-zinc-500">Nenhum gatilho mapeado ainda.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                {insights!.gatilhosCompra.map((g, i) => (
+                  <GatilhoCard key={i} gatilho={g.gatilho} quando={g.quando} />
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       )}
 
