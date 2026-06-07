@@ -9,6 +9,8 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Activity,
+  AlertTriangle,
   ArrowRight,
   Bell,
   Calendar,
@@ -39,6 +41,7 @@ import {
   listLeads,
   listMessageTemplates,
   listStageHistory,
+  listStageHistorySince,
   moveLead,
   updateLead,
   upsertMessageTemplate,
@@ -385,13 +388,70 @@ function KanbanColumn({
 // Commercial Dashboard
 // ─────────────────────────────────────────────────────────────
 
-function CommercialDashboard({ leads }: { leads: Lead[] }) {
+function CommercialDashboard({
+  leads,
+  weeklyHistory,
+  onOpenLead,
+}: {
+  leads: Lead[];
+  weeklyHistory: StageHistoryEntry[];
+  onOpenLead: (lead: Lead) => void;
+}) {
   const byStage = useMemo(() => {
     const out: Record<Stage, Lead[]> = {} as Record<Stage, Lead[]>;
     STAGES.forEach((s) => (out[s] = []));
     leads.forEach((l) => out[l.stage]?.push(l));
     return out;
   }, [leads]);
+
+  // ─── Weekly activity: stage transitions in the last 7 days ──────────
+  const weeklyActivity = useMemo(() => {
+    const contatadosThisWeek = weeklyHistory.filter(
+      (h) => h.stageTo === "Contato Feito",
+    ).length;
+    const reunioesAgendadas = weeklyHistory.filter(
+      (h) => h.stageTo === "Diagnóstico Agendado",
+    ).length;
+    const propostasEnviadas = weeklyHistory.filter(
+      (h) => h.stageTo === "Proposta",
+    ).length;
+    const fechamentos = weeklyHistory.filter(
+      (h) => h.stageTo === "Fechado",
+    ).length;
+    return {
+      contatadosThisWeek,
+      reunioesAgendadas,
+      propostasEnviadas,
+      fechamentos,
+    };
+  }, [weeklyHistory]);
+
+  // ─── Overdue follow-ups list sorted by urgency (most overdue first) ──
+  const overdueLeads = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return leads
+      .filter(
+        (l) =>
+          l.dataProximaAcao &&
+          new Date(l.dataProximaAcao) < today &&
+          l.stage !== "Fechado" &&
+          l.stage !== "Perdido",
+      )
+      .sort((a, b) => {
+        const da = new Date(a.dataProximaAcao!).getTime();
+        const db = new Date(b.dataProximaAcao!).getTime();
+        return da - db; // older first = more urgent
+      });
+  }, [leads]);
+
+  function daysOverdue(dateStr: string): number {
+    const due = new Date(dateStr);
+    due.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
+  }
 
   const conversions = useMemo(() => {
     return STAGES.slice(0, -1).map((stage, i) => {
@@ -457,6 +517,53 @@ function CommercialDashboard({ leads }: { leads: Lead[] }) {
           </div>
           <div className="mt-1 text-2xl font-black text-white">
             {overdueAll.length}
+          </div>
+        </div>
+      </div>
+
+      {/* Weekly activity summary — stage transitions in last 7 days */}
+      <div className="rounded-2xl border border-white/10 bg-zinc-900/40 p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <Activity className="h-5 w-5 text-brand-cyan" />
+          <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">
+            Atividade da Semana
+          </h2>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+            últimos 7 dias
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              Leads Contatados
+            </div>
+            <div className="mt-1 text-2xl font-black tabular-nums text-white">
+              {weeklyActivity.contatadosThisWeek}
+            </div>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              Reuniões Agendadas
+            </div>
+            <div className="mt-1 text-2xl font-black tabular-nums text-white">
+              {weeklyActivity.reunioesAgendadas}
+            </div>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              Propostas Enviadas
+            </div>
+            <div className="mt-1 text-2xl font-black tabular-nums text-white">
+              {weeklyActivity.propostasEnviadas}
+            </div>
+          </div>
+          <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/[0.04] p-4">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
+              Fechamentos
+            </div>
+            <div className="mt-1 text-2xl font-black tabular-nums text-white">
+              {weeklyActivity.fechamentos}
+            </div>
           </div>
         </div>
       </div>
@@ -559,6 +666,83 @@ function CommercialDashboard({ leads }: { leads: Lead[] }) {
               </div>
             ))}
         </div>
+      </div>
+
+      {/* Próximos Follow-ups Vencidos — sorted by urgency */}
+      <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.03] p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-red-400" />
+          <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">
+            Próximos Follow-ups Vencidos
+          </h2>
+          <span className="ml-auto text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+            {overdueLeads.length} pendentes
+          </span>
+        </div>
+        {overdueLeads.length === 0 ? (
+          <p className="text-sm text-zinc-500">
+            Nenhum follow-up vencido. Pipeline em dia.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {overdueLeads.slice(0, 10).map((lead) => {
+              const dias = daysOverdue(lead.dataProximaAcao!);
+              const urgencyTone =
+                dias >= 7
+                  ? "border-red-500/40 bg-red-500/[0.06]"
+                  : dias >= 3
+                    ? "border-amber-300/30 bg-amber-300/[0.04]"
+                    : "border-white/10 bg-white/[0.02]";
+              const badgeTone =
+                dias >= 7
+                  ? "bg-red-500/30 text-red-200"
+                  : dias >= 3
+                    ? "bg-amber-300/20 text-amber-200"
+                    : "bg-white/[0.06] text-zinc-300";
+              return (
+                <button
+                  key={lead.id}
+                  type="button"
+                  onClick={() => onOpenLead(lead)}
+                  className={`flex w-full items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left transition hover:bg-white/[0.05] ${urgencyTone}`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm font-bold text-white">
+                        {lead.empresa || lead.nome || "Sem nome"}
+                      </span>
+                      <span
+                        className={`inline-flex h-5 items-center rounded-md border bg-white/[0.02] px-2 text-[9px] font-bold uppercase tracking-wider ${stageTone[lead.stage]}`}
+                      >
+                        {lead.stage}
+                      </span>
+                    </div>
+                    {lead.proximaAcao ? (
+                      <div className="mt-0.5 truncate text-xs text-zinc-400">
+                        {lead.proximaAcao}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider tabular-nums ${badgeTone}`}
+                    >
+                      {dias === 0 ? "Hoje" : `${dias}d`}
+                    </span>
+                    <span className="text-[10px] text-zinc-500 tabular-nums">
+                      {formatDate(lead.dataProximaAcao!)}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+            {overdueLeads.length > 10 && (
+              <p className="pt-1 text-center text-[11px] text-zinc-500">
+                + {overdueLeads.length - 10} outros vencidos…
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1230,13 +1414,19 @@ export default function CRMPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overStage, setOverStage] = useState<Stage | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
+  const [weeklyHistory, setWeeklyHistory] = useState<StageHistoryEntry[]>([]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [ls, cs] = await Promise.all([listLeads(), listClienteOptions()]);
+      const [ls, cs, wh] = await Promise.all([
+        listLeads(),
+        listClienteOptions(),
+        listStageHistorySince(7),
+      ]);
       setLeads(ls);
       setClientes(cs);
+      setWeeklyHistory(wh);
     } finally {
       setLoading(false);
     }
@@ -1514,7 +1704,11 @@ export default function CRMPage() {
           </div>
         </div>
       ) : (
-        <CommercialDashboard leads={leads} />
+        <CommercialDashboard
+          leads={leads}
+          weeklyHistory={weeklyHistory}
+          onOpenLead={openEdit}
+        />
       )}
 
       <LeadDrawer

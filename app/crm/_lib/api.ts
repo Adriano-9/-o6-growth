@@ -158,6 +158,26 @@ export async function listStageHistory(
   return (data as Record<string, unknown>[]).map(rowToStageHistory);
 }
 
+/**
+ * Fetch every stage transition in the last `days` days (default 7).
+ * Used by the commercial dashboard's weekly activity summary —
+ * "leads contacted this week", "meetings scheduled", "proposals sent".
+ */
+export async function listStageHistorySince(
+  days = 7,
+): Promise<StageHistoryEntry[]> {
+  const sb = getSupabase();
+  if (!sb) return [];
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await sb
+    .from("crm_stage_history")
+    .select("*")
+    .gte("changed_at", cutoff)
+    .order("changed_at", { ascending: false });
+  if (error || !data) return [];
+  return (data as Record<string, unknown>[]).map(rowToStageHistory);
+}
+
 // ─────────────────────────────────────────────────────────────
 // Funnel glue — converter Lead Fechado em Cliente
 // ─────────────────────────────────────────────────────────────
