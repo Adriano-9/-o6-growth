@@ -152,12 +152,21 @@ function extractHtmlFromResponse(
   const trimmed = raw.trim();
 
   // Branch 1: fenced block ```html ... ```  /  ``` ... ```
+  // Only accept the fence if its content has DOCTYPE or <html — otherwise
+  // we could be picking up an EMBEDDED fence inside Claude's content
+  // (e.g. an `<script type="text/llms.txt">` example block, or a CSS
+  // snippet Claude wrapped to "explain"). Falls through to Branch 2 in
+  // that case.
   const fenceMatch = trimmed.match(
     /```(?:html|HTML)?\s*\n([\s\S]*?)\n```/,
   );
   if (fenceMatch && fenceMatch[1]) {
     const inner = fenceMatch[1].trim();
-    if (inner.length > 50) {
+    const innerLower = inner.toLowerCase();
+    if (
+      inner.length > 50 &&
+      (innerLower.startsWith("<!doctype") || innerLower.startsWith("<html"))
+    ) {
       return { html: inner, source: "fenced" };
     }
   }
@@ -247,11 +256,12 @@ async function generateHtml(p: ProspectRow): Promise<string> {
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      // 12k > 8k so a moderately rich landing page (hero+services+
-      // diferenciais+contato+footer with inline CSS) doesn't get
-      // truncated mid-document. Truncation loses the closing </html>
-      // and forces the extractor into a less reliable branch.
-      max_tokens: 12000,
+      // 20k tokens leaves room for ~60k chars of inline-styled HTML.
+      // Direct probes showed sonnet-4-6 happily produces 40k+ chars
+      // when not constrained and hits stop_reason=max_tokens — losing
+      // the closing </html>. Branch 2 auto-closes truncated docs, but
+      // we'd rather Claude finish cleanly when it can.
+      max_tokens: 20000,
       messages: [{ role: "user", content: buildHtmlPrompt(p) }],
     }),
   });
@@ -345,18 +355,26 @@ async function generateHtml(p: ProspectRow): Promise<string> {
     googleImportsRemoved: importCount,
   });
 
-  if (!hasHtml || !hasBody) {
-    // Last-resort wrap — should be unreachable since extractHtmlFromResponse
-    // wraps too, but defensive.
+  // Final structural check is now DEFENSIVE ONLY — we only wrap when
+  // both <html> AND <body> are missing. Previously this fired too
+  // eagerly: when extraction Branch 3 had already wrapped content that
+  // included Claude's own DOCTYPE/html/body inside the shell body, this
+  // check would see "well wrap it AGAIN to be safe", resulting in nested
+  // <!DOCTYPE>/<html>/<body> and the misleading "Demo — {nome}" title.
+  //
+  // Now: trust the extractor. If extractor returned ANY HTML structure,
+  // ship it. Only wrap if extractor's output is body-fragment-only
+  // (e.g. just <section>...</section> with no surrounding doc).
+  if (!hasHtml && !hasBody) {
     console.warn(
-      "[prospects/demo] HTML ainda incompleto após extração — wrapping em shell minimal",
+      "[prospects/demo] extracted HTML has no <html> AND no <body> — wrapping em shell minimal",
     );
     html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Demo — ${p.nome}</title>
+<title>${p.nome}</title>
 <style>body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:24px;color:#1a1a1a;line-height:1.6}</style>
 </head>
 <body>
@@ -504,24 +522,32 @@ async function deployToVercel(
   }
 
   const deploy = (await deployRes.json()) as {
+    id?: string;
     url?: string;
     alias?: string[];
+    aliasAssigned?: boolean | number | null;
     automaticAliases?: string[];
     readyState?: string;
     projectId?: string;
   };
 
-  // Prefer alias (subdomain) over the deployment-specific URL — it's the
-  // stable address; the per-deployment .vercel.app URL changes on every
-  // redeploy.
-  const url =
-    deploy.alias?.[0] ?? deploy.automaticAliases?.[0] ?? deploy.url;
-  if (!url) throw new Error("Vercel não retornou URL do deploy");
+  // ─── DIAGNOSTIC: dump every URL-shaped field the API returned so future
+  // 404 reports can be triaged without re-running the deploy.
+  console.log("[prospects/demo] === Vercel deploy created ===");
+  console.log("[prospects/demo] deployment fields:", {
+    id: deploy.id,
+    url: deploy.url,
+    alias: deploy.alias,
+    automaticAliases: deploy.automaticAliases,
+    aliasAssigned: deploy.aliasAssigned,
+    readyState: deploy.readyState,
+    projectId: deploy.projectId,
+  });
 
-  // 3. Disable SSO protection so prospects (no Vercel account) can open
-  //    the URL. New Hobby-team projects ship with ssoProtection enabled
-  //    by default; without this PATCH, the deploy returns HTTP 401
-  //    "Authentication Required" to anonymous visitors.
+  // 3. Disable SSO protection — must happen BEFORE polling, so the URL
+  //    is publicly reachable the moment it goes READY. New Hobby-team
+  //    projects ship with ssoProtection enabled and would 401 anon
+  //    visitors otherwise.
   if (deploy.projectId) {
     try {
       await debugFetch(
@@ -549,7 +575,73 @@ async function deployToVercel(
     }
   }
 
-  return url.startsWith("http") ? url : `https://${url}`;
+  // 4. Poll until READY before returning a URL. The deploy POST creates
+  //    the record but the alias DNS / file mirror isn't live until the
+  //    build settles. Returning early means callers hit 404 NOT_FOUND
+  //    on the alias that hasn't been wired yet.
+  let finalState = deploy.readyState ?? "INITIALIZING";
+  let finalAlias = deploy.alias?.[0] ?? deploy.automaticAliases?.[0];
+  let finalUrl = deploy.url;
+
+  if (deploy.id && finalState !== "READY") {
+    const maxAttempts = 15; // 15 × 2s = 30s ceiling
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      // Wait BEFORE polling so we don't hammer immediately after the
+      // create call (which Vercel rate-limits).
+      await new Promise((r) => setTimeout(r, 2000));
+
+      const pollRes = await debugFetch(
+        `Vercel poll #${attempt}`,
+        `https://api.vercel.com/v13/deployments/${deploy.id}?teamId=${teamId}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      if (!pollRes.ok) {
+        const txt = await pollRes.text().catch(() => "");
+        console.warn(
+          `[prospects/demo] poll #${attempt} ${pollRes.status}: ${txt.slice(0, 200)}`,
+        );
+        continue;
+      }
+
+      const poll = (await pollRes.json()) as {
+        readyState?: string;
+        url?: string;
+        alias?: string[];
+        aliasAssigned?: boolean | number | null;
+      };
+
+      finalState = poll.readyState ?? finalState;
+      if (poll.alias?.[0]) finalAlias = poll.alias[0];
+      if (poll.url) finalUrl = poll.url;
+
+      console.log(
+        `[prospects/demo] poll #${attempt}: readyState=${finalState} aliasAssigned=${poll.aliasAssigned} alias=${finalAlias ?? "?"} url=${finalUrl ?? "?"}`,
+      );
+
+      if (finalState === "READY") break;
+      if (finalState === "ERROR" || finalState === "CANCELED") {
+        throw new Error(`Vercel deployment ${finalState} (id=${deploy.id})`);
+      }
+    }
+  }
+
+  if (finalState !== "READY") {
+    console.warn(
+      `[prospects/demo] deployment ${deploy.id} ainda em ${finalState} após 30s — devolvendo URL mesmo assim (pode levar mais alguns segundos para subir)`,
+    );
+  }
+
+  // Prefer the deployment-specific URL (deploy.url) over alias[0] for the
+  // INITIAL return because that's the address Vercel itself guarantees
+  // points at this exact deployment. The team-scoped alias takes longer
+  // to wire DNS-wise. Once aliasAssigned is true, alias[0] also resolves
+  // and either works.
+  const chosen =
+    finalState === "READY" && finalAlias ? finalAlias : finalUrl ?? finalAlias;
+  if (!chosen) throw new Error("Vercel não retornou URL do deploy");
+
+  return chosen.startsWith("http") ? chosen : `https://${chosen}`;
 }
 
 // ─────────────────────────────────────────────────────────────
