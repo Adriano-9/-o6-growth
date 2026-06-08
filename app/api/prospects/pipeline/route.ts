@@ -8,7 +8,7 @@ export const maxDuration = 120;
 // Types
 // ─────────────────────────────────────────────────────────────
 
-type PipelineInput = { prospect_id: string; force?: boolean };
+type PipelineInput = { prospect_id: string; force?: boolean; skipDemo?: boolean };
 
 type Recommendation = {
   priority: "P1" | "P2" | "P3";
@@ -46,6 +46,7 @@ type ProspectRow = {
   audit_score: number | null;
   audit_json: AuditResult | null;
   abertura_whatsapp: string | null;
+  demo_url: string | null;
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -161,7 +162,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
 
-  const { prospect_id, force = false } = body;
+  const { prospect_id, force = false, skipDemo = false } = body;
   if (!prospect_id) {
     return NextResponse.json(
       { error: "prospect_id é obrigatório" },
@@ -185,7 +186,7 @@ export async function POST(req: NextRequest) {
   const { data: rowRaw, error: readErr } = await sb
     .from("prospects")
     .select(
-      "id, nome, site, cidade, estado, categoria, telefone, google_rating, google_reviews, audit_score, audit_json, abertura_whatsapp",
+      "id, nome, site, cidade, estado, categoria, telefone, google_rating, google_reviews, audit_score, audit_json, abertura_whatsapp, demo_url",
     )
     .eq("id", prospect_id)
     .maybeSingle();
@@ -216,6 +217,7 @@ export async function POST(req: NextRequest) {
       audit: prospect.audit_json,
       auditScore: prospect.audit_score,
       abertura: prospect.abertura_whatsapp,
+      demoUrl: prospect.demo_url ?? null,
       cached: true,
     });
   }
@@ -255,16 +257,46 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ─── 3. Persiste tudo no prospect
+  // ─── 3. Demo site generation (fail-soft — pipeline continua sem demo se falhar)
+  let demoUrl: string | null = null;
+  if (!skipDemo && process.env.VERCEL_TOKEN) {
+    try {
+      const demoRes = await fetch(`${origin}/api/prospects/demo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prospect_id: prospect.id }),
+      });
+      if (demoRes.ok) {
+        const demoData = (await demoRes.json()) as { url?: string };
+        demoUrl = demoData.url ?? null;
+      } else {
+        const demoErr = (await demoRes.json().catch(() => ({}))) as { error?: string };
+        console.warn("[prospects/pipeline] demo skipped:", demoErr.error);
+      }
+    } catch (err) {
+      console.warn("[prospects/pipeline] demo failed (non-fatal):", err);
+    }
+  }
+
+  // ─── 4. Append demo URL to abertura if available
+  if (demoUrl) {
+    abertura =
+      abertura +
+      `\n\nAh, e montamos uma versão melhorada do site de vocês como demonstração: ${demoUrl} — o que você acha?`;
+  }
+
+  // ─── 5. Persiste tudo no prospect
+  const updatePayload: Record<string, unknown> = {
+    audit_score: audit.overallScore,
+    audit_json: audit,
+    abertura_whatsapp: abertura,
+    abordagem_gerada_em: new Date().toISOString(),
+    status: demoUrl ? "Demo Gerada" : "Auditado",
+  };
+
   const { error: updErr } = await sb
     .from("prospects")
-    .update({
-      audit_score: audit.overallScore,
-      audit_json: audit,
-      abertura_whatsapp: abertura,
-      abordagem_gerada_em: new Date().toISOString(),
-      status: "Auditado",
-    })
+    .update(updatePayload)
     .eq("id", prospect.id);
 
   if (updErr) {
@@ -276,6 +308,7 @@ export async function POST(req: NextRequest) {
     audit,
     auditScore: audit.overallScore,
     abertura,
+    demoUrl,
     cached: false,
   });
 }

@@ -53,9 +53,12 @@ export type Prospect = {
   auditJson: ProspectAuditJson | null;
   aberturaWhatsapp: string | null;
   abordagemGeradaEm: string | null;
+  // Demo site columns (migration 009)
+  demoUrl: string | null;
+  demoGeneratedAt: string | null;
 };
 
-// Campos puramente server-managed (audit, AI, timestamps) NÃO fazem parte do input.
+// Campos puramente server-managed (audit, AI, demo, timestamps) NÃO fazem parte do input.
 export type ProspectInput = Omit<
   Prospect,
   | "id"
@@ -65,6 +68,8 @@ export type ProspectInput = Omit<
   | "auditJson"
   | "aberturaWhatsapp"
   | "abordagemGeradaEm"
+  | "demoUrl"
+  | "demoGeneratedAt"
 >;
 
 export const emptyProspectInput = (): ProspectInput => ({
@@ -105,6 +110,8 @@ export function rowToProspect(r: Record<string, unknown>): Prospect {
     auditJson: (r.audit_json as ProspectAuditJson | null) ?? null,
     aberturaWhatsapp: (r.abertura_whatsapp as string | null) ?? null,
     abordagemGeradaEm: (r.abordagem_gerada_em as string | null) ?? null,
+    demoUrl: (r.demo_url as string | null) ?? null,
+    demoGeneratedAt: (r.demo_generated_at as string | null) ?? null,
   };
 }
 

@@ -4,6 +4,21 @@ Pacote de finalização do sistema executado em sessão única. Newest on top.
 
 ---
 
+## Sprint 7 — Demo Site Generator (2026-06-08)
+
+| # | Tarefa | Status |
+|---|---|---|
+| 1 | Migration `009_demo_url` (`demo_url`, `demo_generated_at`) | ✅ Aplicado via Supabase MCP |
+| 2 | `POST /api/prospects/demo` — Claude HTML + Vercel deploy | ✅ Criado |
+| 3 | Pipeline atualizado — demo step + demo URL na abertura | ✅ |
+| 4 | Types + mapper `rowToProspect` com `demoUrl`/`demoGeneratedAt` | ✅ |
+| 5 | `ProspectDrawer` — botão "Gerar Demo" + panel Demo Site + link | ✅ |
+| 6 | `.env.local` — placeholder `VERCEL_TOKEN=` documentado | ✅ |
+
+**Pendente para ativar**: setar `VERCEL_TOKEN` no `.env.local` (obter em vercel.com/account/tokens).
+
+---
+
 ## Status final por tarefa
 
 | # | Tarefa | Status | Commit |

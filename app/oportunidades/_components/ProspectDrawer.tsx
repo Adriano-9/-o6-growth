@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Beaker, CalendarPlus, Check, Copy, KanbanSquare, Loader2, MessageCircle, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowRight, Beaker, CalendarPlus, Check, Copy, ExternalLink, Globe, KanbanSquare, Loader2, MessageCircle, Sparkles, Trash2, X } from "lucide-react";
 import {
   emptyProspectInput,
   PROSPECT_STATUS,
@@ -75,6 +75,10 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
   const [abordagemScore, setAbordagemScore] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
+  const [demoUrl, setDemoUrl] = useState<string | null>(null);
+  const [generatingDemo, setGeneratingDemo] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
+
   async function handleGerarAbordagem(force = false) {
     if (!initial) return;
     setGenerating(true);
@@ -95,11 +99,13 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
         abertura: string;
         auditScore: number;
         audit: AuditResult;
+        demoUrl?: string | null;
         cached: boolean;
       };
       setAbordagem(data.abertura);
       setAbordagemScore(data.auditScore);
       setAuditResult(data.audit);
+      if (data.demoUrl) setDemoUrl(data.demoUrl);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro ao gerar abordagem";
       setAbordagemError(msg);
@@ -116,6 +122,30 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
       setTimeout(() => setCopied(false), 1500);
     } catch {
       /* clipboard pode falhar em contexto sem HTTPS — ignora */
+    }
+  }
+
+  async function handleGerarDemo() {
+    if (!initial) return;
+    setGeneratingDemo(true);
+    setDemoError(null);
+    try {
+      const res = await fetch("/api/prospects/demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prospect_id: initial.id }),
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error || `Erro ${res.status}`);
+      }
+      const data = (await res.json()) as { url: string };
+      setDemoUrl(data.url);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao gerar demo";
+      setDemoError(msg);
+    } finally {
+      setGeneratingDemo(false);
     }
   }
 
@@ -204,7 +234,7 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
           }
         : emptyProspectInput(),
     );
-    // Hidrata cached abordagem/audit, se houver
+    // Hidrata cached abordagem/audit/demo, se houver
     setAbordagem(initial?.aberturaWhatsapp ?? null);
     setAbordagemScore(initial?.auditScore ?? null);
     setAuditResult(
@@ -216,8 +246,10 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
           } as AuditResult)
         : null,
     );
+    setDemoUrl(initial?.demoUrl ?? null);
     setAbordagemError(null);
     setAuditError(null);
+    setDemoError(null);
   }, [initial?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const patch = (p: Partial<ProspectInput>) =>
@@ -416,13 +448,13 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
                 </div>
               </div>
 
-              {/* Audit + Gerar Abordagem buttons */}
+              {/* Audit + Gerar Abordagem + Gerar Demo buttons */}
               {initial.site && (
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   <button
                     type="button"
                     onClick={handleAudit}
-                    disabled={auditing || generating}
+                    disabled={auditing || generating || generatingDemo}
                     className="inline-flex items-center justify-center gap-2 rounded-lg border border-purple-500/40 bg-purple-500/10 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-purple-300 transition hover:bg-purple-500/20 disabled:opacity-40"
                   >
                     {auditing ? (
@@ -430,12 +462,12 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
                     ) : (
                       <Beaker className="h-3.5 w-3.5" />
                     )}
-                    {auditing ? "Auditando..." : "Auditar Site"}
+                    {auditing ? "Auditando..." : "Auditar"}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleGerarAbordagem(!!abordagem)}
-                    disabled={generating || auditing}
+                    disabled={generating || auditing || generatingDemo}
                     className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-40"
                   >
                     {generating ? (
@@ -446,8 +478,21 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
                     {generating
                       ? "Gerando..."
                       : abordagem
-                        ? "Regerar Abordagem"
-                        : "Gerar Abordagem"}
+                        ? "Regerar"
+                        : "Abordagem"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGerarDemo}
+                    disabled={generatingDemo || auditing || generating}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-cyan/40 bg-brand-cyan/10 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-brand-cyan transition hover:bg-brand-cyan/20 disabled:opacity-40"
+                  >
+                    {generatingDemo ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Globe className="h-3.5 w-3.5" />
+                    )}
+                    {generatingDemo ? "Gerando..." : demoUrl ? "Regen. Demo" : "Gerar Demo"}
                   </button>
                 </div>
               )}
@@ -519,6 +564,57 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
                   {abordagem}
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Demo Site Panel */}
+          {mode !== "create" && initial && (demoUrl || generatingDemo || demoError) && (
+            <div className="mt-4 rounded-xl border border-brand-cyan/20 bg-brand-cyan/[0.04] p-4">
+              <div className="flex items-center gap-2">
+                <div className="grid h-7 w-7 place-items-center rounded-md border border-brand-cyan/30 bg-brand-cyan/10 text-brand-cyan">
+                  <Globe className="h-3.5 w-3.5" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-cyan">
+                    Demo Site
+                  </div>
+                  <div className="mt-0.5 text-[10px] text-zinc-500">
+                    Landing page gerada por IA + deploy automático
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3">
+                {generatingDemo ? (
+                  <div className="space-y-2 py-1">
+                    <div className="h-3 w-full animate-pulse rounded bg-white/[0.06]" />
+                    <div className="h-3 w-2/3 animate-pulse rounded bg-white/[0.06]" />
+                  </div>
+                ) : demoError ? (
+                  <p className="rounded-md border border-red-500/20 bg-red-500/[0.06] p-2 text-xs text-red-200">
+                    {demoError}
+                  </p>
+                ) : demoUrl ? (
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={demoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 truncate rounded-md border border-brand-cyan/20 bg-zinc-950/40 px-3 py-2 text-xs text-brand-cyan hover:underline"
+                    >
+                      {demoUrl}
+                    </a>
+                    <a
+                      href={demoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-brand-cyan/40 bg-brand-cyan/15 px-3 py-2 text-xs font-bold uppercase tracking-wider text-brand-cyan transition hover:bg-brand-cyan/25"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Ver Demo
+                    </a>
+                  </div>
+                ) : null}
+              </div>
             </div>
           )}
 

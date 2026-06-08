@@ -4,6 +4,43 @@ Decisões técnicas do módulo `/oportunidades`. Newest on top. Cross-cutting em
 
 ---
 
+## 2026-06-08 · Sprint 7 — Demo Site Generator (Claude HTML + Vercel Deploy)
+
+### Implementado
+- **Migration `009_demo_url.sql`**: colunas `demo_url TEXT` e `demo_generated_at TIMESTAMPTZ` em `prospects` + índice parcial.
+- **`/api/prospects/demo/route.ts`** (POST `{ prospect_id }`):
+  - Claude `claude-sonnet-4-6` gera HTML landing page completa (8k tokens) para a clínica com base em nome, categoria, cidade, telefone e `audit_json.recommendations`.
+  - Deploy via Vercel API: upload do arquivo (`POST /v2/files`, header `x-vercel-digest`=SHA256) + criação de deployment (`POST /v13/deployments`, projeto `o6-demo-{slug}`).
+  - Persiste `demo_url`, `demo_generated_at`, `status = "Demo Gerada"`. Fail-soft em persist.
+  - Requer `VERCEL_TOKEN` em `.env.local` (pessoal, full account). Sem token → 502 claro.
+- **`/api/prospects/pipeline/route.ts`** atualizado:
+  - Aceita `skipDemo?: boolean` (default false).
+  - Após gerar abertura, chama `/api/prospects/demo` se `VERCEL_TOKEN` presente.
+  - Se demo OK: appenda URL ao final da abertura WhatsApp (`"\n\nAh, e montamos uma versão melhorada do site de vocês como demonstração: {url} — o que você acha?"`).
+  - Status: `"Demo Gerada"` se demo OK, `"Auditado"` se não.
+  - Resposta incluiu `demoUrl` (nullable).
+- **`Prospect` type** + `rowToProspect` mapper: campos `demoUrl` / `demoGeneratedAt` adicionados.
+- **`ProspectInput` Omit** atualizado para excluir os 2 novos campos server-managed.
+- **`ProspectDrawer.tsx`**: estado `demoUrl` / `generatingDemo` / `demoError`. Botão "Gerar Demo" (3ª col em grid sm:3-col). Panel "Demo Site" com link + "Ver Demo" button (ExternalLink). Hidrata `initial.demoUrl` no useEffect.
+
+### Decisões de design
+- **Fallback sem v0 API** — v0.dev não tem API pública. Usar Claude diretamente produz HTML de alta qualidade em ~10s. Sem dependência extra.
+- **Vercel static deployment** — HTML único via `/v2/files` (SHA256) + `/v13/deployments`. Deploy de arquivo estático fica ready em ~3-5s. Sem framework (Next, Vite etc.) = zero build time.
+- **Project name**: `o6-demo-{slug28}` — slug normalizado, sem acentos, max 28 chars. Vercel limita project names a 52 chars.
+- **Fail-soft no pipeline** — se VERCEL_TOKEN ausente ou deploy falhar, pipeline retorna `demoUrl: null` e continua. Operador recebe abertura mesmo sem demo.
+- **maxDuration = 120** nos dois routes — HTML generation (~10s) + file upload + deploy polling caberiam em 120s com folga.
+- **`claude-sonnet-4-6`** para HTML (modelo atual da sessão), mantendo `claude-opus-4-8` para `/api/offer-book/generate` (legado Sprint 4).
+
+### ENV necessário
+- `VERCEL_TOKEN` — obter em vercel.com/account/tokens, scope Full Account, server-side only.
+
+### Trade-offs aceitos
+- Deploy por prospect = projeto novo no Vercel. Não há reutilização de projeto. Poderia ser `o6-demos` com aliases por prospect, mas requereria lógica extra de alias management.
+- HTML gerado não tem backend — formulário de contato é decorativo. Aceitável para demo/prospecção.
+- Sem polling de status de deploy — retornamos o URL do deploy imediatamente. Para estático, Vercel fica ready em <5s, então o URL já funciona quando o usuário clica.
+
+---
+
 ## 2026-06-04 · Sprint 3 — Substituição Serper → Apify Google Maps Scraper
 
 ### Implementado
