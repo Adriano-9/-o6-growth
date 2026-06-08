@@ -99,20 +99,21 @@ ${problems}
 Eixos mais fracos: ${weakAxes}` : ""}
 
 REQUISITOS OBRIGATÓRIOS:
-1. HTML completo, auto-contido, arquivo único — CSS inline no <style>, JS inline no <script>
-2. Mobile first (viewport meta, flexbox/grid responsivo, mínimo 375px)
-3. Tema profissional claro com acentos modernos (não genérico, não branco simples)
-4. Seções: Hero (nome + tagline + CTA), Serviços (3-4 cards), Diferenciais, Contato + WhatsApp, Footer
-5. Botão WhatsApp flutuante ${whatsappNumber ? `linkando para https://wa.me/55${whatsappNumber}` : "(placeholder wa.me/55XX)"}
-6. CTA principal: "Agendar Consulta" ou "Marcar Avaliação" — tom consultivo, não agressivo
-7. Copy em pt-BR, tom profissional e acolhedor, específico para o segmento
-8. Sem frameworks externos (sem Bootstrap, sem Tailwind, sem CDNs) — tudo inline
-9. Tipografia: Google Fonts via @import (Inter ou Plus Jakarta Sans)
-10. Animações suaves via CSS transitions (sem JS pesado)
-11. Formulário de contato simples (nome, telefone, mensagem) — estético, sem backend
-12. Schema.org LocalBusiness em JSON-LD no <head>
-13. Meta tags Open Graph para redes sociais
-14. Imagens: usar gradientes CSS, ícones SVG inline ou emojis — sem imagens externas
+1. HTML completo, auto-contido, arquivo único — CSS APENAS inline no <style>
+2. ZERO JavaScript — NÃO inclua nenhuma tag <script>. Nenhuma. A página deve funcionar sem JS.
+3. ZERO dependências externas — sem Google Fonts, sem CDNs, sem @import de URLs externas, sem imagens de URL externa
+4. Tipografia: font-family: system-ui, -apple-system, 'Segoe UI', sans-serif — apenas fontes do sistema
+5. Mobile first (viewport meta, flexbox/grid responsivo, mínimo 375px)
+6. Tema profissional claro com acentos modernos (não genérico, não branco simples)
+7. Seções: Hero (nome + tagline + CTA), Serviços (3-4 cards), Diferenciais, Contato + WhatsApp, Footer
+8. Botão WhatsApp flutuante ${whatsappNumber ? `linkando para https://wa.me/55${whatsappNumber}` : "(placeholder wa.me/55XX)"}
+9. CTA principal: "Agendar Consulta" ou "Marcar Avaliação" — tom consultivo, não agressivo
+10. Copy em pt-BR, tom profissional e acolhedor, específico para o segmento
+11. Animações suaves apenas via CSS transitions e @keyframes — NENHUM JavaScript
+12. Formulário de contato simples (nome, telefone, mensagem) — estético, sem backend, apenas HTML
+13. Schema.org LocalBusiness em JSON-LD no <head>
+14. Meta tags Open Graph para redes sociais
+15. Imagens: usar gradientes CSS, ícones SVG inline ou emojis — sem imagens externas
 
 DESIGN DIRECTION:
 - Paleta: branco/cinza claro de fundo, um acento forte (azul petróleo, verde-esmeralda ou violeta, conforme o segmento)
@@ -121,7 +122,116 @@ DESIGN DIRECTION:
 - Hero com gradiente suave ou padrão geométrico CSS
 - Não genérico: personalize a copy para ${p.nome} em ${categoria}
 
+CRÍTICO: A resposta deve ser HTML puro estático. NÃO use <script>. NÃO use @import de fontes externas. NÃO use src= com URLs externas.
 Responda APENAS com o código HTML completo. Sem explicações. Sem markdown. Comece com <!DOCTYPE html>.`;
+}
+
+/**
+ * Pull a complete HTML document out of whatever Claude returns. Handles:
+ *  - raw HTML starting with <!DOCTYPE
+ *  - HTML wrapped in ```html ... ``` (or just ``` ... ```)
+ *  - HTML preceded/followed by explanation text ("Aqui está…")
+ *  - HTML missing the DOCTYPE but starting at <html>
+ *  - Markdown fences without language hint
+ *
+ * Strategy:
+ *  1. Try to find a fenced code block first — that's the most reliable
+ *     boundary when Claude adds prose.
+ *  2. If no fence, find the FIRST `<!doctype` or `<html` and the LAST
+ *     `</html>` and slice between them.
+ *  3. If we still don't have a full document, wrap whatever HTML-looking
+ *     content survives in a minimal shell so the deploy still produces
+ *     something showable instead of crashing.
+ *
+ * Returns `{ html, source }` where `source` describes which branch fired
+ * — used for debug logging.
+ */
+function extractHtmlFromResponse(
+  raw: string,
+): { html: string; source: string } {
+  const trimmed = raw.trim();
+
+  // Branch 1: fenced block ```html ... ```  /  ``` ... ```
+  const fenceMatch = trimmed.match(
+    /```(?:html|HTML)?\s*\n([\s\S]*?)\n```/,
+  );
+  if (fenceMatch && fenceMatch[1]) {
+    const inner = fenceMatch[1].trim();
+    if (inner.length > 50) {
+      return { html: inner, source: "fenced" };
+    }
+  }
+
+  // Branch 2: slice from the first DOCTYPE / <html> to the end.
+  // We DON'T require a closing </html> — if Claude truncated mid-document
+  // we'd rather salvage the partial HTML and append the missing closers
+  // than fall through to the wrap fallback (which would nest the doc).
+  const lowered = trimmed.toLowerCase();
+  const doctypeIdx = lowered.indexOf("<!doctype");
+  const htmlOpenIdx = lowered.indexOf("<html");
+  const htmlCloseIdx = lowered.lastIndexOf("</html>");
+
+  const startIdx =
+    doctypeIdx >= 0
+      ? doctypeIdx
+      : htmlOpenIdx >= 0
+        ? htmlOpenIdx
+        : -1;
+
+  if (startIdx >= 0) {
+    // Prefer slicing through </html> if present; otherwise take everything
+    // from startIdx to end of response.
+    const endIdx =
+      htmlCloseIdx > startIdx ? htmlCloseIdx + "</html>".length : trimmed.length;
+    let sliced = trimmed.slice(startIdx, endIdx).trim();
+
+    // Strip trailing markdown fence if the slice ended mid-fence
+    // (e.g. truncated before the closing ```)
+    sliced = sliced.replace(/\s*```\s*$/g, "").trim();
+
+    // Auto-close common tags if truncation chopped them off
+    const sLower = sliced.toLowerCase();
+    if (!sLower.includes("</body>")) sliced += "\n</body>";
+    if (!sLower.includes("</html>")) sliced += "\n</html>";
+
+    // Ensure DOCTYPE prefix even if we sliced from <html>
+    const hasDoctype = sliced.slice(0, 16).toLowerCase().startsWith("<!doctype");
+    return {
+      html: hasDoctype ? sliced : `<!DOCTYPE html>\n${sliced}`,
+      source: hasDoctype
+        ? htmlCloseIdx > startIdx
+          ? "sliced-doctype"
+          : "sliced-doctype-truncated"
+        : htmlCloseIdx > startIdx
+          ? "sliced-html"
+          : "sliced-html-truncated",
+    };
+  }
+
+  // Branch 3: we have SOME content but no proper boundaries — wrap it
+  // so the deploy still produces a viewable page instead of erroring.
+  const bodyCandidate = trimmed
+    .replace(/```(?:html|HTML)?\s*/g, "")
+    .replace(/```/g, "")
+    .trim();
+
+  if (bodyCandidate.length > 50) {
+    const wrapped = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo — Pré-visualização</title>
+<style>body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:24px;color:#1a1a1a;line-height:1.6}</style>
+</head>
+<body>
+${bodyCandidate}
+</body>
+</html>`;
+    return { html: wrapped, source: "wrapped-fallback" };
+  }
+
+  return { html: "", source: "empty" };
 }
 
 async function generateHtml(p: ProspectRow): Promise<string> {
@@ -137,7 +247,11 @@ async function generateHtml(p: ProspectRow): Promise<string> {
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 8000,
+      // 12k > 8k so a moderately rich landing page (hero+services+
+      // diferenciais+contato+footer with inline CSS) doesn't get
+      // truncated mid-document. Truncation loses the closing </html>
+      // and forces the extractor into a less reliable branch.
+      max_tokens: 12000,
       messages: [{ role: "user", content: buildHtmlPrompt(p) }],
     }),
   });
@@ -149,18 +263,106 @@ async function generateHtml(p: ProspectRow): Promise<string> {
 
   const data = (await res.json()) as {
     content?: Array<{ type: string; text: string }>;
+    stop_reason?: string;
+    usage?: { input_tokens?: number; output_tokens?: number };
   };
-  let html = data.content?.[0]?.text?.trim() ?? "";
-  if (!html) throw new Error("Claude retornou HTML vazio");
+  const rawText = data.content?.[0]?.text ?? "";
 
-  // Strip markdown fences if model wrapped the output
-  html = html
-    .replace(/^```(?:html)?\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
+  // ─── DIAGNOSTIC LOG: dump the raw response BEFORE any processing.
+  // This is what the user asked for — when extraction fails we need to
+  // see exactly what Claude returned (prose? markdown? truncated?).
+  console.log("[prospects/demo] === Claude raw response ===");
+  console.log(
+    "[prospects/demo] stop_reason:",
+    data.stop_reason,
+    "| usage:",
+    JSON.stringify(data.usage),
+    "| length:",
+    rawText.length,
+  );
+  console.log(
+    "[prospects/demo] head (first 600):",
+    rawText.slice(0, 600),
+  );
+  console.log(
+    "[prospects/demo] tail (last 300):",
+    rawText.slice(-300),
+  );
+  console.log("[prospects/demo] === end raw ===");
 
-  if (!html.toLowerCase().startsWith("<!doctype")) {
-    throw new Error("Claude não gerou HTML válido (não começa com DOCTYPE)");
+  if (!rawText.trim()) {
+    throw new Error(
+      `Claude retornou resposta vazia (stop_reason=${data.stop_reason ?? "?"})`,
+    );
+  }
+
+  // ─── Robust extraction
+  let { html, source } = extractHtmlFromResponse(rawText);
+
+  if (!html) {
+    throw new Error(
+      `Claude não retornou nada extraível como HTML. stop_reason=${data.stop_reason ?? "?"}. ` +
+        `Primeiros 200 chars: "${rawText.slice(0, 200).replace(/\s+/g, " ")}"`,
+    );
+  }
+
+  // ─── Safety net: strip any <script> tags Claude may have generated
+  const scriptCount = (html.match(/<script[\s\S]*?<\/script>/gi) ?? []).length;
+  if (scriptCount > 0) {
+    console.warn(
+      `[prospects/demo] removendo ${scriptCount} <script>(s) gerado(s) por Claude`,
+    );
+    html = html.replace(/<script[\s\S]*?<\/script>/gi, "");
+  }
+
+  // ─── Safety net: strip Google Fonts @import lines
+  const importCount = (html.match(/@import\s+url\([^)]+google[^)]+\)/gi) ?? [])
+    .length;
+  if (importCount > 0) {
+    console.warn(
+      `[prospects/demo] removendo ${importCount} Google Fonts @import gerado(s)`,
+    );
+    html = html.replace(/@import\s+url\([^)]+google[^)]+\)[^;]*;?/gi, "");
+  }
+
+  // ─── Final structural check (post-extraction).
+  // We don't throw here anymore — extractHtmlFromResponse already wraps
+  // as a last resort. We just log so future failures are diagnosable.
+  const lower = html.toLowerCase();
+  const hasDoctype = lower.startsWith("<!doctype");
+  const hasHtml = lower.includes("<html");
+  const hasHead = lower.includes("<head");
+  const hasBody = lower.includes("<body");
+
+  console.log("[prospects/demo] extraction result:", {
+    source,
+    bytes: Buffer.byteLength(html, "utf-8"),
+    hasDoctype,
+    hasHtml,
+    hasHead,
+    hasBody,
+    scriptTagsRemoved: scriptCount,
+    googleImportsRemoved: importCount,
+  });
+
+  if (!hasHtml || !hasBody) {
+    // Last-resort wrap — should be unreachable since extractHtmlFromResponse
+    // wraps too, but defensive.
+    console.warn(
+      "[prospects/demo] HTML ainda incompleto após extração — wrapping em shell minimal",
+    );
+    html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo — ${p.nome}</title>
+<style>body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:24px;color:#1a1a1a;line-height:1.6}</style>
+</head>
+<body>
+${html}
+</body>
+</html>`;
   }
 
   return html;
