@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { notifyTelegram, formatPipelineComplete, formatDemoGenerated } from "@/app/_lib/telegram";
 
 // Claude precisa de até ~30s + audit interno ~30s
 export const maxDuration = 120;
@@ -303,6 +304,12 @@ export async function POST(req: NextRequest) {
     console.error("[prospects/pipeline] update failed", updErr);
     // Fail-soft: devolve a resposta mesmo se persist falhou
   }
+
+  // ─── 6. Telegram notification (fire-and-forget)
+  if (demoUrl) {
+    notifyTelegram(formatDemoGenerated(prospect.nome, demoUrl));
+  }
+  notifyTelegram(formatPipelineComplete(prospect.nome, audit.overallScore));
 
   return NextResponse.json({
     audit,

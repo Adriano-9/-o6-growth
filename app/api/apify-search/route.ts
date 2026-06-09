@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { PlaceResult } from "@/app/oportunidades/_lib/types";
+import { notifyTelegram, formatNewProspects } from "@/app/_lib/telegram";
 
 // Allow up to 5 min on Vercel Pro+ -- locally Node has no timeout
 export const maxDuration = 300;
@@ -259,6 +260,11 @@ export async function POST(req: NextRequest) {
         imported += chunk.length;
       }
     }
+  }
+
+  // Telegram notification (fire-and-forget)
+  if (imported > 0) {
+    notifyTelegram(formatNewProspects(imported, searchQuery));
   }
 
   return NextResponse.json({

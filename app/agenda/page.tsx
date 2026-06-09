@@ -140,6 +140,23 @@ function AgendaInner() {
             }
           : input;
       await createMeeting(finalInput);
+      // Telegram notification (fire-and-forget)
+      const dateStr = finalInput.startsAt
+        ? new Date(finalInput.startsAt).toLocaleDateString("pt-BR")
+        : "—";
+      const timeStr = finalInput.startsAt
+        ? new Date(finalInput.startsAt).toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "—";
+      fetch("/api/telegram/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: `<b>Reunião agendada</b>\n\nContato: <b>${finalInput.titulo || "—"}</b>\nData: ${dateStr}\nHorário: ${timeStr}`,
+        }),
+      }).catch(() => {});
       // Limpa o pending após o primeiro uso
       if (pendingProspectId) setPendingDismissed(true);
     }
