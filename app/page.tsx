@@ -6,13 +6,13 @@ import O6Metrics from "@/components/o6/O6Metrics";
 import O6Footer from "@/components/o6/O6Footer";
 
 export const metadata: Metadata = {
-  title: "O6 Growth | Engenharia de Conversão e Análise de Dados de Alta Performance",
+  title: "O6 Growth | Mais Pacientes e Clientes com Sistema de Conversão",
   description:
-    "Reduza a latência operacional de contacto de leads para zero. Triagem e qualificação autónoma em menos de 10 segundos com análise de dados de alta performance e dashboards de ROI em tempo real.",
+    "Sistema comercial para clínicas, consultórios e escritórios. Resposta rápida, follow-up automático e visibilidade total do ROI de cada canal.",
   openGraph: {
-    title: "O6 Growth | Inteligência de Negócio para Decisão",
+    title: "O6 Growth | Sistema Comercial para Serviços Profissionais",
     description:
-      "Estanque a hemorragia de leads após 5 minutos. Otimização matemática, roteamento matricial e visão raio-X do pipeline de conversão.",
+      "Pare de perder leads por demora no atendimento. Sistema de aquisição, conversão e acompanhamento com ROI visível em tempo real.",
     type: "website",
   },
 };
@@ -20,19 +20,10 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col bg-brand-offwhite selection:bg-brand-cyan selection:text-brand-graphite">
-      {/* Hero — Presença. Processo. Conversão. */}
       <O6Hero />
-
-      {/* Problema — A hemorragia de leads aos 300 segundos */}
       <O6Problem />
-
-      {/* XSquad — As quatro Unidades Táticas de Operação */}
       <O6XSquad />
-
-      {/* Métricas — Visão Raio-X e Telemetria de ROI */}
       <O6Metrics />
-
-      {/* CTA — Agendar Diagnóstico Estratégico */}
       <O6Footer />
     </main>
   );

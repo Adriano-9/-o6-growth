@@ -26,32 +26,32 @@ export default function O6XSquad() {
 
   const squads = [
     {
-      unit: "UT-01",
-      title: "Engenharia de Tráfego e Intenção",
+      unit: "01",
+      title: "Captação e Atração de Leads",
       icon: <Layers className="w-5 h-5 text-brand-orange" />,
-      description: "Estabilização e otimização dos vetores de entrada de leads. Filtramos e calibramos os canais de atração para maximizar a densidade de intenção inicial antes que ocorra a dispersão térmica.",
-      highlight: "Minimização de Dispersão",
+      description: "Organizamos seus canais de atração (Google, Instagram, indicações) para que cada lead chegue qualificado e pronto para ser atendido — sem desperdício de verba.",
+      highlight: "Menos Desperdício",
     },
     {
-      unit: "UT-02",
-      title: "Triagem e Qualificação Autónoma",
+      unit: "02",
+      title: "Qualificação Automática",
       icon: <Activity className="w-5 h-5 text-brand-cyan" />,
-      description: "Processamento analítico instantâneo. Implementação de algoritmos de qualificação estatística que avaliam o enquadramento comercial em menos de 10 segundos, eliminando a fricção humana.",
-      highlight: "Processamento < 10 Segundos",
+      description: "O sistema avalia cada lead em segundos: perfil, interesse e potencial de fechamento. Sua equipe só recebe quem realmente tem chance de virar cliente.",
+      highlight: "Resposta em Segundos",
     },
     {
-      unit: "UT-03",
-      title: "Roteamento Matricial de Latência Zero",
+      unit: "03",
+      title: "Atendimento Rápido e Organizado",
       icon: <Compass className="w-5 h-5 text-brand-orange" />,
-      description: "Direcionamento automático de alta fidelidade. O vetor do lead qualificado é distribuído instantaneamente para a interface de conversão apropriada, assegurando que o tempo de resposta se aproxima de zero.",
-      highlight: "Latência Operacional Nula",
+      description: "Cada lead qualificado é direcionado automaticamente para a pessoa certa da equipe, no canal certo. O tempo de resposta cai de horas para segundos.",
+      highlight: "Zero Atraso",
     },
     {
-      unit: "UT-04",
-      title: "Telemetria de ROI e Inteligência de Negócio",
+      unit: "04",
+      title: "Painel de Resultados e ROI",
       icon: <Eye className="w-5 h-5 text-brand-cyan" />,
-      description: "Infraestrutura de diagnóstico contínuo. Calibramos os fluxos financeiros e fornecemos dashboards analíticos em tempo real que geram visão de Raio-X do pipeline de aquisição.",
-      highlight: "Visão Raio-X de Conversão",
+      description: "Acompanhe em tempo real quanto cada canal de marketing traz de retorno. Saiba exatamente onde investir mais e onde cortar — com números, não com achismo.",
+      highlight: "ROI Visível",
     },
   ];
 
@@ -68,13 +68,13 @@ export default function O6XSquad() {
         {/* Header */}
         <div className="max-w-3xl mb-20">
           <span className="text-xs font-black tracking-widest text-brand-orange uppercase block mb-3">
-            UNIDADES TÁTICAS DE OPERAÇÃO
+            COMO FUNCIONA
           </span>
           <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-brand-graphite leading-none">
-            AS DIVISÕES FUNCIONAIS DA XSQUAD.
+            4 ETAPAS QUE TRANSFORMAM LEADS EM CLIENTES.
           </h2>
           <p className="mt-6 text-base md:text-lg text-brand-graphite/70 max-w-2xl font-normal leading-relaxed">
-            Estrutura operacional matricial de alta performance. Cada divisão executa uma etapa específica do processo de retenção e qualificação, anulando a latência do canal.
+            Um sistema comercial completo que cuida de cada etapa: da captação ao fechamento. Sem depender da memória da recepcionista ou de planilha no WhatsApp.
           </p>
         </div>
 
@@ -135,7 +135,7 @@ export default function O6XSquad() {
         {/* Layer Separator Graphic */}
         <div className="mt-20 flex items-center gap-4 text-[10px] font-mono text-brand-graphite/30 uppercase tracking-widest justify-center">
           <div className="h-[1px] w-20 bg-brand-graphite/10" />
-          <span>XSQUAD MULTI-AGENT PROTOCOL v1.8</span>
+          <span>SISTEMA COMERCIAL O6 GROWTH</span>
           <div className="h-[1px] w-20 bg-brand-graphite/10" />
         </div>
 
