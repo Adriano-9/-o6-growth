@@ -290,8 +290,86 @@ Playbooks por módulo. Ler **antes** de iniciar uma tarefa que se encaixe no esc
 | `/o6-offerbook` | [`skills/o6-offerbook.md`](skills/o6-offerbook.md) | Construir um Offer Book completo (10 passos: Cliente → ICP → Psicografia → Concorrentes → Oferta → Diagnóstico → Plano de Ação → Roadmap → ROI → PDF) |
 | `/o6-audit` | [`skills/o6-audit.md`](skills/o6-audit.md) | Auditar empresa-alvo (URL externa) em 7 eixos (SEO/UX/Conversão/Trust/Velocidade/Oferta/Lead Capture) e gerar pacote de prospecção: score, potencial comercial, impacto $, plano de ação, cold email/WhatsApp/LinkedIn |
 | `/o6-landing` | [`skills/o6-landing.md`](skills/o6-landing.md) | Construir landing page de alta conversão em 7 seções (Hero → Proof → Oferta → ROI → Cases → FAQ → CTA) com Dark Glassmorphism + Bento Grid + Framer Motion |
+| `agents` | [`skills/agents.md`](skills/agents.md) | Construir um agente novo (route Claude + Supabase + opcional Vercel). Padrão I/O, prompt rules, persist fail-soft, pricing/niche definitions |
+| `video` | [`skills/video.md`](skills/video.md) | Gerar vídeo de demo do prospect (Higgsfield planejado, fallback CSS animado em Vercel) — **placeholder** até API disponível |
 
 Para registrar como slash command nativo no Claude Code, copie/symlink para `.claude/commands/o6-offerbook.md`. Hoje o arquivo é apenas referência discoverável via CLAUDE.md.
+
+## Agent Swarm Architecture
+
+O6 está estruturado como uma **cadeia composta de agentes Claude** que se alimentam via tabelas Supabase. Cada agente é uma rota `app/api/<scope>/<name>/route.ts`; o padrão canônico está em [`skills/agents.md`](skills/agents.md).
+
+### Catálogo de agentes (planejados + em produção)
+
+| Agente | Status | Input | Output | Persistência |
+|---|---|---|---|---|
+| **audit** | ✅ Produção | `prospectId` + `auditUrl` | 7 scores + recomendações | `audits` table + `prospects.audit_score`/`audit_json` |
+| **opener** | ✅ Produção | `prospectId` (lê audit) | Mensagem WhatsApp 3-4 linhas | `prospects.abertura_whatsapp` + `abordagem_gerada_em` |
+| **demo** | ✅ Produção | `prospectId` (lê audit + categoria) | HTML landing page deployada na Vercel | `prospects.demo_url` + `demo_generated_at` |
+| **sintese** | ✅ Produção | `clienteId` + state Offer Book completo | 4 campos estratégicos (posicionamento, diagnóstico crítico, oferta irresistível, mensagem principal) | `offer_book_sintese` table (cache 7d) |
+| **generate** (engine) | ✅ Produção | `clienteId` + state | Síntese + plano de ação (3 prioridades) + roadmap (3 fases) + insights ocultos (7 categorias) + strategic engine (3 horizontes) | `offer_books.ai_output` JSONB |
+| **video** | 📋 Planejado | `prospectId` (lê demo URL + audit) | Vídeo 15s ou página animada antes/depois | `prospects.video_url` (a criar) |
+| **outreach-wpp** | 📋 Planejado | `prospectId` + número WhatsApp aprovado | Disparo da mensagem + log | `prospects.outreach_sent_at` (a criar) |
+| **outreach-email** | 📋 Planejado | `clienteId` + lista de contatos | Email via Resend + tracking | nova tabela `outreach_log` |
+| **proposta** | 📋 Planejado | `clienteId` (lê Offer Book + scores) | Proposta PDF/email com pricing por nicho | nova tabela `propostas` |
+| **onboarding** | 📋 Planejado | `clienteId` (após "Fechado" no CRM) | Checklist + agendamento kickoff + setup pixels | atualiza `crm_leads` + cria `meetings` |
+
+### Padrão de orquestração
+
+```
+Apify Search          (rota /api/apify-search)
+        │ insere em
+        ▼
+   prospects ─────────────────────────────────┐
+        │                                       │
+        ▼                                       ▼
+   [audit]                              [outreach-email] (planejado)
+        │ grava em audits + prospects           │
+        ▼                                       ▼
+   [opener] ───┐                          (lê audit)
+        │      │
+        ▼      ▼
+   prospects  [demo]
+   .abertura  │ grava demo_url
+              ▼
+              [video] (planejado)
+              │ grava video_url
+              ▼
+   ───── PROSPECT pronto para outreach ─────
+                                    │
+                                    ▼ (humano dispara via UI ProspectDrawer)
+                                  WhatsApp
+                                    │
+                                    ▼ (responde + agenda)
+                                CRM Lead ─────► [diagnostico] (Offer Book)
+                                                  │
+                                                  ▼
+                                              [generate] / [sintese]
+                                                  │
+                                                  ▼ (cliente fecha)
+                                              [proposta] (planejado)
+                                                  │
+                                                  ▼
+                                              [onboarding] (planejado)
+```
+
+### Como agentes se comunicam (regra)
+
+1. **Via Supabase, nunca via fila/queue/Redis.** Cada agente lê o estado dele de uma tabela e escreve o próximo estado em coluna pré-acordada. Outro agente faz polling/trigger quando precisa.
+2. **Nada de webhooks Vercel→Vercel** entre rotas O6. Internamente, uma rota pode chamar outra via `fetch(`${req.nextUrl.origin}/api/...)` quando precisar (ex.: pipeline → audit), mas o caso normal é o caller original orquestrar.
+3. **Estado é a tabela**. Não há "agente A guarda contexto pra agente B" — agente B sempre relê de `prospects` ou tabela cache.
+4. **Idempotência**. Toda rota agente deve aceitar `force?: boolean` e cachear por 7 dias. Re-rodar sem `force` retorna cached. Re-rodar com `force=true` regera.
+5. **Trigger humano por enquanto**. Até o cron/watcher de Sprint 8 sair, agentes são disparados por clique no UI (ProspectDrawer "Gerar Abordagem", "Gerar Demo", etc.) ou por uma orquestradora `pipeline` que chama vários em série. Nenhum agente roda sozinho.
+6. **Custo controlado**. Toda chamada Claude paga é cacheada. Toda regeneração explícita pelo usuário é log'd com timestamp pra audit financeiro futuro.
+
+### Sprint 8 (pendente) — orquestração assíncrona
+
+Quando habilitarmos:
+- **`cron` no Vercel** ou **Supabase Edge Functions scheduled** disparam agentes que dependem de tempo (re-audit mensal, video após 24h do demo, etc.)
+- **`agent_runs` table** com `agent_name`, `entity_id`, `status`, `started_at`, `finished_at`, `error`, `output_ref` — log único de todas execuções
+- **Idempotency key** em todo POST agente: `<agent>:<entity>:<YYYYMMDD>` para evitar duplicar execução por race
+
+Até lá, todos os disparos são síncronos vindo do humano operador.
 
 ## Working agreements
 
