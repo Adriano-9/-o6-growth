@@ -295,6 +295,31 @@ Playbooks por módulo. Ler **antes** de iniciar uma tarefa que se encaixe no esc
 
 Para registrar como slash command nativo no Claude Code, copie/symlink para `.claude/commands/o6-offerbook.md`. Hoje o arquivo é apenas referência discoverável via CLAUDE.md.
 
+## Design System Reference
+
+[`design.md`](design.md) — tokens visuais (Modern Noir / Dark Minimalist) importados do xrun-projeto. Complementa os tokens em `app/globals.css`.
+
+## AIOX Agent Squad (importado do xrun-projeto)
+
+12 agentes especializados disponíveis em 3 formatos (`.github/agents/`, `.claude/skills/AIOX/`, `.codex/`):
+
+| Agente | Papel |
+|---|---|
+| `aiox-master` | Orquestrador do squad — delega e coordena |
+| `analyst` | Análise de dados e métricas |
+| `architect` | Arquitetura de sistema |
+| `data-engineer` | Pipelines e modelagem de dados |
+| `dev` | Desenvolvimento e implementação |
+| `devops` | Infra, CI/CD, deploy |
+| `pm` | Gestão de projeto |
+| `po` | Product ownership e backlog |
+| `qa` | Qualidade e testes |
+| `sm` | Scrum master e facilitação |
+| `squad-creator` | Bootstrap de squads novos |
+| `ux-design-expert` | UX/UI design |
+
+**Skills extras** em `.claude/skills/`: `architect-first`, `checklist-runner`, `coderabbit-review`, `mcp-builder`, `skill-creator`, `synapse`, `tech-search`.
+
 ## Agent Swarm Architecture
 
 O6 está estruturado como uma **cadeia composta de agentes Claude** que se alimentam via tabelas Supabase. Cada agente é uma rota `app/api/<scope>/<name>/route.ts`; o padrão canônico está em [`skills/agents.md`](skills/agents.md).
