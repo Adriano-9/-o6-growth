@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { notifyTelegram, formatPipelineComplete, formatDemoGenerated } from "@/app/_lib/telegram";
+import { getCopywriterVoice } from "@/app/_lib/copywriters";
 
 // Claude precisa de até ~30s + audit interno ~30s
 export const maxDuration = 120;
@@ -9,7 +10,12 @@ export const maxDuration = 120;
 // Types
 // ─────────────────────────────────────────────────────────────
 
-type PipelineInput = { prospect_id: string; force?: boolean; skipDemo?: boolean };
+type PipelineInput = {
+  prospect_id: string;
+  force?: boolean;
+  skipDemo?: boolean;
+  copywriter?: string;
+};
 
 type Recommendation = {
   priority: "P1" | "P2" | "P3";
@@ -54,7 +60,11 @@ type ProspectRow = {
 // Build WhatsApp opener prompt
 // ─────────────────────────────────────────────────────────────
 
-function buildOpenerPrompt(p: ProspectRow, audit: AuditResult): string {
+function buildOpenerPrompt(
+  p: ProspectRow,
+  audit: AuditResult,
+  copywriterVoice: string,
+): string {
   const cidade = p.cidade || "sua cidade";
   const categoria = p.categoria || "seu segmento";
 
@@ -96,7 +106,7 @@ ${weakest.map((w) => `- ${w.key}: ${w.value}/100`).join("\n")}
 
 PRINCIPAIS PROBLEMAS ENCONTRADOS:
 ${topRecs || "(nenhuma recomendação P1 ainda)"}
-
+${copywriterVoice ? "\n" + copywriterVoice + "\n" : ""}
 INSTRUÇÕES OBRIGATÓRIAS
 1. 3 a 4 linhas. Casual, pt-BR, sem corporativês.
 2. Comece chamando o negócio pelo nome (ou pelo dono se aparente).
@@ -163,7 +173,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
 
-  const { prospect_id, force = false, skipDemo = false } = body;
+  const { prospect_id, force = false, skipDemo = false, copywriter } = body;
   if (!prospect_id) {
     return NextResponse.json(
       { error: "prospect_id é obrigatório" },
@@ -247,7 +257,8 @@ export async function POST(req: NextRequest) {
   // ─── 2. Claude gera abertura
   let abertura: string;
   try {
-    const prompt = buildOpenerPrompt(prospect, audit);
+    const voice = getCopywriterVoice(copywriter);
+    const prompt = buildOpenerPrompt(prospect, audit, voice);
     abertura = await generateOpener(prompt);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erro no Claude";

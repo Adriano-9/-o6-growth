@@ -554,7 +554,7 @@ export async function POST(req: NextRequest) {
 
   // Telegram (fire-and-forget)
   notifyTelegram(
-    `<b>Video gerado</b>\n\nProspect: <b>${prospect.nome}</b>\nURL: ${videoUrl}`,
+    `🎬 <b>Vídeo gerado</b> para <b>${prospect.nome}</b>:\n${videoUrl}`,
   );
 
   return NextResponse.json({

@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Beaker, CalendarPlus, Check, Copy, ExternalLink, Globe, KanbanSquare, Loader2, MessageCircle, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowRight, Beaker, CalendarPlus, Check, Copy, ExternalLink, Film, Globe, KanbanSquare, Loader2, MessageCircle, Sparkles, Trash2, X } from "lucide-react";
 import {
   emptyProspectInput,
   PROSPECT_STATUS,
@@ -79,6 +79,12 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
   const [generatingDemo, setGeneratingDemo] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
 
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [generatingVideo, setGeneratingVideo] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
+
+  const [copywriter, setCopywriter] = useState<string>("");
+
   async function handleGerarAbordagem(force = false) {
     if (!initial) return;
     setGenerating(true);
@@ -87,7 +93,11 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
       const res = await fetch("/api/prospects/pipeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prospect_id: initial.id, force }),
+        body: JSON.stringify({
+          prospect_id: initial.id,
+          force,
+          ...(copywriter ? { copywriter } : {}),
+        }),
       });
 
       if (!res.ok) {
@@ -146,6 +156,30 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
       setDemoError(msg);
     } finally {
       setGeneratingDemo(false);
+    }
+  }
+
+  async function handleGerarVideo() {
+    if (!initial) return;
+    setGeneratingVideo(true);
+    setVideoError(null);
+    try {
+      const res = await fetch("/api/prospects/video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prospect_id: initial.id }),
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error || `Erro ${res.status}`);
+      }
+      const data = (await res.json()) as { url: string };
+      setVideoUrl(data.url);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao gerar vídeo";
+      setVideoError(msg);
+    } finally {
+      setGeneratingVideo(false);
     }
   }
 
@@ -247,9 +281,11 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
         : null,
     );
     setDemoUrl(initial?.demoUrl ?? null);
+    setVideoUrl(null);
     setAbordagemError(null);
     setAuditError(null);
     setDemoError(null);
+    setVideoError(null);
   }, [initial?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const patch = (p: Partial<ProspectInput>) =>
@@ -448,13 +484,34 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
                 </div>
               </div>
 
+              {/* Copywriter voice selector (opcional) */}
+              {initial.site && (
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">
+                    Voz da abordagem
+                  </label>
+                  <select
+                    value={copywriter}
+                    onChange={(e) => setCopywriter(e.target.value)}
+                    disabled={generating || auditing || generatingDemo || generatingVideo}
+                    className="flex-1 rounded-lg border border-white/10 bg-zinc-950/60 px-3 py-1.5 text-xs text-white outline-none focus:border-brand-cyan/60 focus:ring-2 focus:ring-brand-cyan/20 disabled:opacity-50"
+                  >
+                    <option value="">Default (consultor)</option>
+                    <option value="dan-kennedy">Dan Kennedy (direto, no-BS)</option>
+                    <option value="eugene-schwartz">Eugene Schwartz (mercado)</option>
+                    <option value="gary-halbert">Gary Halbert (A-pile, pessoal)</option>
+                    <option value="jon-benson">Jon Benson (pattern interrupt)</option>
+                  </select>
+                </div>
+              )}
+
               {/* Audit + Gerar Abordagem + Gerar Demo buttons */}
               {initial.site && (
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <button
                     type="button"
                     onClick={handleAudit}
-                    disabled={auditing || generating || generatingDemo}
+                    disabled={auditing || generating || generatingDemo || generatingVideo}
                     className="inline-flex items-center justify-center gap-2 rounded-lg border border-purple-500/40 bg-purple-500/10 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-purple-300 transition hover:bg-purple-500/20 disabled:opacity-40"
                   >
                     {auditing ? (
@@ -467,7 +524,7 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
                   <button
                     type="button"
                     onClick={() => handleGerarAbordagem(!!abordagem)}
-                    disabled={generating || auditing || generatingDemo}
+                    disabled={generating || auditing || generatingDemo || generatingVideo}
                     className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-40"
                   >
                     {generating ? (
@@ -484,7 +541,7 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
                   <button
                     type="button"
                     onClick={handleGerarDemo}
-                    disabled={generatingDemo || auditing || generating}
+                    disabled={generatingDemo || auditing || generating || generatingVideo}
                     className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-cyan/40 bg-brand-cyan/10 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-brand-cyan transition hover:bg-brand-cyan/20 disabled:opacity-40"
                   >
                     {generatingDemo ? (
@@ -493,6 +550,23 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
                       <Globe className="h-3.5 w-3.5" />
                     )}
                     {generatingDemo ? "Gerando..." : demoUrl ? "Regen. Demo" : "Gerar Demo"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGerarVideo}
+                    disabled={generatingVideo || auditing || generating || generatingDemo}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-pink-400/40 bg-pink-400/10 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-pink-200 transition hover:bg-pink-400/20 disabled:opacity-40"
+                  >
+                    {generatingVideo ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Film className="h-3.5 w-3.5" />
+                    )}
+                    {generatingVideo
+                      ? "Gerando vídeo..."
+                      : videoUrl
+                        ? "Regen. Vídeo"
+                        : "Gerar Vídeo"}
                   </button>
                 </div>
               )}
@@ -611,6 +685,57 @@ export function ProspectDrawer({ mode, initial, onClose, onSubmit, onDelete }: P
                     >
                       <ExternalLink className="h-3 w-3" />
                       Ver Demo
+                    </a>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          )}
+
+          {/* Video Panel */}
+          {mode !== "create" && initial && (videoUrl || generatingVideo || videoError) && (
+            <div className="mt-4 rounded-xl border border-pink-400/20 bg-pink-400/[0.04] p-4">
+              <div className="flex items-center gap-2">
+                <div className="grid h-7 w-7 place-items-center rounded-md border border-pink-400/30 bg-pink-400/10 text-pink-300">
+                  <Film className="h-3.5 w-3.5" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-pink-200">
+                    Vídeo Animado
+                  </div>
+                  <div className="mt-0.5 text-[10px] text-zinc-500">
+                    Página animada com antes/depois + deploy automático
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3">
+                {generatingVideo ? (
+                  <div className="space-y-2 py-1">
+                    <div className="h-3 w-full animate-pulse rounded bg-white/[0.06]" />
+                    <div className="h-3 w-2/3 animate-pulse rounded bg-white/[0.06]" />
+                  </div>
+                ) : videoError ? (
+                  <p className="rounded-md border border-red-500/20 bg-red-500/[0.06] p-2 text-xs text-red-200">
+                    {videoError}
+                  </p>
+                ) : videoUrl ? (
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 truncate rounded-md border border-pink-400/20 bg-zinc-950/40 px-3 py-2 text-xs text-pink-200 hover:underline"
+                    >
+                      {videoUrl}
+                    </a>
+                    <a
+                      href={videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-pink-400/40 bg-pink-400/15 px-3 py-2 text-xs font-bold uppercase tracking-wider text-pink-200 transition hover:bg-pink-400/25"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Ver Vídeo
                     </a>
                   </div>
                 ) : null}
