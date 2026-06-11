@@ -1,0 +1,31 @@
+# Deep Research — Cross-Domain Handoff Template
+# Enables Deep Research to receive upstream data (e.g., from ETL-Ops)
+# and emit downstream handoffs (e.g., to Spy for scoring/benchmarking)
+# Roundtable RT-2026-04-09 — Wave 1B
+
+handoff:
+  id: dr-cross-domain-handoff
+  version: "1.0.0"
+
+  # Inbound contract: what Deep Research accepts from upstream squads
+  inbound:
+    from_squad: ""           # e.g., "etl-ops"
+    from_domain: ""          # e.g., "Operational"
+    artifact_type: ""        # e.g., "etl-pipeline-output", "enriched-transcript"
+    context_summary: ""
+    evidence_paths: []
+    quality_gate_passed: false  # upstream must declare if their QG passed
+
+  # Outbound contract: what Deep Research emits to downstream squads
+  outbound:
+    to_squad: ""             # e.g., "spy"
+    to_domain: ""            # e.g., "Tactical"
+    artifact_type: ""        # e.g., "research-report", "evidence-synthesis"
+    context_summary: ""
+    evidence_paths: []
+    qa_gate_passed: false    # Deep Research QA tier (Ioannidis + Kahneman) result
+    qa_details:
+      ioannidis_ppv: null    # Positive Predictive Value from evidence audit
+      kahneman_score: null   # 12-question checklist score from decision audit
+    blocking_risks: []
+    next_action: ""

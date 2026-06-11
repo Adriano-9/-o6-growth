@@ -1,0 +1,36 @@
+quality_gates:
+  squad: deep-research
+  version: "1.0.1"
+  validation_batch: "20260514-validate-deep"
+  gates:
+    - id: question-quality
+      severity: blocking
+      description: "Research question must be classified and framed before evidence collection."
+      evidence_required:
+        - use_case
+        - pico_or_equivalent_scope
+    - id: methodology-fit
+      severity: blocking
+      description: "Review methodology must match question type and evidence availability."
+      evidence_required:
+        - selected_methodology
+        - rationale
+    - id: source-credibility
+      severity: high
+      description: "Sources must be rated for authority, recency, bias and rigor."
+      evidence_required:
+        - source_ratings
+        - citation_trail
+    - id: evidence-reliability
+      severity: blocking
+      description: "Evidence synthesis must audit PPV, bias and reliability before final answer."
+      evidence_required:
+        - reliability_audit
+        - bias_flags
+    - id: decision-quality
+      severity: blocking
+      description: "Decision-oriented outputs must pass bias checklist and pre-mortem review."
+      evidence_required:
+        - kahneman_audit
+        - premortem
+

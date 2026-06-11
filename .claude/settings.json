@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash C:/Users/Didico/Downloads/*/install.sh *)",
+      "Bash(npm install --prefix C:/Users/Didico/o6-growth *)",
+      "Bash(cp -r C:/Users/Didico/Downloads/* C:/Users/Didico/o6-growth/squads/*)"
+    ]
+  }
+}

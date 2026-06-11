@@ -1,0 +1,81 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Squad: Offer Book
+# Domain: Irresistible Offer Architecture (Grand Slam / Value Equation)
+# Agnostic: workspace_integration.level = none (standalone-ready)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+pack:
+  name: offer-book
+  version: "1.0.0"
+  description: >-
+    Squad agnóstico para arquitetar ofertas irresistíveis (Grand Slam Offers).
+    Destila a Value Equation, garantias, bônus, escassez/urgência e naming num
+    pipeline self-contained — não depende de workspace de business. Todos os
+    inputs chegam em tempo de chamada.
+  icon: "💎"
+
+entry_agent: offer-architect
+
+squad:
+  name: offer-book
+  display_name: "Offer Book Squad"
+  version: "1.0.0"
+  domain: "Irresistible Offer Architecture"
+  description: |
+    Squad self-contained para construir e versionar ofertas irresistíveis.
+    Metodologia: Value Equation (dream outcome / likelihood / time / effort),
+    Grand Slam Offer (core + bônus + garantias + escassez + urgência + naming).
+  keywords:
+    - offer
+    - offerbook
+    - grand-slam-offer
+    - value-equation
+    - pricing-offer
+    - guarantees
+    - bonuses
+    - scarcity-urgency
+  entry_agent: offer-architect
+  created_by: export-squad-greenfield
+  created_at: "2026-06-08"
+  tested: false
+
+# Agnostic by design — consumes nothing from workspace/businesses.
+workspace_integration:
+  level: none
+  rationale: >-
+    Offer Book é self-contained. Recebe o contexto de produto/ICP como input na
+    chamada (não lê workspace/businesses). Produz offerbook entries em outputs/.
+
+capabilities:
+  - offer-architecture
+  - value-equation-scoring
+  - guarantee-design
+  - bonus-stacking
+  - scarcity-urgency-design
+  - offer-naming
+
+agents:
+  - id: offer-architect
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "offerbook entry (YAML) per templates/offerbook-entry-tmpl.yaml"
+      story_role: executor
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: ["offer"]
+    file: agents/offer-architect.md
+    role: Irresistible Offer Architect
+    status: active
+    is_lead: true
+
+artifact_contracts:
+  - artifact_id: offerbook-entry
+    template_path: templates/offerbook-entry-tmpl.yaml
+    lifecycle_states: [draft, validated, approved]
+
+activation:
+  entry_agent: offer-architect
+  shortcuts:
+    - "/offer-book:offer-architect"

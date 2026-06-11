@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist da Demo Comprável · AIOX na Prática</title>
+<!--
+  CHECKLIST DA DEMO COMPRÁVEL · Bônus do Zoom de Implementação (AIOX na Prática · Academia Lendária)
+  Identidade: Forja Lendár[IA] (colors_and_type.css). Checklist preenchível: Antes → Demo ao vivo → Fechamento.
+  Fontes: _DSPC_GUIA_COMPLETO.md (Demonstre / casos), webinario-v3.1 (Bloco 6 demo, "objeção morre", "gargalo é não ter o que mostrar").
+  Export: window.print() → "Salvar como PDF". Sem dependências externas (exceto Google Fonts).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Cinzel:wght@400;500;600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js"></script>
+<style>
+:root{
+  --preto:#131109; --preto-2:#1B1810; --preto-3:#221E14;
+  --bege:#E8DCC4; --amarelo:#F6C324; --vermelho-sinal:#E63946;
+  --bronze:#9A7D56; --bronze-claro:#A88A5C; --brasa:#8B0000; --cinzas:#4A453E;
+  --fg1:#E8DCC4; --fg2:rgba(232,220,196,.68); --fg3:rgba(232,220,196,.60);
+  --fg-bronze:#9A7D56; --fg-amarelo:#F6C324;
+  --linha-bronze:rgba(139,111,71,.40); --linha-fraca:rgba(139,111,71,.18);
+  --amarelo-08:rgba(246,195,36,.08); --amarelo-30:rgba(246,195,36,.30);
+  --brasa-14:rgba(139,0,0,.14);
+  --ouro-revelado:linear-gradient(135deg,#8B6F47,#F6C324);
+  --linha-de-fogo:linear-gradient(180deg,#F6C324,#E63946,#8B0000);
+  --voz-monumental:'Archivo Black','Arial Black',sans-serif;
+  --voz-sagrada:'Cinzel','Trajan Pro',serif;
+  --voz-operacional:'EB Garamond',Georgia,serif;
+  --codex-max:1000px;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--preto); color:var(--fg1); font-family:var(--voz-operacional); font-size:17px; line-height:1.7;}
+.wrap{max-width:var(--codex-max); margin:0 auto; padding:64px 32px 110px; background:var(--preto); background-image:radial-gradient(1200px 600px at 80% 0%, var(--amarelo-08), transparent 60%),radial-gradient(900px 560px at -12% 12%, var(--brasa-14), transparent 55%);}
+.kicker{font-family:var(--voz-sagrada); font-size:12px; letter-spacing:.32em; text-transform:uppercase; color:var(--amarelo); margin:0 0 14px;}
+.meta{font-family:var(--voz-sagrada); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--bronze);}
+h1.title{font-family:var(--voz-monumental); text-transform:uppercase; letter-spacing:-.02em; line-height:.9; color:var(--bege); font-size:clamp(38px,7vw,76px); margin:0 0 18px;}
+.subtitle{font-family:var(--voz-sagrada); font-size:clamp(17px,2.4vw,23px); color:var(--bronze-claro); letter-spacing:.02em; line-height:1.3; margin:0 0 26px;}
+.firebar{height:3px; width:120px; background:var(--linha-de-fogo); border-radius:3px; margin:0 0 26px;}
+.lead{font-size:19px; color:var(--fg2); max-width:66ch;}
+.lead strong{color:var(--bege); font-weight:600;}
+.masthead{border-bottom:1px solid var(--linha-bronze); padding-bottom:34px;}
+.brandline{display:flex; align-items:center; gap:14px; margin-bottom:30px; flex-wrap:wrap;}
+.brandline .seal{width:34px;height:34px;border:1.5px solid var(--bronze);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--voz-sagrada);color:var(--amarelo);font-size:15px;flex:0 0 auto;}
+
+.pull{border-left:3px solid var(--amarelo); background:var(--amarelo-08); padding:16px 20px; margin:30px 0 0; font-size:18px; color:var(--fg1); font-style:italic;}
+.pull cite{display:block; font-style:normal; font-family:var(--voz-sagrada); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--fg-bronze); margin-top:8px;}
+
+/* ---- Fase ---- */
+.phase{margin-top:50px; border:1px solid var(--linha-fraca); border-radius:14px; background:linear-gradient(180deg,var(--preto-2),var(--preto)); padding:30px 32px 26px; position:relative; overflow:hidden; break-inside:avoid; page-break-inside:avoid;}
+.phase:before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--linha-de-fogo); opacity:.85;}
+.phase-head{display:flex; align-items:baseline; gap:14px; margin-bottom:6px;}
+.phase-num{font-family:var(--voz-monumental); color:var(--amarelo); font-size:30px; text-shadow:0 2px 0 var(--brasa);}
+.phase-name{font-family:var(--voz-sagrada); color:var(--bege); font-size:clamp(20px,2.6vw,26px); letter-spacing:.05em; text-transform:uppercase;}
+.phase-sub{color:var(--fg3); font-size:15px; font-style:italic; margin:2px 0 20px;}
+
+/* ---- Item de checklist ---- */
+.item{display:flex; gap:14px; align-items:flex-start; padding:14px 0; border-top:1px solid var(--linha-fraca); cursor:pointer; user-select:none;}
+.item:first-of-type{border-top:none;}
+.item .box{width:20px;height:20px;border:1.6px solid var(--bronze);border-radius:5px;flex:0 0 auto;margin-top:3px;position:relative;transition:all .15s;}
+.item.on .box{background:var(--amarelo); border-color:var(--amarelo);}
+.item.on .box:after{content:"✓"; position:absolute; inset:0; color:var(--preto); font-size:15px; line-height:18px; text-align:center; font-weight:700;}
+.item .txt{flex:1;}
+.item .it-title{color:var(--bege); font-size:17.5px; line-height:1.4;}
+.item.on .it-title{color:var(--fg2);}
+.item .it-why{color:var(--fg3); font-size:14.5px; font-style:italic; margin-top:3px;}
+
+.nextstep{margin-top:54px; border:1px solid var(--linha-bronze); border-radius:14px; padding:30px 34px; background:radial-gradient(700px 300px at 90% 0,var(--amarelo-08),transparent 60%);}
+.nextstep .kicker{margin-bottom:10px;}
+.nextstep h3{font-family:var(--voz-sagrada); color:var(--bege); font-size:23px; margin:0 0 12px;}
+.nextstep p{color:var(--fg2); margin:0; max-width:64ch;}
+.nextstep b{color:var(--bege);}
+.colophon{margin-top:46px; padding-top:22px; border-top:1px solid var(--linha-fraca); color:var(--fg3); font-size:13px; line-height:1.7;}
+.colophon b{color:var(--fg-bronze); font-weight:600;}
+.export-btn{position:fixed; top:22px; right:22px; z-index:50; font-family:var(--voz-sagrada); font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--preto); background:var(--ouro-revelado); border:none; border-radius:999px; padding:13px 22px; cursor:pointer; box-shadow:0 6px 24px rgba(0,0,0,.45); transition:transform .15s;}
+.export-btn:hover{transform:translateY(-1px);}
+@media print{
+  @page{size:A4; margin:0;}
+  *{-webkit-print-color-adjust:exact!important; print-color-adjust:exact!important;}
+  html,body{background:var(--preto)!important;}
+  .no-print{display:none!important;} .wrap{padding:14mm 12mm; max-width:none;}
+  .phase{break-inside:avoid;} .nextstep,.pull{break-inside:avoid;} h1.title{font-size:50px;}
+}
+</style>
+</head>
+<body>
+<button class="export-btn no-print" onclick="exportarPDF()">Exportar PDF&nbsp;↓</button>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="brandline"><span class="seal">∞</span><span class="meta">AIOX na Prática · Academia Lendár[IA]</span></div>
+    <p class="kicker">Bônus do Zoom de Implementação</p>
+    <h1 class="title">Checklist da Demo Comprável</h1>
+    <p class="subtitle">O que sua demonstração precisa ter pra virar contrato — não só impressionar.</p>
+    <div class="firebar"></div>
+    <p class="lead">A venda mais poderosa não é o pitch — é a <strong>demonstração ao vivo</strong>. Quando o cliente vê o squad funcionar no problema dele, <strong>a objeção morre antes de nascer</strong>. Mas demo que só impressiona não vende. <strong>Demo comprável</strong> é a que termina em contrato. Passe a sua por este checklist — antes, durante e no fechamento.</p>
+    <div class="pull">O gargalo de venda não é tráfego, audiência ou Instagram. O gargalo é não ter o que mostrar. Quando você tem o squad rodando, demonstração vira contrato.<cite>Método DSPC · caso Karla Pazos</cite></div>
+  </header>
+
+  <!-- FASE 1 -->
+  <section class="phase">
+    <div class="phase-head"><span class="phase-num">1</span><span class="phase-name">Antes — prepare uma demo que vende</span></div>
+    <p class="phase-sub">Demo comprável se prepara. Sem isto, você chega pra "impressionar" — e impressão não fecha contrato.</p>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">Tenho algo REAL rodando pra mostrar — não só slide nem promessa.</span><span class="it-why">O gargalo é não ter o que mostrar. Sem squad rodando, não há demo.</span></span></div>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">A demo ataca a dor cara DELE (do nicho/cliente), não um exemplo genérico.</span><span class="it-why">Médico, não farmacêutico: você diagnostica o caso dele antes de mostrar a solução.</span></span></div>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">Carreguei o caso, os dados e o processo do nicho dele (a "pele", não o template puro).</span><span class="it-why">Template puro vira commodity. O que vende é template + adaptação ao processo daquele cliente.</span></span></div>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">Sei o "antes" mensurável (ex.: "hoje isso leva 4 horas") pra contrastar com o depois.</span><span class="it-why">Sem o antes, o depois não tem régua — e o cliente não enxerga o valor.</span></span></div>
+  </section>
+
+  <!-- FASE 2 -->
+  <section class="phase">
+    <div class="phase-head"><span class="phase-num">2</span><span class="phase-name">Durante — a demo ao vivo</span></div>
+    <p class="phase-sub">É aqui que a objeção morre. O cliente precisa VER funcionar — não ouvir que funciona.</p>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">Mostro o squad FUNCIONANDO ao vivo — não vídeo gravado, não screenshot.</span><span class="it-why">Ao vivo é o que mata a objeção. Gravado vira "será que é montado?".</span></span></div>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">Resolvo um pedaço do problema REAL dele na frente dele.</span><span class="it-why">Quando o cliente vê o squad funcionar no caso dele, a objeção morre antes de nascer.</span></span></div>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">Mostro o PROCESSO acontecendo, não só o resultado final.</span><span class="it-why">Ver o processo real funcionando é mais crível e comprável do que só ver a promessa.</span></span></div>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">Mostro o antes → depois mensurável (ex.: 4h → 30min).</span><span class="it-why">O salto concreto é o que fica na cabeça dele depois da call.</span></span></div>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">Conduzo, não despejo — deixo ele reagir, perguntar e apontar o que mais dói.</span><span class="it-why">A demo também é diagnóstico: o que ele reage revela a próxima venda.</span></span></div>
+  </section>
+
+  <!-- FASE 3 -->
+  <section class="phase">
+    <div class="phase-head"><span class="phase-num">3</span><span class="phase-name">Fechamento — vire a demo em contrato</span></div>
+    <p class="phase-sub">A demo comprável não termina em "que legal" — termina numa oferta na tela e num próximo passo.</p>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">Termino com a oferta-piloto na tela: nicho · dor · processo · Sprint · prazo (7–21 dias) · faixa.</span><span class="it-why">Oferta concreta fecha; "depois te mando o orçamento" esfria.</span></span></div>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">Apresento a régua ROI 10x — a matemática que justifica o preço.</span><span class="it-why">ROI 10x não é promessa de receita; é a lógica que tira você da tabela de preço por hora.</span></span></div>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">Proponho o próximo passo concreto: piloto + recorrência mensal.</span><span class="it-why">Piloto sem recorrência é cliente queimado; piloto + retainer paga você muitas vezes ao ano.</span></span></div>
+    <div class="item"><span class="box"></span><span class="txt"><span class="it-title">Ofereço a garantia segura — de entrega, nunca de receita.</span><span class="it-why">"Se ao final não houver processo funcionando e documentado, eu continuo sem custo até entregar." Risco é seu, não dele.</span></span></div>
+  </section>
+
+  <section class="nextstep">
+    <p class="kicker">Liga com o resto do seu kit</p>
+    <h3>A oferta que você mostra na demo vem do seu Mapa DSPC.</h3>
+    <p>Preencheu o <b>C — Contrato</b> do <b>Mapa DSPC</b>? É essa oferta-piloto que entra na tela no fechamento. E a dor que você demonstra sai do seu diagnóstico — do <b>D — Dor</b>. A demo é onde o mapa vira contrato.</p>
+  </section>
+
+  <p class="colophon">
+    <b>Método DSPC</b> — Dor · Sprint · Pitch · Contrato. A demonstração é o passo onde o serviço vira venda: «a venda mais poderosa não é o pitch, é a demonstração ao vivo». &nbsp;|&nbsp; Use com o <b>Mapa DSPC</b>, o <b>Banco de Dores Caras</b> e o <b>Copiloto DSPC</b>. &nbsp;|&nbsp; AIOX na Prática · Academia Lendár[IA].
+  </p>
+
+</div>
+<script>
+  document.querySelectorAll('.item').forEach(function(el){ el.addEventListener('click', function(){ el.classList.toggle('on'); }); });
+</script>
+<script>
+function _prep(on){
+  document.querySelectorAll('[contenteditable][data-ph]').forEach(function(el){
+    if(on){ if(!el.textContent.trim()){ el.dataset.we='1'; el.textContent=el.getAttribute('data-ph'); el.style.color='var(--fg3)'; el.style.fontStyle='italic'; } }
+    else if(el.dataset.we){ el.textContent=''; el.style.color=''; el.style.fontStyle=''; delete el.dataset.we; }
+  });
+  document.querySelectorAll('.print-url').forEach(function(el){ el.style.display = on?'block':''; });
+}
+async function exportarPDF(){
+  var btn=document.querySelector('.export-btn');
+  if(typeof html2pdf==='undefined'){ window.print(); return; }
+  var old=btn.innerHTML; btn.textContent='Gerando PDF…'; btn.disabled=true; _prep(true);
+  try{
+    if(document.fonts&&document.fonts.ready){ await document.fonts.ready; }
+    await html2pdf().set({
+      margin:0, filename:'Checklist-Demo-Compravel-AIOX.pdf',
+      image:{type:'jpeg',quality:0.97},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#131109',windowWidth:1040},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy'],avoid:['.phase','.item','.nextstep','.pull']}
+    }).from(document.querySelector('.wrap')).save();
+  }catch(e){ window.print(); }
+  finally{ _prep(false); btn.innerHTML=old; btn.disabled=false; }
+}
+</script>
+</body>
+</html>

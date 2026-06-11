@@ -1,0 +1,20 @@
+# Workflow: Dataset Analysis (single-agent, self-contained)
+name: analysis
+description: End-to-end analysis from call-time dataset to a draft analysis report.
+entry_agent: data-analyst
+
+phases:
+  - id: frame
+    agent: data-analyst
+    task: tasks/analyze-dataset.md
+    elicit: true
+    description: Collect dataset + business question (ask for any missing).
+  - id: analyze
+    agent: data-analyst
+    task: tasks/analyze-dataset.md
+    description: Profile, quality, descriptive stats, patterns.
+  - id: emit
+    agent: data-analyst
+    output: outputs/data-analysis/{slug}/analysis-report.md
+    checklist: checklists/analysis-quality-checklist.md
+    description: Synthesize insights + emit report (draft) and run the checklist.

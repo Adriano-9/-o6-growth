@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abridor de Conversa · AIOX na Prática</title>
+<!--
+  ABRIDOR DE CONVERSA (60s) · Bônus do Zoom de Implementação (AIOX na Prática · Academia Lendária)
+  Identidade: Forja Lendár[IA]. Objetivo do abridor: MARCAR o diagnóstico, não vender.
+  Fontes: webinario-v3.1 (Dia 2 "não é call de venda, é diagnóstico"; Dia 3 "volta com mapa + proposta"),
+          _DSPC_GUIA_COMPLETO.md (médico não farmacêutico; garantia de entrega; anti-padrões).
+  Export: window.print() → "Salvar como PDF". Sem dependências externas (exceto Google Fonts).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Cinzel:wght@400;500;600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js"></script>
+<style>
+:root{
+  --preto:#131109; --preto-2:#1B1810; --preto-3:#221E14;
+  --bege:#E8DCC4; --amarelo:#F6C324; --vermelho-sinal:#E63946;
+  --bronze:#9A7D56; --bronze-claro:#A88A5C; --brasa:#8B0000; --cinzas:#4A453E;
+  --fg1:#E8DCC4; --fg2:rgba(232,220,196,.68); --fg3:rgba(232,220,196,.60);
+  --fg-bronze:#9A7D56; --fg-amarelo:#F6C324;
+  --linha-bronze:rgba(139,111,71,.40); --linha-fraca:rgba(139,111,71,.18);
+  --amarelo-08:rgba(246,195,36,.08); --amarelo-30:rgba(246,195,36,.30);
+  --brasa-14:rgba(139,0,0,.14);
+  --ouro-revelado:linear-gradient(135deg,#8B6F47,#F6C324);
+  --linha-de-fogo:linear-gradient(180deg,#F6C324,#E63946,#8B0000);
+  --voz-monumental:'Archivo Black','Arial Black',sans-serif;
+  --voz-sagrada:'Cinzel','Trajan Pro',serif;
+  --voz-operacional:'EB Garamond',Georgia,serif;
+  --codex-max:1000px;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--preto); color:var(--fg1); font-family:var(--voz-operacional); font-size:17px; line-height:1.7;}
+.wrap{max-width:var(--codex-max); margin:0 auto; padding:64px 32px 110px; background:var(--preto); background-image:radial-gradient(1200px 600px at 80% 0%, var(--amarelo-08), transparent 60%),radial-gradient(900px 560px at -12% 12%, var(--brasa-14), transparent 55%);}
+.kicker{font-family:var(--voz-sagrada); font-size:12px; letter-spacing:.32em; text-transform:uppercase; color:var(--amarelo); margin:0 0 14px;}
+.meta{font-family:var(--voz-sagrada); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--bronze);}
+h1.title{font-family:var(--voz-monumental); text-transform:uppercase; letter-spacing:-.02em; line-height:.9; color:var(--bege); font-size:clamp(38px,7vw,76px); margin:0 0 18px;}
+.subtitle{font-family:var(--voz-sagrada); font-size:clamp(17px,2.4vw,23px); color:var(--bronze-claro); letter-spacing:.02em; line-height:1.3; margin:0 0 26px;}
+.firebar{height:3px; width:120px; background:var(--linha-de-fogo); border-radius:3px; margin:0 0 26px;}
+.lead{font-size:19px; color:var(--fg2); max-width:66ch;}
+.lead strong{color:var(--bege); font-weight:600;}
+.masthead{border-bottom:1px solid var(--linha-bronze); padding-bottom:34px;}
+.brandline{display:flex; align-items:center; gap:14px; margin-bottom:30px; flex-wrap:wrap;}
+.brandline .seal{width:34px;height:34px;border:1.5px solid var(--bronze);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--voz-sagrada);color:var(--amarelo);font-size:15px;flex:0 0 auto;}
+
+.pull{border-left:3px solid var(--amarelo); background:var(--amarelo-08); padding:16px 20px; margin:30px 0 0; font-size:18px; color:var(--fg1); font-style:italic;}
+.pull cite{display:block; font-style:normal; font-family:var(--voz-sagrada); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--fg-bronze); margin-top:8px;}
+
+.sec{margin-top:52px;}
+.sec h2{font-family:var(--voz-sagrada); color:var(--bege); font-size:clamp(21px,2.8vw,27px); letter-spacing:.03em; margin:0 0 6px;}
+.sec .sub{color:var(--fg3); font-size:15px; font-style:italic; margin:0 0 22px;}
+
+/* ---- Template de mensagem ---- */
+.tmpl{border:1px solid var(--linha-fraca); border-radius:12px; background:linear-gradient(180deg,var(--preto-2),var(--preto)); padding:24px 26px; margin-bottom:18px; position:relative; overflow:hidden; break-inside:avoid;}
+.tmpl:before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--linha-de-fogo); opacity:.7;}
+.tmpl-tag{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+.tmpl-tag .badge{font-family:var(--voz-sagrada); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--preto); background:var(--amarelo); border-radius:6px; padding:4px 10px;}
+.tmpl-tag .when{font-family:var(--voz-sagrada); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--fg-bronze);}
+.tmpl-tag .time{margin-left:auto; font-size:13px; color:var(--fg3); font-style:italic;}
+.script{font-size:18px; line-height:1.85; color:var(--fg1);}
+.fillin{display:inline; border-bottom:1.5px solid var(--bronze); color:var(--amarelo); padding:0 4px; outline:none;}
+.fillin[contenteditable][data-ph]:empty:before{content:attr(data-ph); color:var(--fg3); font-style:italic; font-size:14px;}
+
+/* ---- Lista de regras / anti-padrões ---- */
+.rules{display:grid; gap:12px; margin-top:6px;}
+.rule{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--linha-fraca); border-radius:10px; padding:14px 18px; background:rgba(0,0,0,.18);}
+.rule .x{color:var(--vermelho-sinal); font-size:18px; line-height:1.3; flex:0 0 auto;}
+.rule .body{flex:1;}
+.rule .rt{color:var(--bege); font-size:16.5px;}
+.rule .rw{color:var(--fg3); font-size:14.5px; font-style:italic; margin-top:2px;}
+
+.nextstep{margin-top:54px; border:1px solid var(--linha-bronze); border-radius:14px; padding:30px 34px; background:radial-gradient(700px 300px at 90% 0,var(--amarelo-08),transparent 60%);}
+.nextstep .kicker{margin-bottom:10px;}
+.nextstep h3{font-family:var(--voz-sagrada); color:var(--bege); font-size:23px; margin:0 0 12px;}
+.nextstep p{color:var(--fg2); margin:0; max-width:64ch;} .nextstep b{color:var(--bege);}
+.colophon{margin-top:46px; padding-top:22px; border-top:1px solid var(--linha-fraca); color:var(--fg3); font-size:13px; line-height:1.7;}
+.colophon b{color:var(--fg-bronze); font-weight:600;}
+.export-btn{position:fixed; top:22px; right:22px; z-index:50; font-family:var(--voz-sagrada); font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--preto); background:var(--ouro-revelado); border:none; border-radius:999px; padding:13px 22px; cursor:pointer; box-shadow:0 6px 24px rgba(0,0,0,.45); transition:transform .15s;}
+.export-btn:hover{transform:translateY(-1px);}
+@media print{
+  @page{size:A4; margin:0;}
+  *{-webkit-print-color-adjust:exact!important; print-color-adjust:exact!important;}
+  html,body{background:var(--preto)!important;}
+  .no-print{display:none!important;} .wrap{padding:14mm 12mm; max-width:none;}
+  .tmpl,.sec,.nextstep,.pull,.rule{break-inside:avoid;} h1.title{font-size:50px;}
+}
+</style>
+</head>
+<body>
+<button class="export-btn no-print" onclick="exportarPDF()">Exportar PDF&nbsp;↓</button>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="brandline"><span class="seal">∞</span><span class="meta">AIOX na Prática · Academia Lendár[IA]</span></div>
+    <p class="kicker">Bônus do Zoom de Implementação</p>
+    <h1 class="title">Abridor de Conversa</h1>
+    <p class="subtitle">A primeira mensagem que marca o diagnóstico — em 60 segundos.</p>
+    <div class="firebar"></div>
+    <p class="lead">Você <strong>não vende na abertura</strong>. Você marca o <strong>diagnóstico</strong>. O médico bom não empurra remédio na porta — ele examina primeiro. Estes abridores levam ~60 segundos pra ler ou dizer e têm um único objetivo: conseguir a <strong>call de 30 minutos</strong> onde você ouve, examina e anota. Troque os campos em destaque pelo seu caso.</p>
+    <div class="pull">Não é call de venda. É diagnóstico. Você ouve, examina, anota.<cite>Método DSPC · sequência de 3 dias (Dia 2)</cite></div>
+  </header>
+
+  <!-- A MENSAGEM DE ABORDAGEM -->
+  <section class="sec">
+    <h2>1 · A mensagem de abordagem</h2>
+    <p class="sub">DM ou WhatsApp. Objetivo único: marcar os 30 minutos. Não explica o serviço, não manda preço.</p>
+
+    <div class="tmpl">
+      <div class="tmpl-tag"><span class="badge">Variação A</span><span class="when">contato quente · alguém que você já conhece</span><span class="time">~60s</span></div>
+      <p class="script">Oi <span class="fillin" contenteditable="true" data-ph="nome">nome</span>, tudo bem? Tô montando um trabalho focado em <span class="fillin" contenteditable="true" data-ph="nicho">nicho</span> e queria sua ajuda pra entender uma coisa de perto. Percebo que <span class="fillin" contenteditable="true" data-ph="dor observada — ex.: vocês perdem horas toda semana com triagem manual">dor observada</span>. Posso te roubar 30 minutos só pra entender como isso funciona aí? <strong>Não é pra te vender nada</strong> — é pra eu mapear o processo de verdade. Topa <span class="fillin" contenteditable="true" data-ph="dia/horário">dia</span>?</p>
+    </div>
+
+    <div class="tmpl">
+      <div class="tmpl-tag"><span class="badge">Variação B</span><span class="when">contato frio · nicho que você conhece</span><span class="time">~60s</span></div>
+      <p class="script">Oi <span class="fillin" contenteditable="true" data-ph="nome">nome</span>, me chamo <span class="fillin" contenteditable="true" data-ph="seu nome">seu nome</span>. Trabalho ajudando <span class="fillin" contenteditable="true" data-ph="nicho">nicho</span> a resolver <span class="fillin" contenteditable="true" data-ph="dor cara — ex.: o tempo gasto com X toda semana">dor cara</span>. <strong>Não vim te oferecer nada agora</strong> — vim entender: isso é uma dor real no seu dia a dia? Se for, queria 30 minutos pra examinar o processo com você e te devolver um <strong>mapa do que dá pra resolver</strong>. Sem compromisso. Faz sentido?</p>
+    </div>
+  </section>
+
+  <!-- OS PRIMEIROS 60S DA CALL -->
+  <section class="sec">
+    <h2>2 · Os primeiros 60 segundos da call</h2>
+    <p class="sub">Marcou? Comece enquadrando — pra ele baixar a guarda e te deixar examinar.</p>
+    <div class="tmpl">
+      <div class="tmpl-tag"><span class="badge">Abertura da call</span><span class="when">enquadrar + primeira pergunta</span><span class="time">~60s</span></div>
+      <p class="script">Obrigado pelos 30 minutos. Vou ser direto sobre o que isto é: <strong>não é uma call de venda — é um diagnóstico</strong>. Minha meta nos próximos 30 minutos é entender <span class="fillin" contenteditable="true" data-ph="a dor">a dor</span> no seu processo: onde dói, quanto custa e com que frequência acontece. Eu ouço, examino e anoto. No fim, te digo com honestidade se tem algo que vale a pena resolver — e, se tiver, volto com um <strong>mapa do processo</strong>. Pra começar: me conta como funciona hoje <span class="fillin" contenteditable="true" data-ph="o processo onde mora a dor">o processo</span>?</p>
+    </div>
+  </section>
+
+  <!-- ANTI-PADRÕES -->
+  <section class="sec">
+    <h2>3 · O que NÃO fazer na abertura</h2>
+    <p class="sub">Cada um destes mata a conversa antes do diagnóstico.</p>
+    <div class="rules">
+      <div class="rule"><span class="x">✕</span><div class="body"><div class="rt">Chegar vendendo ferramenta / "tenho uma solução de IA incrível".</div><div class="rw">Você vende a ponta do iceberg — e vira mais um vendedor de ferramenta. Diagnostique primeiro.</div></div></div>
+      <div class="rule"><span class="x">✕</span><div class="body"><div class="rt">Prometer receita — "você vai faturar X", "vai vender mais".</div><div class="rw">Você não controla a receita dele. A promessa honesta é de entrega, não de faturamento.</div></div></div>
+      <div class="rule"><span class="x">✕</span><div class="body"><div class="rt">Mandar orçamento antes de diagnosticar.</div><div class="rw">Sem diagnóstico, seu serviço vira commodity comparável por preço. O preço vem depois do valor.</div></div></div>
+      <div class="rule"><span class="x">✕</span><div class="body"><div class="rt">Pedir a venda na abertura.</div><div class="rw">O objetivo da abertura é o diagnóstico. Quem aperta pra fechar no primeiro toque, perde o toque.</div></div></div>
+    </div>
+  </section>
+
+  <section class="nextstep">
+    <p class="kicker">Depois da call</p>
+    <h3>Volte com o mapa do processo + a proposta — não com "te mando o orçamento".</h3>
+    <p>No dia seguinte ao diagnóstico, retorne ao mesmo prospect com <b>"olha o que eu vi, olha o que eu prescrevo, olha o investimento"</b>. O que você ouviu na call preenche o <b>D — Dor</b> do seu <b>Mapa DSPC</b>; o que você prescreve é o <b>S/P/C</b>. E quando puder, transforme a proposta numa <b>demo ao vivo</b> — é onde a objeção morre.</p>
+  </section>
+
+  <p class="colophon">
+    <b>Método DSPC</b> — Dor · Sprint · Pitch · Contrato. A abertura serve ao <b>D</b>: diagnosticar antes de prescrever (médico, não farmacêutico). &nbsp;|&nbsp; Use com o <b>Mapa DSPC</b>, o <b>Banco de Dores Caras</b>, o <b>Copiloto DSPC</b> e o <b>Checklist da Demo Comprável</b>. &nbsp;|&nbsp; AIOX na Prática · Academia Lendár[IA].
+  </p>
+
+</div>
+<script>
+function _prep(on){
+  document.querySelectorAll('[contenteditable][data-ph]').forEach(function(el){
+    if(on){ if(!el.textContent.trim()){ el.dataset.we='1'; el.textContent=el.getAttribute('data-ph'); el.style.color='var(--fg3)'; el.style.fontStyle='italic'; } }
+    else if(el.dataset.we){ el.textContent=''; el.style.color=''; el.style.fontStyle=''; delete el.dataset.we; }
+  });
+  document.querySelectorAll('.print-url').forEach(function(el){ el.style.display = on?'block':''; });
+}
+async function exportarPDF(){
+  var btn=document.querySelector('.export-btn');
+  if(typeof html2pdf==='undefined'){ window.print(); return; }
+  var old=btn.innerHTML; btn.textContent='Gerando PDF…'; btn.disabled=true; _prep(true);
+  try{
+    if(document.fonts&&document.fonts.ready){ await document.fonts.ready; }
+    await html2pdf().set({
+      margin:0, filename:'Abridor-de-Conversa-AIOX.pdf',
+      image:{type:'jpeg',quality:0.97},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#131109',windowWidth:1040},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy'],avoid:['.sec','.tmpl','.rule','.nextstep','.pull']}
+    }).from(document.querySelector('.wrap')).save();
+  }catch(e){ window.print(); }
+  finally{ _prep(false); btn.innerHTML=old; btn.disabled=false; }
+}
+</script>
+</body>
+</html>

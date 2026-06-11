@@ -1,0 +1,93 @@
+{
+  "squads": [
+    {
+      "name": "copy",
+      "path": "squads/copy",
+      "installed_at": "2026-06-10",
+      "version": "1.0",
+      "verdict": "PORTABLE",
+      "description": "23 legendary copywriter agents (Kennedy, Schwartz, Benson, Halbert, Ogilvy) with frameworks and voice patterns",
+      "entrypoint": "squads/copy/README.md",
+      "agents_count": 24,
+      "agents": [
+        "andre-chaperon", "ben-settle", "claude-hopkins", "clayton-makepeace",
+        "copy-chief", "dan-kennedy", "dan-koe", "david-deutsch", "david-ogilvy",
+        "eugene-schwartz", "frank-kern", "gary-bencivenga", "gary-halbert",
+        "jeff-walker", "jim-rutz", "joe-sugarman", "john-carlton", "jon-benson",
+        "parris-lampropoulos", "robert-collier", "russell-brunson", "ry-schwartz",
+        "stefan-georgi", "todd-brown"
+      ],
+      "uses": [
+        "/api/offer-book/generate — voz de copywriter específico",
+        "/api/prospects/pipeline — opener WhatsApp (@dan-kennedy / @gary-halbert)",
+        "LPs /saude /advocacia — headline via @eugene-schwartz",
+        "VSL — script via @jon-benson"
+      ]
+    },
+    {
+      "name": "deep-research",
+      "path": "squads/deep-research",
+      "installed_at": "2026-06-10",
+      "version": "1.0.1",
+      "verdict": "PORTABLE",
+      "description": "Pesquisa profunda 3-tier (Diagnostic/Execution/QA). 5 agents: research-chief + cochrane + higgins + ioannidis + kahneman. Capacidades: PICO, systematic review, OSINT, competitive intel, source credibility",
+      "entrypoint": "squads/deep-research/README.md",
+      "agents_count": 5,
+      "agents": ["research-chief", "cochrane", "higgins", "ioannidis", "kahneman"],
+      "uses": [
+        "/api/prospects/research — enriquece prospect com pesquisa antes do audit",
+        "/api/offer-book/sintese — competitor intel para 'Concorrentes' slice",
+        "Validação de claims antes de copy (evita afirmações inventadas)"
+      ]
+    },
+    {
+      "name": "offer-book",
+      "path": "squads/offer-book",
+      "installed_at": "2026-06-10",
+      "version": "1.0",
+      "verdict": "PORTABLE",
+      "description": "Squad com offer-architect (1 agent) — gera oferta estruturada via Value Equation (Hormozi)",
+      "entrypoint": "squads/offer-book/README.md",
+      "agents_count": 1,
+      "agents": ["offer-architect"],
+      "uses": [
+        "/api/offer-book/generate — substitui ou complementa síntese de oferta atual",
+        "Avaliação de Value Equation (Dream/Likelihood/Time/Effort)",
+        "ATENÇÃO: pode conflitar com módulo /offer-book em produção — auditar antes de chamar em runtime"
+      ],
+      "audit_2026_06_10": "ZERO conflito com app/offer-book/*. Módulo o6 = coleta + 4 scores próprios. Squad = Hormozi Value Equation. Complementares. Sugestão: criar /api/offer-book/value-equation que lê offer_books.oferta e roda offer-architect"
+    },
+    {
+      "name": "design-extractor",
+      "path": "squads/design-extractor",
+      "installed_at": "2026-06-10",
+      "version": "1.0",
+      "verdict": "PORTABLE",
+      "description": "Extrai design system de URL externa (tokens, tipografia, layout). 1 agent. Deps: axios, cheerio, js-yaml, puppeteer, turndown, yaml",
+      "entrypoint": "squads/design-extractor/README.md",
+      "agents_count": 1,
+      "agents": ["design-extractor"],
+      "deps_installed": ["axios", "cheerio", "js-yaml", "puppeteer", "turndown", "yaml"],
+      "uses": [
+        "Benchmark de concorrentes na audit (extrair design do site analisado)",
+        "Importar paleta/typografia de referência para novas LPs"
+      ],
+      "chromium_installed": "chrome@149.0.7827.22 em C:/Users/Didico/.cache/puppeteer/"
+    },
+    {
+      "name": "data-analysis",
+      "path": "squads/data-analysis",
+      "installed_at": "2026-06-10",
+      "version": "1.0",
+      "verdict": "PORTABLE",
+      "description": "Squad de análise de dados (1 agent: data-analyst). Baixa prioridade para O6 hoje — útil quando volume de clientes justificar análise quantitativa de funil",
+      "entrypoint": "squads/data-analysis/README.md",
+      "agents_count": 1,
+      "agents": ["data-analyst"],
+      "uses": [
+        "Análise quantitativa de funil cross-cliente",
+        "KPIs agregados da carteira (LTV, churn, ROI por nicho)"
+      ]
+    }
+  ]
+}

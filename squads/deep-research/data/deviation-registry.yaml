@@ -1,0 +1,25 @@
+deviation_registry:
+  squad: deep-research
+  version: "1.0.1"
+  validation_batch: "20260514-validate-deep"
+  deviations:
+    - id: dr-deep-001
+      status: closed
+      severity: high
+      finding: "config.yaml used an empty workflows object despite three workflow files existing."
+      remediation: "Registered wf-deep-research, wf-quick-research and wf-competitive-intel with task coverage."
+    - id: dr-deep-002
+      status: closed
+      severity: medium
+      finding: "Capabilities were placeholder-only."
+      remediation: "Expanded capabilities to concrete research pipeline functions."
+    - id: dr-deep-003
+      status: closed
+      severity: medium
+      finding: "Tasks lacked canonical SINKRA frontmatter."
+      remediation: "Normalized 17 tasks with executor type, research_gate and acceptance_gate."
+    - id: dr-deep-004
+      status: accepted
+      severity: low
+      finding: "External web/documentation search was not executed during validation."
+      remediation: "tested=false and external_search_executed=false preserve evidence honesty."

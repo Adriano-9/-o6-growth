@@ -1,0 +1,46 @@
+# Template: Offerbook Entry (agnostic — no workspace base ref)
+# Lifecycle states: draft → validated → approved
+# Inputs are provided at call time; output lands in outputs/offer-book/{slug}/.
+
+offerbook_entry:
+  # --- Identity ---
+  id: "{offerbook_entry_id}"        # generated
+  product_ref: "{product_slug}"     # provided by caller (not a workspace FK)
+  lifecycle: "draft"                # draft | validated | approved
+
+  # --- Offer Core ---
+  offer_name: "{offer_name}"
+  tagline: "{tagline}"
+
+  # --- Value Equation ---
+  value_equation:
+    dream_outcome: "{dream_outcome}"
+    perceived_likelihood: "{0_to_1}"
+    time_delay: "{time_delay}"
+    effort_sacrifice: "{effort}"
+    value_score: "{computed_directional_score}"
+
+  # --- Grand Slam Components ---
+  core_offer:
+    deliverables:
+      - "{deliverable_1}"
+    duration: "{duration}"
+    format: "{online|presencial|hibrido|async|DFY|DWY}"
+
+  bonuses:
+    - name: "{bonus_1}"
+      dissolves_objection: "{objection}"
+      value_perceived: "{currency}{bonus_1_value}"
+
+  guarantees:
+    - type: "{unconditional|conditional|anti-guarantee|implied}"
+      terms: "{exact_terms}"
+
+  scarcity_urgency:
+    - mechanism: "{cohort_size|seats|deadline|bonus_expiry}"
+      real: true
+      detail: "{detail}"
+
+  # --- Proof (caller-provided only) ---
+  proof:
+    - "{proof_or '# gap: needs proof'}"

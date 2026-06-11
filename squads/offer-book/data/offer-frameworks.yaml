@@ -1,0 +1,26 @@
+# Offer frameworks reference (self-contained — no external DNA deps)
+value_equation:
+  formula: "(dream_outcome * perceived_likelihood) / (time_delay * effort_sacrifice)"
+  levers:
+    dream_outcome: "Raise — the specific end state the customer wants"
+    perceived_likelihood: "Raise — proof, guarantees, track record, specificity"
+    time_delay: "Lower — speed to first win, faster total result"
+    effort_sacrifice: "Lower — done-for-you, simplicity, removing steps"
+
+guarantee_types:
+  - unconditional: "Full refund, no conditions — strongest, highest risk"
+  - conditional: "Refund if specific conditions/effort met — common, defensible"
+  - anti_guarantee: "All sales final — used when scarcity/positioning demands"
+  - implied: "Performance/partnership model — outcome-tied"
+
+scarcity_urgency:
+  scarcity: ["cohort size cap", "limited seats", "limited units"]
+  urgency: ["enrollment deadline", "bonus expiry", "price increase date"]
+  rule: "Must be real and enforceable. Never fabricate."
+
+naming_magic:
+  - magnetic_reason: "why now / why this"
+  - avatar: "who it's for"
+  - goal: "the dream outcome"
+  - interval: "the timeframe"
+  - container: "the vehicle (program, system, kit)"

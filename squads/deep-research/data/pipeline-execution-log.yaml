@@ -1,0 +1,18 @@
+pipeline_execution_log:
+  squad: deep-research
+  version: "1.0.1"
+  validation_batch: "20260514-validate-deep"
+  runs:
+    - id: "20260514-validate-deep"
+      command_sequence:
+        - "/sinkra-squad:sinkra-chief"
+        - "*validate-squad deep-research --deep"
+      status: pass
+      score: 97.65
+      remediations:
+        - "workflows section replaced with three real workflow entries."
+        - "17 tasks normalized with canonical frontmatter."
+        - "Deep governance registries materialized."
+      residual_risks:
+        - "External search and source fetching were not executed during validation."
+

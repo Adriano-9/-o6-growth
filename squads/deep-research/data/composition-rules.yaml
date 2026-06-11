@@ -1,0 +1,28 @@
+composition_rules:
+  squad: deep-research
+  version: "1.0.1"
+  validation_batch: "20260514-validate-deep"
+  mechanisms:
+    temporal:
+      rules:
+        - "classification precedes activation planning."
+        - "Tier 0 diagnostic tasks precede Tier 1 research execution."
+        - "QA tasks follow all evidence-producing tasks."
+        - "final synthesis follows evidence and decision audits."
+    structural:
+      rules:
+        - "Every report keeps question, method, sources, synthesis, limitations and QA verdict."
+        - "Every source keeps credibility metadata."
+    direct:
+      examples:
+        - "formulate-pico-question -> structured research question"
+        - "conduct-systematic-review -> evidence synthesis"
+        - "audit-decision-quality -> final decision verdict"
+  anti_patterns:
+    - id: answer-before-question
+      description: "Coletar evidência antes de formular a pergunta."
+    - id: source-dump
+      description: "Listar fontes sem síntese, qualidade ou decisão."
+    - id: qa-bypass
+      description: "Entregar relatório sem Ioannidis e Kahneman."
+

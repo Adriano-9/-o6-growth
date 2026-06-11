@@ -1,0 +1,16 @@
+meta_axiomas:
+  squad: deep-research
+  version: "1.0.1"
+  validation_batch: "20260514-validate-deep"
+  axioms:
+    - id: question-before-evidence
+      statement: "A pergunta correta vem antes da busca por evidências."
+    - id: method-fits-question
+      statement: "O método de revisão nasce do tipo de pergunta, não da preferência do agente."
+    - id: citation-is-not-synthesis
+      statement: "Fonte sem síntese e qualidade não é evidência suficiente."
+    - id: qa-is-mandatory
+      statement: "Nenhum relatório final passa sem auditoria de confiabilidade e decisão."
+    - id: uncertainty-is-output
+      statement: "Incerteza explícita é um resultado válido quando a evidência é fraca."
+

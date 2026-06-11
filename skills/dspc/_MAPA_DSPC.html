@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa DSPC — Seu Primeiro Serviço de IA · AIOX na Prática</title>
+<!--
+  MAPA DSPC · Bônus do Zoom de Implementação (AIOX na Prática · Academia Lendária)
+  Identidade: Forja Lendár[IA] (colors_and_type.css). Worksheet preenchível D·S·P·C.
+  Fonte do método: _DSPC_GUIA_COMPLETO.md (Partes III–IV). Sem invenção.
+  Export: window.print() → "Salvar como PDF". Sem dependências externas (exceto Google Fonts).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Cinzel:wght@400;500;600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js"></script>
+<style>
+:root{
+  --preto:#131109; --preto-2:#1B1810; --preto-3:#221E14;
+  --bege:#E8DCC4; --amarelo:#F6C324; --vermelho-sinal:#E63946;
+  --bronze:#9A7D56; --bronze-claro:#A88A5C; --brasa:#8B0000; --cinzas:#4A453E;
+  --fg1:#E8DCC4; --fg2:rgba(232,220,196,.68); --fg3:rgba(232,220,196,.60);
+  --fg-bronze:#9A7D56; --fg-amarelo:#F6C324;
+  --linha-bronze:rgba(139,111,71,.40); --linha-fraca:rgba(139,111,71,.18);
+  --amarelo-08:rgba(246,195,36,.08); --amarelo-30:rgba(246,195,36,.30);
+  --brasa-14:rgba(139,0,0,.14);
+  --ouro-revelado:linear-gradient(135deg,#8B6F47,#F6C324);
+  --linha-de-fogo:linear-gradient(180deg,#F6C324,#E63946,#8B0000);
+  --voz-monumental:'Archivo Black','Arial Black',sans-serif;
+  --voz-sagrada:'Cinzel','Trajan Pro',serif;
+  --voz-operacional:'EB Garamond',Georgia,serif;
+  --codex-max:1020px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--preto); color:var(--fg1);
+  font-family:var(--voz-operacional); font-size:17px; line-height:1.7;
+}
+.wrap{max-width:var(--codex-max); margin:0 auto; padding:64px 32px 120px; background:var(--preto);
+  background-image:
+    radial-gradient(1200px 600px at 80% 0%, var(--amarelo-08), transparent 60%),
+    radial-gradient(900px 560px at -12% 12%, var(--brasa-14), transparent 55%);
+}
+
+/* ---- Tipografia ---- */
+.kicker{font-family:var(--voz-sagrada); font-size:12px; letter-spacing:.32em; text-transform:uppercase; color:var(--amarelo); margin:0 0 14px;}
+.meta{font-family:var(--voz-sagrada); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--bronze);}
+h1.title{font-family:var(--voz-monumental); text-transform:uppercase; letter-spacing:-.02em; line-height:.92; color:var(--bege); font-size:clamp(40px,8vw,84px); margin:0 0 18px;}
+.subtitle{font-family:var(--voz-sagrada); font-size:clamp(17px,2.4vw,23px); color:var(--bronze-claro); letter-spacing:.02em; line-height:1.3; margin:0 0 28px;}
+.lead{font-size:19px; color:var(--fg2); max-width:64ch;}
+.lead strong{color:var(--bege); font-weight:600;}
+
+/* ---- Cabeçalho ---- */
+.masthead{border-bottom:1px solid var(--linha-bronze); padding-bottom:34px; margin-bottom:8px;}
+.brandline{display:flex; align-items:center; gap:14px; margin-bottom:30px; flex-wrap:wrap;}
+.brandline .seal{width:34px;height:34px;border:1.5px solid var(--bronze);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--voz-sagrada);color:var(--amarelo);font-size:15px;flex:0 0 auto;}
+
+/* ---- Divisor de fogo ---- */
+.firebar{height:3px; width:120px; background:var(--linha-de-fogo); border-radius:3px; margin:0 0 26px;}
+
+/* ---- Bloco de estágio (D/S/P/C) ---- */
+.stage{margin-top:54px; border:1px solid var(--linha-fraca); border-radius:14px; background:linear-gradient(180deg,var(--preto-2),var(--preto)); padding:34px 34px 30px; position:relative; overflow:hidden;}
+.stage:before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--linha-de-fogo); opacity:.85;}
+.stage-head{display:flex; align-items:baseline; gap:18px; margin-bottom:6px;}
+.stage-letter{font-family:var(--voz-monumental); font-size:clamp(40px,6vw,64px); line-height:.9; color:var(--amarelo); -webkit-text-stroke:0; text-shadow:0 2px 0 var(--brasa);}
+.stage-name{font-family:var(--voz-sagrada); font-size:clamp(22px,3vw,30px); color:var(--bege); letter-spacing:.05em; text-transform:uppercase;}
+.stage-tag{font-family:var(--voz-sagrada); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--fg-bronze); margin-left:auto; align-self:center;}
+.guide{font-style:italic; color:var(--fg2); font-size:18px; margin:8px 0 22px; max-width:62ch;}
+.guide b{color:var(--bege); font-style:normal;}
+
+/* ---- Filtros (pré-check) ---- */
+.filters{margin-top:30px; border:1px dashed var(--linha-bronze); border-radius:12px; padding:26px 30px;}
+.filters h3{font-family:var(--voz-sagrada); color:var(--bege); font-size:21px; margin:0 0 6px; letter-spacing:.03em;}
+.filters .hint{color:var(--fg3); font-size:15px; margin:0 0 18px;}
+.filter-row{display:flex; gap:14px; align-items:flex-start; padding:11px 0; border-top:1px solid var(--linha-fraca);}
+.filter-row:first-of-type{border-top:none;}
+.filter-row .star{color:var(--amarelo); font-size:13px; padding-top:3px;}
+.filter-row .fname{font-family:var(--voz-sagrada); color:var(--amarelo); letter-spacing:.04em; min-width:120px; font-size:15px;}
+.filter-row .fq{color:var(--fg2); flex:1; font-size:16px;}
+
+/* ---- Campos preenchíveis ---- */
+.field{margin:20px 0;}
+.field .label{font-family:var(--voz-sagrada); font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--fg-bronze); display:block; margin-bottom:8px;}
+.fill{
+  display:block; width:100%; min-height:54px;
+  background:rgba(0,0,0,.22); border:1px solid var(--linha-bronze); border-radius:8px;
+  padding:12px 14px; color:var(--bege); font-family:var(--voz-operacional); font-size:17px; line-height:1.55;
+  outline:none; transition:border-color .15s, box-shadow .15s;
+}
+.fill:focus{border-color:var(--amarelo-30); box-shadow:0 0 0 3px var(--amarelo-08);}
+.fill[contenteditable][data-ph]:empty:before{content:attr(data-ph); color:var(--fg3); font-style:italic;}
+.fill.short{min-height:auto;}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+/* ---- Checkbox-row (3 recursos / 4 filtros) ---- */
+.checks{display:flex; flex-wrap:wrap; gap:10px 14px; margin:6px 0 4px;}
+.chk{display:inline-flex; align-items:center; gap:9px; border:1px solid var(--linha-bronze); border-radius:999px; padding:8px 15px; cursor:pointer; user-select:none; font-size:15px; color:var(--fg2); transition:all .15s;}
+.chk .box{width:15px;height:15px;border:1.5px solid var(--bronze);border-radius:4px;display:inline-block;position:relative;flex:0 0 auto;}
+.chk.on{border-color:var(--amarelo-30); color:var(--bege); background:var(--amarelo-08);}
+.chk.on .box{background:var(--amarelo); border-color:var(--amarelo);}
+.chk.on .box:after{content:"✓"; position:absolute; inset:0; color:var(--preto); font-size:12px; line-height:13px; text-align:center; font-weight:700;}
+.checks-label{font-family:var(--voz-sagrada); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--fg-bronze); margin:18px 0 4px;}
+
+/* ---- Citação do método ---- */
+.warn{margin:22px 0 4px; padding:14px 18px; border-left:3px solid var(--vermelho-sinal); background:rgba(139,0,0,.10); color:var(--fg1); font-style:italic; font-size:16px;}
+.warn:before{content:"«"; color:var(--vermelho-sinal); font-style:normal; margin-right:2px;}
+.warn:after{content:"»"; color:var(--vermelho-sinal); font-style:normal; margin-left:2px;}
+
+/* ---- Exemplo lateral ---- */
+.example{margin-top:18px; border-top:1px dashed var(--linha-fraca); padding-top:14px;}
+.example .etag{font-family:var(--voz-sagrada); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--bronze); margin-bottom:5px;}
+.example p{margin:0; color:var(--fg3); font-size:15.5px; font-style:italic;}
+
+/* ---- Pitch fórmula ---- */
+.formula{font-size:21px; line-height:2.1; color:var(--fg1); margin:6px 0 0;}
+.blank{display:inline-block; min-width:170px; border-bottom:1.5px solid var(--bronze); color:var(--amarelo); padding:0 8px; outline:none; text-align:center; font-family:var(--voz-operacional);}
+.blank[contenteditable][data-ph]:empty:before{content:attr(data-ph); color:var(--fg3); font-style:italic; font-size:14px; letter-spacing:.02em;}
+
+/* ---- Rodapé / próximo passo ---- */
+.nextstep{margin-top:56px; border:1px solid var(--linha-bronze); border-radius:14px; padding:32px 34px; background:radial-gradient(700px 300px at 90% 0,var(--amarelo-08),transparent 60%);}
+.nextstep .kicker{margin-bottom:10px;}
+.nextstep h3{font-family:var(--voz-sagrada); color:var(--bege); font-size:24px; margin:0 0 12px;}
+.nextstep p{color:var(--fg2); margin:0 0 8px; max-width:62ch;}
+.nextstep .copiloto{margin-top:16px; font-size:15.5px; color:var(--fg-bronze); font-style:italic;}
+.colophon{margin-top:48px; padding-top:22px; border-top:1px solid var(--linha-fraca); color:var(--fg3); font-size:13px; letter-spacing:.02em;}
+.colophon b{color:var(--fg-bronze); font-weight:600;}
+
+/* ---- Botão exportar ---- */
+.export-btn{
+  position:fixed; top:22px; right:22px; z-index:50;
+  font-family:var(--voz-sagrada); font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--preto); background:var(--ouro-revelado); border:none; border-radius:999px;
+  padding:13px 22px; cursor:pointer; box-shadow:0 6px 24px rgba(0,0,0,.45); transition:transform .15s, box-shadow .15s;
+}
+.export-btn:hover{transform:translateY(-1px); box-shadow:0 10px 30px rgba(246,195,36,.25);}
+.export-btn:active{transform:translateY(0);}
+
+/* ============== PRINT / PDF (fallback — fiel à página) ============== */
+@media print{
+  @page{size:A4; margin:0;}
+  *{-webkit-print-color-adjust:exact!important; print-color-adjust:exact!important;}
+  html,body{background:var(--preto)!important;}
+  .no-print{display:none!important;}
+  .wrap{padding:14mm 12mm; max-width:none;}
+  .stage{break-inside:avoid; page-break-inside:avoid; margin-top:22px;}
+  .filters,.nextstep{break-inside:avoid;}
+  .fill{background:rgba(255,255,255,.05)!important;}
+  h1.title{font-size:54px;}
+}
+</style>
+</head>
+<body>
+<button class="export-btn no-print" onclick="exportarPDF()">Exportar PDF&nbsp;↓</button>
+
+<div class="wrap">
+
+  <!-- ===== CABEÇALHO ===== -->
+  <header class="masthead">
+    <div class="brandline">
+      <span class="seal">∞</span>
+      <span class="meta">AIOX na Prática · Academia Lendár[IA]</span>
+    </div>
+    <p class="kicker">Bônus do Zoom de Implementação</p>
+    <h1 class="title">Mapa DSPC</h1>
+    <p class="subtitle">Do zero ao seu primeiro serviço de IA vendável — em uma página.</p>
+    <div class="firebar"></div>
+    <p class="lead">Quatro etapas separam um <em>prompt</em> de um <strong>serviço que cabe num contrato</strong>: <strong>Dor</strong> que dói no bolso, <strong>Sprint</strong> que entrega rápido, <strong>Pitch</strong> que vende, <strong>Contrato</strong> que fecha. Preencha de cima a baixo. Não encare a página em branco — encare este mapa.</p>
+  </header>
+
+  <!-- ===== PRÉ-CHECK · 5 FILTROS ===== -->
+  <section class="filters">
+    <h3>Antes de mapear — os 5 Filtros do Negócio Perfeito</h3>
+    <p class="hint">Passe sua ideia pelos cinco. <b style="color:var(--amarelo)">Sticky</b> é o mais importante: sem retenção, você não tem negócio — tem fila de vendas que recomeça todo mês. <span style="color:var(--bronze)">[atributos: Alex Hormozi, aplicados a serviço de IA]</span></p>
+    <div class="filter-row"><span class="star">★</span><span class="fname">Sticky</span><span class="fq">Continua depois do projeto? (manutenção, novos agentes, melhoria mensal)</span><span class="chk no-screen-hide" data-chk style="margin-left:auto"><span class="box"></span></span></div>
+    <div class="filter-row"><span class="star">·</span><span class="fname">Expensive</span><span class="fq">O valor entregue é maior que o custo? (horas, erro, atraso, contratação)</span><span class="chk" data-chk style="margin-left:auto"><span class="box"></span></span></div>
+    <div class="filter-row"><span class="star">·</span><span class="fname">Expansion</span><span class="fq">O mercado está crescendo? (IA, automação, produtividade)</span><span class="chk" data-chk style="margin-left:auto"><span class="box"></span></span></div>
+    <div class="filter-row"><span class="star">·</span><span class="fname">Air</span><span class="fq">É leve de operar? (diagnóstico + agentes + treinamento + suporte)</span><span class="chk" data-chk style="margin-left:auto"><span class="box"></span></span></div>
+    <div class="filter-row"><span class="star">·</span><span class="fname">Unique</span><span class="fq">É diferente o suficiente? (nicho, processo, dados, linguagem setorial)</span><span class="chk" data-chk style="margin-left:auto"><span class="box"></span></span></div>
+  </section>
+
+  <!-- ===== D — DOR ===== -->
+  <section class="stage stage-D">
+    <div class="stage-head"><span class="stage-letter">D</span><span class="stage-name">Dor</span><span class="stage-tag">Diagnóstico antes da prescrição</span></div>
+    <p class="guide">Qual <b>dor cara</b> você (ou um nicho que você conhece) tem, <b>que se repete toda semana</b>?</p>
+
+    <div class="field">
+      <span class="label">A dor cara que você vai atacar</span>
+      <div class="fill" contenteditable="true" data-ph="Ex.: escritórios jurídicos perdem horas toda semana com triagem manual de contratos…"></div>
+    </div>
+
+    <p class="checks-label">Teste dos 3 recursos — bate em pelo menos um?</p>
+    <div class="checks">
+      <span class="chk" data-chk><span class="box"></span>Tempo — horas devolvidas</span>
+      <span class="chk" data-chk><span class="box"></span>Dinheiro — receita destravada / custo cortado</span>
+      <span class="chk" data-chk><span class="box"></span>Foco — distração removida</span>
+    </div>
+
+    <p class="checks-label">Os 4 filtros de uma dor boa</p>
+    <div class="checks">
+      <span class="chk" data-chk><span class="box"></span>Acontece toda semana</span>
+      <span class="chk" data-chk><span class="box"></span>O cliente já tentou resolver</span>
+      <span class="chk" data-chk><span class="box"></span>Existe comprador com poder de decisão</span>
+      <span class="chk" data-chk><span class="box"></span>O resultado é fácil de explicar</span>
+    </div>
+
+    <p class="warn">Se a dor não bate em pelo menos um dos três — Tempo, Dinheiro ou Foco — não é dor cara. É inconveniência.</p>
+
+    <div class="example">
+      <div class="etag">Exemplo · Jurídico</div>
+      <p>Escritórios com alto volume de contratos gastam ~4 horas por triagem inicial. Bate em Tempo e Dinheiro, acontece toda semana, tem sócio que decide, e o resultado ("de 4h para 30min") é fácil de explicar.</p>
+    </div>
+  </section>
+
+  <!-- ===== S — SPRINT ===== -->
+  <section class="stage stage-S">
+    <div class="stage-head"><span class="stage-letter">S</span><span class="stage-name">Sprint</span><span class="stage-tag">A entrega mínima rápida</span></div>
+    <p class="guide">O que você <b>entrega</b> — a solução mínima viável, na rua, rápido. <b>Não é o time de agentes</b>: o squad é o COMO; o Sprint é o QUE.</p>
+
+    <div class="field">
+      <span class="label">A entrega mínima que resolve a dor</span>
+      <div class="fill" contenteditable="true" data-ph="Ex.: um fluxo que faz a triagem inicial dos contratos e devolve um resumo de riscos por contrato…"></div>
+    </div>
+
+    <p class="checks-label">O squad que constrói o Sprint — o que cada agente faz no seu caso</p>
+    <div class="grid2">
+      <div class="field" style="margin:8px 0"><span class="label">Pesquisador</span><div class="fill short" contenteditable="true" data-ph="o que ele levanta…"></div></div>
+      <div class="field" style="margin:8px 0"><span class="label">Analista</span><div class="fill short" contenteditable="true" data-ph="o que ele processa…"></div></div>
+      <div class="field" style="margin:8px 0"><span class="label">Redator</span><div class="fill short" contenteditable="true" data-ph="o que ele escreve…"></div></div>
+      <div class="field" style="margin:8px 0"><span class="label">Auditor</span><div class="fill short" contenteditable="true" data-ph="o que ele revisa…"></div></div>
+    </div>
+
+    <div class="field">
+      <span class="label">A adaptação ao processo do cliente (a "pele")</span>
+      <div class="fill" contenteditable="true" data-ph="o que torna isto específico do processo dele, não um template genérico…"></div>
+    </div>
+
+    <p class="warn">Template puro vira commodity em 90 dias. O que você vende é template + diagnóstico + adaptação ao processo daquele cliente.</p>
+  </section>
+
+  <!-- ===== P — PITCH ===== -->
+  <section class="stage stage-P">
+    <div class="stage-head"><span class="stage-letter">P</span><span class="stage-name">Pitch</span><span class="stage-tag">A frase que vende</span></div>
+    <p class="guide">Preencha a <b>fórmula fixa</b>. Específico e mensurável vence genérico toda vez.</p>
+
+    <p class="formula">
+      Eu ajudo <span class="blank" contenteditable="true" data-ph="cliente específico"></span>
+      a <span class="blank" contenteditable="true" data-ph="resultado mensurável"></span>
+      sem <span class="blank" contenteditable="true" data-ph="dor principal"></span>,
+      usando um squad de IA para <span class="blank" contenteditable="true" data-ph="processo específico"></span>,
+      implantado em <span class="blank" contenteditable="true" data-ph="prazo curto"></span>.
+    </p>
+
+    <div class="example">
+      <div class="etag">Exemplo canônico · Jurídico</div>
+      <p>"Eu ajudo escritórios jurídicos com alto volume de contratos a reduzir o tempo de triagem inicial de 4 horas para 30 minutos, sem contratar mais analistas, usando um squad de IA treinado no fluxo do escritório, implantado em 14 dias."</p>
+    </div>
+  </section>
+
+  <!-- ===== C — CONTRATO ===== -->
+  <section class="stage stage-C">
+    <div class="stage-head"><span class="stage-letter">C</span><span class="stage-name">Contrato</span><span class="stage-tag">A oferta-piloto que fecha</span></div>
+    <p class="guide">A oferta-piloto que fecha o <b>primeiro contrato</b>. Concreta: nicho, dor, processo, Sprint, prazo, faixa.</p>
+
+    <div class="grid3">
+      <div class="field" style="margin:8px 0"><span class="label">1 Nicho</span><div class="fill short" contenteditable="true" data-ph="…"></div></div>
+      <div class="field" style="margin:8px 0"><span class="label">1 Dor</span><div class="fill short" contenteditable="true" data-ph="…"></div></div>
+      <div class="field" style="margin:8px 0"><span class="label">1 Processo</span><div class="fill short" contenteditable="true" data-ph="…"></div></div>
+      <div class="field" style="margin:8px 0"><span class="label">1 Sprint (entrega)</span><div class="fill short" contenteditable="true" data-ph="…"></div></div>
+      <div class="field" style="margin:8px 0"><span class="label">Prazo · 7 a 21 dias</span><div class="fill short" contenteditable="true" data-ph="ex.: 14 dias"></div></div>
+      <div class="field" style="margin:8px 0"><span class="label">Faixa · R$ 8K a R$ 30K</span><div class="fill short" contenteditable="true" data-ph="ex.: R$ 15K"></div></div>
+    </div>
+
+    <div class="field">
+      <span class="label">A régua ROI 10x — a matemática que justifica o preço</span>
+      <p class="formula" style="font-size:18px; line-height:1.9">
+        O piloto custa R$ <span class="blank" contenteditable="true" data-ph="10K" style="min-width:90px"></span>,
+        e eu mostro um caminho plausível pra R$ <span class="blank" contenteditable="true" data-ph="100K" style="min-width:90px"></span> de valor ao cliente ao longo do tempo.
+      </p>
+      <p style="color:var(--fg3); font-size:14.5px; margin:6px 0 0; font-style:italic">ROI 10x não é promessa — é a matemática que justifica o pagamento. Sem ela, você fica refém de tabela de preço.</p>
+    </div>
+
+    <div class="field">
+      <span class="label">Continuidade mensal — o Sticky em ação (não é opcional)</span>
+      <p class="formula" style="font-size:18px; line-height:1.9">Retainer de R$ <span class="blank" contenteditable="true" data-ph="3K" style="min-width:90px"></span> / mês — manutenção, novos agentes, melhoria.</p>
+    </div>
+
+    <div class="field">
+      <span class="label">Garantia segura (modelo) — de entrega, nunca de receita</span>
+      <div class="fill" contenteditable="true">Se ao final do sprint você não tiver um processo funcionando e documentado, eu continuo trabalhando sem custo até entregar.</div>
+      <p style="color:var(--fg3); font-size:14.5px; margin:6px 0 0; font-style:italic">Regra de ouro: não prometa receita que você não controla. A garantia é de <b style="color:var(--fg-bronze)">entrega</b>, não de faturamento.</p>
+    </div>
+  </section>
+
+  <!-- ===== PRÓXIMO PASSO ===== -->
+  <section class="nextstep">
+    <p class="kicker">O próximo passo (hoje)</p>
+    <h3>Marque 1 call de 30 minutos com alguém desse nicho.</h3>
+    <p>Não é call de venda — é <b style="color:var(--bege)">diagnóstico</b>. Você ouve, examina, anota. Depois volta pra esse mesmo prospect com <b style="color:var(--bege)">mapa do processo + proposta</b>. Não é "te mando o orçamento". É: "olha o que eu vi, olha o que eu prescrevo, olha o investimento".</p>
+    <p class="copiloto">Travou em algum campo? O <b>Copiloto DSPC</b> (seu Custom GPT) te conduz, etapa por etapa, até preencher o mapa inteiro.</p>
+  </section>
+
+  <p class="colophon">
+    <b>Método DSPC</b> — Dor · Sprint · Pitch · Contrato · a superfície do iceberg: como você <b>vende</b> um serviço de IA. &nbsp;|&nbsp;
+    O squad de agentes é a <b>ferramenta</b> que constrói o Sprint, não o produto. &nbsp;|&nbsp;
+    AIOX na Prática · Academia Lendár[IA].
+  </p>
+
+</div>
+
+<script>
+  // Toggle dos checks (3 recursos / 4 filtros / 5 filtros) — preenchível na tela
+  document.querySelectorAll('[data-chk]').forEach(function(el){
+    el.addEventListener('click', function(){ el.classList.toggle('on'); });
+  });
+
+  // html2canvas não captura placeholders via ::before — durante o export, mostra como texto real
+  function fillPlaceholders(on){
+    document.querySelectorAll('[contenteditable][data-ph]').forEach(function(el){
+      if(on){ if(!el.textContent.trim()){ el.dataset.wasEmpty='1'; el.textContent=el.getAttribute('data-ph'); el.style.color='var(--fg3)'; el.style.fontStyle='italic'; } }
+      else if(el.dataset.wasEmpty){ el.textContent=''; el.style.color=''; el.style.fontStyle=''; delete el.dataset.wasEmpty; }
+    });
+  }
+
+  // Export: PDF fiel à página (html2pdf, download direto — sem diálogo de impressão). Fallback: window.print().
+  async function exportarPDF(){
+    var btn=document.querySelector('.export-btn');
+    if(typeof html2pdf==='undefined'){ window.print(); return; }
+    var old=btn.innerHTML; btn.textContent='Gerando PDF…'; btn.disabled=true;
+    fillPlaceholders(true);
+    try{
+      if(document.fonts&&document.fonts.ready){ await document.fonts.ready; }
+      await html2pdf().set({
+        margin:0, filename:'Mapa-DSPC-AIOX.pdf',
+        image:{type:'jpeg',quality:0.97},
+        html2canvas:{scale:2,useCORS:true,backgroundColor:'#131109',windowWidth:1040},
+        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+        pagebreak:{mode:['css','legacy'],avoid:['.stage','.filters','.nextstep','.field']}
+      }).from(document.querySelector('.wrap')).save();
+    }catch(e){ window.print(); }
+    finally{ fillPlaceholders(false); btn.innerHTML=old; btn.disabled=false; }
+  }
+</script>
+</body>
+</html>

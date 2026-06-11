@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seu Copiloto DSPC — Custom GPT · AIOX na Prática</title>
+<!--
+  CARD · COPILOTO DSPC (Custom GPT) · Bônus do Zoom de Implementação (AIOX na Prática · Academia Lendária)
+  Identidade: Forja Lendár[IA] (colors_and_type.css). Consumer-facing: visual + texto + botão pro GPT.
+  Conteúdo ancorado em _CUSTOM_GPT_COPILOTO_DSPC.md (como conduz, guardrails, conversation starters).
+  GPT (criado pelo operador): https://chatgpt.com/g/g-6a1ca31de4d4819183cf08d179ede026-copiloto-sistema-dspc
+  Export: window.print() → "Salvar como PDF". Sem dependências externas (exceto Google Fonts).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Cinzel:wght@400;500;600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js"></script>
+<style>
+:root{
+  --preto:#131109; --preto-2:#1B1810; --preto-3:#221E14;
+  --bege:#E8DCC4; --amarelo:#F6C324; --vermelho-sinal:#E63946;
+  --bronze:#9A7D56; --bronze-claro:#A88A5C; --brasa:#8B0000; --cinzas:#4A453E;
+  --fg1:#E8DCC4; --fg2:rgba(232,220,196,.68); --fg3:rgba(232,220,196,.60);
+  --fg-bronze:#9A7D56; --fg-amarelo:#F6C324;
+  --linha-bronze:rgba(139,111,71,.40); --linha-fraca:rgba(139,111,71,.18);
+  --amarelo-08:rgba(246,195,36,.08); --amarelo-12:rgba(246,195,36,.12); --amarelo-30:rgba(246,195,36,.30);
+  --brasa-14:rgba(139,0,0,.14);
+  --ouro-revelado:linear-gradient(135deg,#8B6F47,#F6C324);
+  --linha-de-fogo:linear-gradient(180deg,#F6C324,#E63946,#8B0000);
+  --voz-monumental:'Archivo Black','Arial Black',sans-serif;
+  --voz-sagrada:'Cinzel','Trajan Pro',serif;
+  --voz-operacional:'EB Garamond',Georgia,serif;
+  --codex-max:980px;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--preto); color:var(--fg1);
+  font-family:var(--voz-operacional); font-size:17px; line-height:1.7;
+}
+.wrap{max-width:var(--codex-max); margin:0 auto; padding:64px 32px 110px; background:var(--preto); background-image:radial-gradient(1200px 600px at 80% 0%, var(--amarelo-08), transparent 60%),radial-gradient(900px 560px at -12% 12%, var(--brasa-14), transparent 55%);}
+
+.kicker{font-family:var(--voz-sagrada); font-size:12px; letter-spacing:.32em; text-transform:uppercase; color:var(--amarelo); margin:0 0 14px;}
+.meta{font-family:var(--voz-sagrada); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--bronze);}
+h1.title{font-family:var(--voz-monumental); text-transform:uppercase; letter-spacing:-.02em; line-height:.9; color:var(--bege); font-size:clamp(40px,7.6vw,80px); margin:0 0 18px;}
+.subtitle{font-family:var(--voz-sagrada); font-size:clamp(18px,2.5vw,24px); color:var(--bronze-claro); letter-spacing:.02em; line-height:1.32; margin:0 0 26px;}
+.firebar{height:3px; width:120px; background:var(--linha-de-fogo); border-radius:3px; margin:0 0 26px;}
+.lead{font-size:20px; color:var(--fg2); max-width:62ch;}
+.lead strong{color:var(--bege); font-weight:600;}
+
+.masthead{border-bottom:1px solid var(--linha-bronze); padding-bottom:36px;}
+.brandline{display:flex; align-items:center; gap:14px; margin-bottom:30px; flex-wrap:wrap;}
+.brandline .seal{width:34px;height:34px;border:1.5px solid var(--bronze);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--voz-sagrada);color:var(--amarelo);font-size:15px;flex:0 0 auto;}
+
+/* ---- CTA principal ---- */
+.cta-wrap{margin:34px 0 6px; display:flex; flex-direction:column; gap:14px; align-items:flex-start;}
+a.cta{display:inline-flex; align-items:center; gap:12px; font-family:var(--voz-sagrada); font-weight:600; font-size:clamp(16px,2vw,19px); letter-spacing:.05em; text-transform:uppercase; color:var(--preto); background:var(--ouro-revelado); border:none; border-radius:14px; padding:20px 34px; text-decoration:none; box-shadow:0 10px 34px rgba(246,195,36,.18); transition:transform .15s, box-shadow .15s;}
+a.cta:hover{transform:translateY(-2px); box-shadow:0 16px 44px rgba(246,195,36,.3);}
+a.cta .arrow{font-size:1.2em; line-height:1;}
+.cta-note{font-size:14.5px; color:var(--fg3); font-style:italic;}
+.print-url{display:none;}
+
+/* ---- Seções ---- */
+.sec{margin-top:54px;}
+.sec h2{font-family:var(--voz-sagrada); color:var(--bege); font-size:clamp(22px,3vw,28px); letter-spacing:.03em; margin:0 0 16px;}
+.sec p{color:var(--fg2); max-width:64ch; margin:0 0 14px;}
+.sec p strong{color:var(--bege); font-weight:600;}
+.pull{border-left:3px solid var(--amarelo); background:var(--amarelo-08); padding:16px 20px; margin:20px 0; font-size:18px; color:var(--fg1); font-style:italic;}
+
+/* ---- 4 estágios D·S·P·C ---- */
+.stages{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:24px;}
+@media(max-width:720px){.stages{grid-template-columns:1fr;}}
+.st{border:1px solid var(--linha-fraca); border-radius:12px; background:linear-gradient(180deg,var(--preto-2),var(--preto)); padding:22px 24px; position:relative; overflow:hidden; break-inside:avoid;}
+.st:before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--linha-de-fogo); opacity:.75;}
+.st-head{display:flex; align-items:baseline; gap:12px; margin-bottom:8px;}
+.st-letter{font-family:var(--voz-monumental); font-size:34px; line-height:.9; color:var(--amarelo); text-shadow:0 2px 0 var(--brasa);}
+.st-name{font-family:var(--voz-sagrada); font-size:19px; color:var(--bege); letter-spacing:.05em; text-transform:uppercase;}
+.st p{color:var(--fg2); font-size:15.5px; margin:0;}
+
+/* ---- Conversation starters ---- */
+.starters{margin-top:22px;}
+.starters .lbl{font-family:var(--voz-sagrada); font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--fg-bronze); margin-bottom:14px;}
+.chip{display:block; border:1px solid var(--linha-bronze); border-left:3px solid var(--amarelo); border-radius:10px; padding:13px 18px; margin-bottom:11px; color:var(--fg1); font-size:16.5px; background:rgba(0,0,0,.18);}
+.chip:before{content:"“"; color:var(--bronze); margin-right:2px;} .chip:after{content:"”"; color:var(--bronze); margin-left:2px;}
+
+/* ---- Trust line ---- */
+.trust{margin-top:30px; border:1px dashed var(--linha-bronze); border-radius:12px; padding:20px 24px;}
+.trust p{margin:0; color:var(--fg2); font-size:15.5px;}
+.trust b{color:var(--fg-bronze);}
+
+/* ---- CTA final ---- */
+.final-cta{margin-top:56px; border:1px solid var(--linha-bronze); border-radius:16px; padding:38px 34px; text-align:center; background:radial-gradient(620px 300px at 50% 0,var(--amarelo-08),transparent 65%);}
+.final-cta h3{font-family:var(--voz-sagrada); color:var(--bege); font-size:24px; margin:0 0 20px;}
+.final-cta a.cta{margin:0 auto;}
+
+.colophon{margin-top:46px; padding-top:22px; border-top:1px solid var(--linha-fraca); color:var(--fg3); font-size:13px; line-height:1.7;}
+.colophon b{color:var(--fg-bronze); font-weight:600;}
+
+.export-btn{position:fixed; top:22px; right:22px; z-index:50; font-family:var(--voz-sagrada); font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--preto); background:var(--ouro-revelado); border:none; border-radius:999px; padding:13px 22px; cursor:pointer; box-shadow:0 6px 24px rgba(0,0,0,.45); transition:transform .15s;}
+.export-btn:hover{transform:translateY(-1px);}
+
+/* ============== PRINT / PDF ============== */
+@media print{
+  @page{size:A4; margin:0;}
+  *{-webkit-print-color-adjust:exact!important; print-color-adjust:exact!important;}
+  html,body{background:var(--preto)!important;}
+  .no-print{display:none!important;}
+  .wrap{padding:14mm 12mm; max-width:none;}
+  a.cta{box-shadow:none;}
+  .print-url{display:block; font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--fg-bronze); word-break:break-all; margin-top:4px;}
+  .sec,.stages,.final-cta,.trust,.starters{break-inside:avoid;}
+  h1.title{font-size:52px;}
+}
+</style>
+</head>
+<body>
+<button class="export-btn no-print" onclick="exportarPDF()">Exportar PDF&nbsp;↓</button>
+
+<div class="wrap">
+
+  <!-- ===== CABEÇALHO ===== -->
+  <header class="masthead">
+    <div class="brandline">
+      <span class="seal">∞</span>
+      <span class="meta">AIOX na Prática · Academia Lendár[IA]</span>
+    </div>
+    <p class="kicker">Bônus do Zoom · Custom GPT</p>
+    <h1 class="title">Seu Copiloto DSPC</h1>
+    <p class="subtitle">Um mentor ao seu lado — do "quero vender IA" até um serviço pronto pra vender.</p>
+    <div class="firebar"></div>
+    <p class="lead">O Copiloto DSPC é um GPT que <strong>te conduz</strong>, etapa por etapa, pelas quatro fases do método — <strong>Dor · Sprint · Pitch · Contrato</strong>. Ele <strong>não cospe prompt pronto</strong>: pergunta, escuta e te leva, uma etapa por vez, até você sair com a dor diagnosticada, o Sprint definido, o pitch escrito e a oferta-piloto desenhada.</p>
+
+    <div class="cta-wrap">
+      <a class="cta" href="https://chatgpt.com/g/g-6a1ca31de4d4819183cf08d179ede026-copiloto-sistema-dspc" target="_blank" rel="noopener">Abrir meu Copiloto DSPC <span class="arrow">→</span></a>
+      <span class="cta-note">Abre no ChatGPT. Precisa de uma conta (o plano grátis já funciona).</span>
+      <span class="print-url">https://chatgpt.com/g/g-6a1ca31de4d4819183cf08d179ede026-copiloto-sistema-dspc</span>
+    </div>
+  </header>
+
+  <!-- ===== COMO FUNCIONA ===== -->
+  <section class="sec">
+    <h2>Como ele funciona</h2>
+    <p>Diferente de um gerador de prompts, o Copiloto age como um <strong>mentor</strong>: conduz <strong>uma etapa por vez</strong>, explica por que cada uma importa, faz a pergunta-chave e só avança quando aquela etapa está concreta. Se algo ficar vago, ele te redireciona — sem deixar você pular pro "construir a ferramenta" antes de ter a dor e a oferta.</p>
+    <div class="pull">Ao final, ele entrega seu resumo DSPC — Dor, Sprint, Pitch e Oferta-piloto — e aponta o próximo passo.</div>
+  </section>
+
+  <!-- ===== AS 4 ETAPAS ===== -->
+  <section class="sec">
+    <h2>As quatro etapas que ele percorre com você</h2>
+    <div class="stages">
+      <div class="st"><div class="st-head"><span class="st-letter">D</span><span class="st-name">Dor</span></div><p>Acha a dor cara que se repete toda semana e bate em Tempo, Dinheiro ou Foco. Médico, não farmacêutico: diagnostica antes de prescrever.</p></div>
+      <div class="st"><div class="st-head"><span class="st-letter">S</span><span class="st-name">Sprint</span></div><p>Define a menor entrega que já resolve a dor e vai pra rua rápido (7 a 21 dias). O squad de agentes é a ferramenta que constrói — não o produto.</p></div>
+      <div class="st"><div class="st-head"><span class="st-letter">P</span><span class="st-name">Pitch</span></div><p>Preenche a fórmula campo a campo até a frase ficar específica e mensurável — a que vende o serviço sem soar genérica.</p></div>
+      <div class="st"><div class="st-head"><span class="st-letter">C</span><span class="st-name">Contrato</span></div><p>Desenha a oferta-piloto: nicho, dor, processo, Sprint, prazo e faixa — com a régua ROI 10x e a recorrência mensal.</p></div>
+    </div>
+  </section>
+
+  <!-- ===== COMO COMEÇAR ===== -->
+  <section class="sec">
+    <h2>Como começar</h2>
+    <p>É só abrir e dizer o que você precisa. Não sabe por onde? Comece por uma destas:</p>
+    <div class="starters">
+      <div class="chip">Quero vender meu primeiro serviço de IA, mas não sei por onde começar</div>
+      <div class="chip">Não sei qual dor atacar — me ajuda a achar uma?</div>
+      <div class="chip">Quero aplicar o DSPC no meu caso</div>
+      <div class="chip">O que é o método DSPC?</div>
+    </div>
+  </section>
+
+  <!-- ===== TRUST ===== -->
+  <section class="trust">
+    <p>Ele segue as regras do método: <b>não promete receita que você não controla</b> — a garantia é de <b>entrega</b>, não de faturamento. E <b>não inventa dados, números ou cases</b> por você. Conduz com honestidade, no seu caso real.</p>
+  </section>
+
+  <!-- ===== CTA FINAL ===== -->
+  <section class="final-cta">
+    <h3>Pronto pra desenhar seu primeiro serviço?</h3>
+    <a class="cta" href="https://chatgpt.com/g/g-6a1ca31de4d4819183cf08d179ede026-copiloto-sistema-dspc" target="_blank" rel="noopener">Abrir meu Copiloto DSPC <span class="arrow">→</span></a>
+    <span class="print-url">https://chatgpt.com/g/g-6a1ca31de4d4819183cf08d179ede026-copiloto-sistema-dspc</span>
+  </section>
+
+  <p class="colophon">
+    <b>Copiloto DSPC</b> — Custom GPT da Academia Lendár[IA]. Conduz pelo método <b>DSPC</b> (Dor · Sprint · Pitch · Contrato): a superfície do iceberg — como você <b>vende</b> um serviço de IA. &nbsp;|&nbsp;
+    Use junto com o <b>Mapa DSPC</b> e o <b>Banco de Dores Caras</b>. &nbsp;|&nbsp; AIOX na Prática.
+  </p>
+
+</div>
+<script>
+function _prep(on){
+  document.querySelectorAll('[contenteditable][data-ph]').forEach(function(el){
+    if(on){ if(!el.textContent.trim()){ el.dataset.we='1'; el.textContent=el.getAttribute('data-ph'); el.style.color='var(--fg3)'; el.style.fontStyle='italic'; } }
+    else if(el.dataset.we){ el.textContent=''; el.style.color=''; el.style.fontStyle=''; delete el.dataset.we; }
+  });
+  document.querySelectorAll('.print-url').forEach(function(el){ el.style.display = on?'block':''; });
+}
+async function exportarPDF(){
+  var btn=document.querySelector('.export-btn');
+  if(typeof html2pdf==='undefined'){ window.print(); return; }
+  var old=btn.innerHTML; btn.textContent='Gerando PDF…'; btn.disabled=true; _prep(true);
+  try{
+    if(document.fonts&&document.fonts.ready){ await document.fonts.ready; }
+    await html2pdf().set({
+      margin:0, filename:'Copiloto-DSPC-AIOX.pdf',
+      image:{type:'jpeg',quality:0.97},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#131109',windowWidth:1040},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy'],avoid:['.sec','.stages','.st','.starters','.trust','.final-cta']}
+    }).from(document.querySelector('.wrap')).save();
+  }catch(e){ window.print(); }
+  finally{ _prep(false); btn.innerHTML=old; btn.disabled=false; }
+}
+</script>
+</body>
+</html>

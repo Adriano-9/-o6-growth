@@ -1,0 +1,20 @@
+# Workflow: Offer Creation (single-agent, self-contained)
+name: offer-creation
+description: End-to-end Grand Slam Offer creation from call-time inputs to a draft offerbook entry.
+entry_agent: offer-architect
+
+phases:
+  - id: gather
+    agent: offer-architect
+    task: tasks/build-grand-slam-offer.md
+    elicit: true
+    description: Collect product, ICP, price, dream outcome (ask for any missing).
+  - id: architect
+    agent: offer-architect
+    task: tasks/build-grand-slam-offer.md
+    description: Value Equation scoring + Grand Slam components (bonuses, guarantee, scarcity, naming).
+  - id: emit
+    agent: offer-architect
+    output: outputs/offer-book/{slug}/offerbook-entry.yaml
+    checklist: checklists/value-equation-checklist.md
+    description: Emit the offerbook entry (draft) and run the checklist.

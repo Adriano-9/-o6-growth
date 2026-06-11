@@ -1,0 +1,63 @@
+# Deep Research Squad — Token Registry
+# Roundtable RT-2026-04-09 — Wave 1A
+# Pattern follows ETL-OPS and Spy token registries
+
+time:
+  - research_ttl
+capacity:
+  - max_parallel_agents
+threshold:
+  - evidence_reliability_threshold
+  - decision_quality_threshold
+priority:
+  - research_query_priority
+permission:
+  - source_access_scope
+taxonomy:
+  - use_case_classification
+behavior:
+  - qa_mandatory
+accountability:
+  - research_steward
+mode:
+  - ENTENDER
+  - EXPLORAR
+  - VALIDAR
+
+tokens:
+  - token_name: research_ttl
+    family: Time
+    semantic: "Janela de validade de um relatório de pesquisa antes de ficar stale"
+  - token_name: max_parallel_agents
+    family: Capacity
+    semantic: "Número máximo de agentes Tier 1 executando em paralelo"
+  - token_name: evidence_reliability_threshold
+    family: Threshold
+    semantic: "PPV mínimo exigido pelo Ioannidis para evidência confiável (QG-003)"
+  - token_name: decision_quality_threshold
+    family: Threshold
+    semantic: "Score mínimo no checklist de 12 perguntas do Kahneman (QG-004)"
+  - token_name: research_query_priority
+    family: Priority
+    semantic: "Prioridade relativa entre queries de pesquisa"
+  - token_name: source_access_scope
+    family: Permission
+    semantic: "Escopo permitido de acesso a fontes: web, academic, osint, proprietary"
+  - token_name: use_case_classification
+    family: Taxonomy
+    semantic: "Classificação canônica de use case: UC-001 Technical, UC-002 Strategic, UC-003 Competitive, UC-004 Evidence"
+  - token_name: qa_mandatory
+    family: Behavior
+    semantic: "QA tier (Ioannidis + Kahneman) é obrigatório e non-bypassable em toda execução"
+  - token_name: research_steward
+    family: Accountability
+    semantic: "Responsável humano final pela validação e aprovação do relatório"
+  - token_name: ENTENDER
+    family: Mode
+    semantic: "Modo de entendimento profundo — full pipeline com QA"
+  - token_name: EXPLORAR
+    family: Mode
+    semantic: "Modo de exploração — Tier 0 + Tier 1 seletivo, QA opcional"
+  - token_name: VALIDAR
+    family: Mode
+    semantic: "Modo de validação — foco em QA tier para evidência existente"

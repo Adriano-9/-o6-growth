@@ -1,0 +1,77 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Squad: Data Analysis
+# Domain: Call-time dataset analysis (agnostic — no business workspace)
+# Rebuild-greenfield of the workspace-coupled `data` squad as a standalone analyst.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+pack:
+  name: data-analysis
+  version: "1.0.0"
+  description: >-
+    Squad agnóstico de análise de dados. Analisa datasets passados como input na
+    chamada (CSV/JSON/tabela/consulta) — não depende de workspace de business.
+    Produz relatório de análise estruturado com achados, qualidade e próximos passos.
+  icon: "📊"
+
+entry_agent: data-analyst
+
+squad:
+  name: data-analysis
+  display_name: "Data Analysis Squad"
+  version: "1.0.0"
+  domain: "Call-time Dataset Analysis"
+  description: |
+    Rebuild greenfield do squad `data` (que era workspace_first) como analista
+    standalone. Recebe os dados na chamada, executa análise exploratória, estatística
+    descritiva, detecção de padrões/outliers e gera insights acionáveis.
+  keywords:
+    - data-analysis
+    - exploratory-data-analysis
+    - descriptive-statistics
+    - data-quality
+    - insights
+    - call-time-data
+  entry_agent: data-analyst
+  created_by: export-squad-greenfield
+  created_at: "2026-06-08"
+  tested: false
+
+workspace_integration:
+  level: none
+  rationale: >-
+    Data Analysis é self-contained. O dataset e a pergunta de negócio chegam como
+    input na chamada (caminho de arquivo local, dados colados, ou conexão fornecida).
+    Não lê workspace/businesses. Saídas em outputs/.
+
+capabilities:
+  - exploratory-data-analysis
+  - descriptive-statistics
+  - data-quality-assessment
+  - pattern-outlier-detection
+  - insight-synthesis
+
+agents:
+  - id: data-analyst
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "analysis report (MD) per templates/analysis-report-tmpl.md"
+      story_role: executor
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: ["data"]
+    file: agents/data-analyst.md
+    role: Standalone Data Analyst
+    status: active
+    is_lead: true
+
+artifact_contracts:
+  - artifact_id: analysis-report
+    template_path: templates/analysis-report-tmpl.md
+    lifecycle_states: [draft, validated]
+
+activation:
+  entry_agent: data-analyst
+  shortcuts:
+    - "/data-analysis:data-analyst"

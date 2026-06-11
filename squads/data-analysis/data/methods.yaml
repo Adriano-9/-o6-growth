@@ -1,0 +1,23 @@
+# Analysis methods reference (self-contained)
+profiling:
+  - shape: "rows × cols"
+  - types: "numeric / categorical / datetime / text"
+  - missingness: "% per column + pattern (MCAR/MAR/MNAR if inferable)"
+  - duplicates: "exact + key-based"
+
+descriptive:
+  central_tendency: [mean, median, mode]
+  spread: [std, iqr, range, cv]
+  distribution: [skew, kurtosis, histogram-shape]
+
+patterns:
+  - correlation: "pearson/spearman; report strength + caveat (≠ causation)"
+  - trend: "time-ordered movement; seasonality if datetime present"
+  - grouping: "segment-level differences that change the story"
+  - outliers: "iqr / z-score / domain rule; flag, don't auto-drop"
+
+integrity_rules:
+  - "Compute on real data only; never fabricate."
+  - "Separate observation from interpretation."
+  - "Tag confidence on every insight."
+  - "State data and analysis limits explicitly."

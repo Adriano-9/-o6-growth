@@ -1,0 +1,20 @@
+infrastructure:
+  squad: deep-research
+  version: "1.0.1"
+  validation_batch: "20260514-validate-deep"
+  runtime:
+    entry_agent: research-chief
+    activation: "@deep-research:research-chief"
+    validation_activation: "/sinkra-squad:sinkra-chief"
+  scripts:
+    - path: scripts/deep-search.ts
+      purpose: "Search orchestration and result scoring."
+    - path: scripts/search-providers.ts
+      purpose: "Provider abstraction for search backends."
+  outputs:
+    validation_root: "outputs/squad-validations/deep-research/"
+    report_templates:
+      - templates/research-report-tmpl.md
+      - templates/evidence-synthesis-tmpl.yaml
+      - templates/competitive-intel-tmpl.md
+

@@ -1,0 +1,570 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Squad: Deep Research
+# Domain: Evidence-Based Research Pipeline
+# Created: 2026-02-07
+# Version: 1.0.1
+# ═══════════════════════════════════════════════════════════════════════════════
+
+pack:
+  name: deep-research
+  version: "1.0.1"
+  description: >-
+    Squad de pesquisa profunda com pipeline 3-tier: Diagnostic (Tier 0),
+    Execution (Tier 1), e Quality Assurance. 11 agents especializados baseados
+    em elite minds reais.
+  icon: "🔬"
+
+entry_agent: research-chief
+tested: false
+tested_scope:
+  status: structural_deep_validation_only
+  reason: "Validação profunda local não executa pesquisa web real nem chamadas externas; valida estrutura, contratos, YAML e scripts TypeScript quando possível."
+
+squad:
+  name: deep-research
+  display_name: "Deep Research Squad"
+  version: "1.0.1"
+  domain: "Evidence-Based Research Pipeline"
+  description: |
+    Squad de pesquisa profunda com pipeline 3-tier: Diagnostic (Tier 0),
+    Execution (Tier 1), e Quality Assurance. 11 agents especializados baseados
+    em elite minds reais — de Evidence-Based Medicine (Sackett) a Competitive
+    Intelligence (Gilad), com QA obrigatório (Ioannidis + Kahneman).
+
+  philosophy: |
+    "Every research question deserves a structured, evidence-based answer."
+    O pipeline garante que toda query passa por diagnóstico (formular a pergunta
+    certa), execução (reunir evidência), e QA (auditar vieses e qualidade).
+
+  keywords:
+    - deep-research
+    - evidence-based
+    - systematic-review
+    - competitive-intelligence
+    - osint
+    - decision-science
+    - bias-detection
+    - pico
+    - dora-metrics
+    - sensemaking
+
+  entry_agent: research-chief
+  created_by: "squad-creator-pro"
+  created_at: "2026-02-07"
+  tested: false
+
+workspace_integration:
+  level: none
+  rationale: >-
+    O deep-research squad e self-contained. Nao consome nem produz artefatos
+    no workspace/. Toda operacao acontece dentro do pipeline de pesquisa.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TIER ARCHITECTURE
+# ─────────────────────────────────────────────────────────────────────────────
+
+tiers:
+  tier_0:
+    name: "Diagnostic"
+    agents:
+      - sackett
+      - booth
+      - creswell
+    purpose: "Formulate the research question, select methodology, and design the research plan. Always runs first, sequentially."
+
+  tier_1:
+    name: "Execution"
+    agents:
+      - forsgren
+      - cochrane
+      - higgins
+      - klein
+      - gilad
+    purpose: "Deep specialist analysis. Runs in parallel — orchestrator selects relevant agents based on use case classification."
+
+  qa:
+    name: "Quality Assurance"
+    agents:
+      - ioannidis
+      - kahneman
+    purpose: "Mandatory QA gate. Ioannidis audits evidence reliability (PPV, bias). Kahneman audits decision quality (cognitive biases). Always runs last, sequentially."
+
+  orchestrator:
+    name: "Pipeline Coordinator"
+    agents:
+      - research-chief
+    purpose: "Classify queries, route through pipeline, enforce quality gates, synthesize final report."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AGENT REGISTRY
+# ─────────────────────────────────────────────────────────────────────────────
+
+agents:
+  # Orchestrator
+  research-chief:
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "deliverable definido pela task ativa"
+      story_role: "executor"
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: []
+    file: agents/research-chief.md
+    tier: orchestrator
+    based_on: "Original (Pipeline Coordinator)"
+    icon: "🔬"
+    focus: "Query classification, pipeline routing, quality gates, report synthesis"
+
+  # Tier 0 — Diagnostic
+  sackett:
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "deliverable definido pela task ativa"
+      story_role: "executor"
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: []
+    file: agents/sackett.md
+    tier: 0
+    based_on: "David Sackett (EBM founder)"
+    icon: "🎯"
+    focus: "PICO question formulation, evidence levels, EBM 5-step workflow"
+
+  booth:
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "deliverable definido pela task ativa"
+      story_role: "executor"
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: []
+    file: agents/booth.md
+    tier: 0
+    based_on: "Andrew Booth (SALSA framework)"
+    icon: "📐"
+    focus: "Review methodology selection (14 types), SALSA/STARLITE frameworks"
+
+  creswell:
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "deliverable definido pela task ativa"
+      story_role: "executor"
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: []
+    file: agents/creswell.md
+    tier: 0
+    based_on: "John Creswell (mixed methods)"
+    icon: "🔀"
+    focus: "Qualitative/quantitative/mixed methods design, data integration strategy"
+
+  # Tier 1 — Execution
+  forsgren:
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "deliverable definido pela task ativa"
+      story_role: "executor"
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: []
+    file: agents/forsgren.md
+    tier: 1
+    based_on: "Nicole Forsgren (DORA/SPACE)"
+    icon: "📊"
+    focus: "Technical performance measurement, DORA metrics, DevOps assessment, SPACE framework"
+
+  cochrane:
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "deliverable definido pela task ativa"
+      story_role: "executor"
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: []
+    file: agents/cochrane.md
+    tier: 1
+    based_on: "Cochrane Collaboration (systematic reviews)"
+    icon: "📚"
+    focus: "Systematic literature reviews, evidence synthesis, PRISMA, GRADE evaluations"
+
+  higgins:
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "deliverable definido pela task ativa"
+      story_role: "executor"
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: []
+    file: agents/higgins.md
+    tier: 1
+    based_on: "Eliot Higgins (Bellingcat/OSINT)"
+    icon: "🔍"
+    focus: "Open-source investigations, source verification, geolocation, digital forensics"
+
+  klein:
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "deliverable definido pela task ativa"
+      story_role: "executor"
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: []
+    file: agents/klein.md
+    tier: 1
+    based_on: "Gary Klein (NDM/RPD)"
+    icon: "🧩"
+    focus: "Pattern recognition, sensemaking, decision analysis, pre-mortem"
+
+  gilad:
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "deliverable definido pela task ativa"
+      story_role: "executor"
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: []
+    file: agents/gilad.md
+    tier: 1
+    based_on: "Ben Gilad (Competitive Intelligence)"
+    icon: "🏢"
+    focus: "Competitive intelligence, strategic early warning, blind spot detection"
+
+  # QA
+  ioannidis:
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "deliverable definido pela task ativa"
+      story_role: "executor"
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: []
+    file: agents/ioannidis.md
+    tier: qa
+    based_on: "John Ioannidis (Meta-research)"
+    icon: "⚖️"
+    focus: "Evidence reliability audit, PPV calculation, bias detection, research quality"
+
+  kahneman:
+    executor_profile:
+      sinkra_type: Agent
+      human_in_the_loop: true
+      output_schema: "deliverable definido pela task ativa"
+      story_role: "executor"
+      can_execute: true
+      core_replaces: null
+      work_contexts: ["general"]
+      can_review: []
+    file: agents/kahneman.md
+    tier: qa
+    based_on: "Daniel Kahneman (Behavioral Economics)"
+    icon: "🧠"
+    focus: "Cognitive bias audit, System 1/2, decision hygiene, pre-mortem analysis"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HANDOFF MATRIX
+# ─────────────────────────────────────────────────────────────────────────────
+
+handoffs:
+  research-chief:
+    routes_to: [sackett, booth, creswell, forsgren, cochrane, higgins, klein, gilad, ioannidis, kahneman]
+
+  # Tier 0 — sequential chain
+  sackett:
+    hands_off_to: [booth]
+    escalates_to: [research-chief]
+
+  booth:
+    receives_from: [sackett]
+    hands_off_to: [creswell]
+    escalates_to: [research-chief]
+
+  creswell:
+    receives_from: [booth]
+    hands_off_to: [research-chief]
+    escalates_to: [research-chief]
+
+  # Tier 1 — parallel, return to orchestrator
+  forsgren:
+    collaborates_with: [cochrane]
+    returns_to: [research-chief]
+
+  cochrane:
+    collaborates_with: [forsgren, higgins]
+    returns_to: [research-chief]
+
+  higgins:
+    collaborates_with: [cochrane, gilad]
+    returns_to: [research-chief]
+
+  klein:
+    collaborates_with: [gilad, forsgren]
+    returns_to: [research-chief]
+
+  gilad:
+    collaborates_with: [higgins, klein]
+    returns_to: [research-chief]
+
+  # QA — sequential, final
+  ioannidis:
+    receives_from: [research-chief]
+    hands_off_to: [kahneman]
+
+  kahneman:
+    receives_from: [ioannidis]
+    hands_off_to: [research-chief]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PIPELINE FLOW
+# ─────────────────────────────────────────────────────────────────────────────
+
+pipeline:
+  description: |
+    Every research query follows this pipeline:
+    1. research-chief classifies query into use cases (UC-001~004)
+    2. Tier 0 runs sequentially: Sackett → Booth → Creswell
+    3. Tier 1 runs in parallel: selected agents based on use case
+    4. QA runs sequentially: Ioannidis → Kahneman
+    5. research-chief synthesizes final report
+
+  use_cases:
+    UC-001:
+      label: "Technical Deep Dive"
+      primary_agents: [forsgren, cochrane]
+      secondary_agents: [klein, higgins]
+
+    UC-002:
+      label: "Strategic Decision Support"
+      primary_agents: [klein, gilad]
+      secondary_agents: [forsgren, cochrane]
+
+    UC-003:
+      label: "Competitive Intelligence"
+      primary_agents: [gilad, higgins]
+      secondary_agents: [klein]
+
+    UC-004:
+      label: "Evidence Synthesis"
+      primary_agents: [cochrane, forsgren]
+      secondary_agents: [higgins]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# QUALITY GATES
+# ─────────────────────────────────────────────────────────────────────────────
+
+quality_gates:
+  QG-001:
+    name: "Question Quality"
+    agent: sackett
+    placement: "After Tier 0"
+    criteria: "PICO question is well-formed with all 4 components"
+
+  QG-002:
+    name: "Methodology Fit"
+    agent: booth
+    placement: "After Tier 0"
+    criteria: "Review type matches question type and available evidence"
+
+  QG-003:
+    name: "Evidence Reliability"
+    agent: ioannidis
+    placement: "After Tier 1"
+    criteria: "PPV > threshold, bias patterns flagged, unreliable evidence identified"
+
+  QG-004:
+    name: "Decision Quality"
+    agent: kahneman
+    placement: "Final"
+    criteria: "12-Question Checklist passed, cognitive biases audited, pre-mortem completed"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOOL INTEGRATION
+# ─────────────────────────────────────────────────────────────────────────────
+
+tools:
+  exa:
+    description: "Web search for current information and sources"
+    used_by: [higgins, cochrane, gilad, research-chief]
+
+  context7:
+    description: "Library documentation lookup"
+    used_by: [forsgren, cochrane]
+
+  web_search:
+    description: "General web search for research queries"
+    used_by: [higgins, gilad, cochrane]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CROSS-CUTTING CONCERNS
+# ─────────────────────────────────────────────────────────────────────────────
+
+cross_cutting:
+  evidence_standards:
+    description: "All agents follow evidence hierarchy and cite sources"
+    applies_to: "all"
+
+  structured_outputs:
+    description: "All agents produce structured outputs that feed downstream"
+    applies_to: "all"
+
+  qa_mandatory:
+    description: "Every pipeline run MUST pass through both QA agents"
+    applies_to: "all"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SETTINGS
+# ─────────────────────────────────────────────────────────────────────────────
+
+settings:
+  greeting:
+    level: archetypal
+    show_project_status: true
+    show_pipeline_status: true
+
+  activation:
+    prefix: "deep-research"
+    example: "@deep-research:research-chief"
+
+quality_standards:
+  min_score: 7.0
+  smoke_tests: 3
+  voice_dna_required: true
+  thinking_dna_required: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STATISTICS
+# ─────────────────────────────────────────────────────────────────────────────
+
+stats:
+  total_agents: 11
+  tier_0_diagnostic: 3
+  tier_1_execution: 5
+  qa_agents: 2
+  orchestrator: 1
+  total_tasks: 17
+  total_workflows: 3
+
+# SINKRA v3.1 (Story 55.15 Hub upgrade)
+artifact_contracts:
+  - artifact_id: "research-report"
+    template_path: "templates/research-report-tmpl.md"
+    lifecycle_states: [draft, validated, approved]
+  - artifact_id: "evidence-synthesis"
+    template_path: "templates/evidence-synthesis-tmpl.yaml"
+    lifecycle_states: [draft, validated, approved]
+  - artifact_id: "competitive-intel-brief"
+    template_path: "templates/competitive-intel-tmpl.md"
+    lifecycle_states: [draft, validated, approved]
+
+bu_mapping: "hub-framework"
+supported_modes:
+  - ENTENDER
+  - EXPLORAR
+  - VALIDAR
+
+# ADR-119: Selective manifest domains (Story 119.12)
+synapse_domains:
+  - research
+  - data
+
+
+# --- MIGRATION-SCHEMA-001 (auto-backfill, refine domain & capabilities) ---
+metadata:
+  name: deep-research
+  status: active
+  domain: deep-research
+  version: "1.0.1"
+  score: 97.65
+  last_deep_validation: "20260514-validate-deep"
+# --- /MIGRATION-SCHEMA-001 ---
+
+
+# --- MIGRATION-SCHEMA-001 (top-level schema backfill) ---
+capabilities:
+  - query-classification
+  - pico-formulation
+  - methodology-selection
+  - research-plan-design
+  - systematic-review
+  - osint-investigation
+  - competitive-intelligence
+  - technical-performance-assessment
+  - evidence-reliability-audit
+  - decision-quality-audit
+  - report-synthesis
+  - source-credibility-validation
+  - activation-planning
+
+activation:
+  # shortcuts injected by export-squad for standalone projection
+  shortcuts:
+    - "/deep-research:research-chief"
+  primary: "@deep-research:research-chief"
+  command_prefix: "*"
+  entry_agent: research-chief
+  manual_invocation: "/sinkra-squad:sinkra-chief -> *validate-squad deep-research --deep"
+
+task_inventory:
+  count: 17
+  source: squads/deep-research/tasks/*.md
+  validation_batch: "20260514-validate-deep"
+
+workflows:
+  - id: wf-deep-research
+    path: squads/deep-research/workflows/wf-deep-research.yaml
+    tasks:
+      - classify-research-query
+      - formulate-pico-question
+      - select-review-methodology
+      - design-research-plan
+      - execute-web-search
+      - conduct-systematic-review
+      - audit-evidence-reliability
+      - audit-decision-quality
+      - synthesize-final-report
+  - id: wf-quick-research
+    path: squads/deep-research/workflows/wf-quick-research.yaml
+    tasks:
+      - classify-research-query
+      - execute-web-search
+      - validate-source-credibility
+      - synthesize-final-report
+  - id: wf-competitive-intel
+    path: squads/deep-research/workflows/wf-competitive-intel.yaml
+    tasks:
+      - classify-research-query
+      - analyze-competitive-intelligence
+      - investigate-osint
+      - analyze-decision-patterns
+      - audit-decision-quality
+      - synthesize-final-report
+
+validation:
+  last_deep_run: "20260514-validate-deep"
+  status: pass
+  score: 97.65
+  tested: false
+  evidence:
+    - "outputs/squad-validations/deep-research/20260514-validate-deep/score-card.yaml"
+    - "outputs/squad-validations/deep-research/20260514-validate-deep/forensic-findings.yaml"
+    - "outputs/squad-validations/deep-research/20260514-validate-deep/compliance-report.md"
+# --- /MIGRATION-SCHEMA-001 ---

@@ -1,0 +1,45 @@
+# Squad IO Contract — deep-research
+# Story: 55.15 | Date: 2026-03-24
+
+inputs:
+  - "Research question or topic"
+  - "Use case classification (UC-001 to UC-004)"
+  - "Evidence requirements"
+
+outputs:
+  - "Research report (evidence-based)"
+  - "Evidence synthesis"
+  - "Competitive intelligence brief"
+  - "Bias audit results"
+
+triggers:
+  - "Manual activation via @deep-research:research-chief"
+  - "Research question from any squad"
+
+dependencies:
+  - "EXA (web search via Docker MCP)"
+  - "Context7 (library documentation)"
+
+artifacts_produced:
+  - "research-report"
+  - "evidence-synthesis"
+  - "competitive-intel-brief"
+
+artifacts_consumed: []
+
+data_sources:
+  - "Web sources (via EXA, web_search)"
+  - "Library documentation (via Context7)"
+
+integrations:
+  - tool: exa
+    type: external
+    purpose: "Web search for evidence"
+  - tool: context7
+    type: external
+    purpose: "Library documentation lookup"
+
+observability:
+  quality_gates: 4
+  qa_mandatory: true
+  pipeline_tiers: 3

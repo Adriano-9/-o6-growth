@@ -1,0 +1,22 @@
+governance_rules:
+  squad: deep-research
+  version: "1.0.1"
+  validation_batch: "20260514-validate-deep"
+  rules:
+    - id: cli-first
+      article: "SINKRA I"
+      rule: "Research workflows must be invocable by agent command before UI."
+      enforcement: blocking
+    - id: no-invention
+      article: "SINKRA IV"
+      rule: "Claims must trace to source, inference, or explicit uncertainty."
+      enforcement: blocking
+    - id: quality-first
+      article: "SINKRA V"
+      rule: "Reports must pass evidence and decision QA before PASS."
+      enforcement: blocking
+    - id: task-first
+      article: "SINKRA VI"
+      rule: "Workflows must enumerate actual task files and no task may be skipped."
+      enforcement: blocking
+
