@@ -205,6 +205,19 @@ Plan → Magic MCP → Build → Review → Update CLAUDE.md
 
 ## Lições aprendidas (append-only)
 
+### 2026-06-10 · Sprint 9 — Squads AIOX + copywriters + vídeo + refactor
+- **Contexto**: Sessão grande — instalou 5 squads externos (`copy` 24 agents, `deep-research` 5, `offer-book` 1, `design-extractor` 1, `data-analysis` 1) em `squads/`, criou `squads/INDEX.json` como registry. Disco C: estava com 0.1GB livre — limpou npm-cache + .next + Temp pra liberar 4.6GB e baixar Chromium do puppeteer.
+- **Decisão arquitetural — squads como diretório irmão de skills**: `squads/` é um diretório novo para agents externos importados (formato AIOX), enquanto `skills/` mantém playbooks O6-nativos. Registry centralizado em `squads/INDEX.json`. Squads são **referência humana** + fonte para destilação em código.
+- **Padrão estabelecido — voice library**: agents `.md` em `squads/copy/agents/` têm 1k+ linhas cada. Em runtime serverless é caro ler. Padrão: destilar voice DNA em `app/_lib/copywriters.ts` como mapa tipado (`Record<CopywriterId, VoiceCard>`). Atualmente: dan-kennedy, eugene-schwartz, gary-halbert, jon-benson.
+- **Pipeline opener agora aceita `copywriter?: string`**: `/api/prospects/pipeline` ganhou param opt-in que injeta `VOZ DE REFERÊNCIA: ...` antes das INSTRUÇÕES OBRIGATÓRIAS. Sem param = tom genérico (default).
+- **Refactor demo route → -266 linhas**: `app/api/prospects/demo/route.ts` tinha cópia local de `debugFetch + getTeamScope + deployToVercel + toSlug`. Migrado para importar de `app/_lib/vercel-deploy.ts` (já compartilhado com video route). De 791 para 525 linhas.
+- **Squad `offer-book` ZERO conflito com módulo**: audit confirmou que squad usa Value Equation (Hormozi) enquanto `app/offer-book/*` usa 4 scores próprios. Complementares — sugestão futura: `/api/offer-book/value-equation` que lê `offer_books.oferta` e roda offer-architect.
+- **HTMLs DSPC em `skills/dspc/`**: 5 playbooks (Mapa DSPC, Abridor de Conversa, Banco de Dores Caras, Checklist Demo Comprável, Card Copiloto). Apenas docs por enquanto — extração do Banco de Dores pro prompt do opener fica pra próxima.
+- **Sprint anterior (2026-06-09)** — vídeo, Telegram, LPs `/saude` `/advocacia`, governança: documentado em commits `c04c300`, `a4790d5`, `faa9727`, `ade1c5b`.
+- **Migration 010_prospects_video aplicada**: colunas `video_url`, `video_generated_at`, `video_provider` em prospects.
+
+
+
 ### 2026-06-05 · Sprint 6 — CRM Commercial Automation
 - **Contexto**: CRM tinha Kanban funcional mas sem mecanismo de follow-up, sem histórico de progresso e sem dashboard de conversão.
 - **Padrão de templates com fallback hardcoded**: `DEFAULT_TEMPLATES` em `page.tsx` garante que templates funcionam no estado zero sem dados em DB. `crm_message_templates` overrides o default quando o usuário customiza. Zero config inicial.

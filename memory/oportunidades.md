@@ -2,6 +2,19 @@
 
 Decisões técnicas do módulo `/oportunidades`. Newest on top. Cross-cutting em [`o6.md`](./o6.md).
 
+## 2026-06-10 · Voice DNA opt-in no opener WhatsApp
+- **Contexto**: `/api/prospects/pipeline` gerava abordagem com tom único (consultor especialista). Squad `copy/` instalado trouxe 24 copywriters como agents `.md`.
+- **Decisão**: criado `app/_lib/copywriters.ts` com 4 voice cards destilados (dan-kennedy, eugene-schwartz, gary-halbert, jon-benson). Param `copywriter?: string` no POST body do pipeline injeta `VOZ DE REFERÊNCIA: ...` antes das INSTRUÇÕES OBRIGATÓRIAS no prompt.
+- **Trade-off**: ler `.md` completo de 1k+ linhas em cada cold start serverless seria caro. Voice cards são uma síntese; quem quiser regenerar abordagem com refinamento maior pode rodar o agent fora do pipeline.
+- **Próximo**: expor seletor de copywriter no ProspectDrawer (opcional, default sem voice). Auditar empiricamente se voice cards mudam taxa de resposta vs. baseline.
+
+## 2026-06-10 · Vídeo animado para prospects (deploy Vercel)
+- **Contexto**: prospects audited tinham `demo_url` (HTML deployed). Próximo gancho de conversão: vídeo curto antes/depois.
+- **Decisão**: `POST /api/prospects/video` constrói HTML CSS-animated com scores antes/depois + bars animadas, deploya em projeto Vercel próprio (`o6-video-{slug}`), cacheia 7 dias. Reuse de `app/_lib/vercel-deploy.ts` (extraído do demo route).
+- **Migration 010_prospects_video**: colunas `video_url`, `video_generated_at`, `video_provider` na tabela `prospects`. Aplicada via Supabase MCP.
+- **UI**: botão "Gerar Vídeo" (rosa/pink) no ProspectDrawer, 4ª na grid `sm:grid-cols-4` (Auditar · Abordagem · Demo · Vídeo).
+- **Telegram**: notificação `🎬 Vídeo gerado para [nome]: [url]` após sucesso.
+
 ---
 
 ## 2026-06-08 · Sprint 7 — Demo Site Generator (Claude HTML + Vercel Deploy)
