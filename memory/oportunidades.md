@@ -2,6 +2,28 @@
 
 Decisões técnicas do módulo `/oportunidades`. Newest on top. Cross-cutting em [`o6.md`](./o6.md).
 
+## 2026-06-17 · BACKLOG S4.6 · Social Media Scraper no pipeline de prospecção
+- **Origem**: pedido do usuário. Não iniciado.
+- **Escopo**: enriquecer prospect com sinais de redes sociais **antes do audit**, melhora o prompt do opener (Claude passa a citar "vocês têm X seguidores no Insta mas o site não tem nada").
+- **Atores Apify a wire**:
+  - `apify/instagram-profile-scraper` (bio, link, contato, seguidores, post recente)
+  - `apify/facebook-pages-scraper`
+  - `apify/tiktok-profile-scraper`
+- **Schema delta** (migration 013_prospects_social pendente):
+  - `instagram_url text`, `instagram_followers integer`
+  - `facebook_url text`, `facebook_followers integer`
+  - `tiktok_url text`, `tiktok_followers integer`
+  - `social_scraped_at timestamptz`
+- **Encaixe no pipeline atual** (`/api/prospects/pipeline`):
+  1. Apify Maps (já existe)
+  2. **+ Social scrape** (novo — paralelizar Instagram/Facebook/TikTok)
+  3. Audit site (já existe, agora com social context)
+  4. Claude opener com novos campos no prompt
+  5. Demo + video
+- **Rate/custo**: Apify Instagram cobra por compute unit. Limitar a 1 perfil por prospect, dedup por handle. Cache 30d (perfis mudam pouco).
+- **Caveats legais**: scraping de redes sociais é zona cinzenta. Restringir a campos **públicos** (bio, contagem visível, link na bio). Não scrape de DMs, lista de seguidores, posts gated.
+- **Próximo passo**: confirmar com o usuário se libera a migration + começa pelo Instagram (maior ROI para nichos Saúde/Estética).
+
 ## 2026-06-10 · Voice DNA opt-in no opener WhatsApp
 - **Contexto**: `/api/prospects/pipeline` gerava abordagem com tom único (consultor especialista). Squad `copy/` instalado trouxe 24 copywriters como agents `.md`.
 - **Decisão**: criado `app/_lib/copywriters.ts` com 4 voice cards destilados (dan-kennedy, eugene-schwartz, gary-halbert, jon-benson). Param `copywriter?: string` no POST body do pipeline injeta `VOZ DE REFERÊNCIA: ...` antes das INSTRUÇÕES OBRIGATÓRIAS no prompt.

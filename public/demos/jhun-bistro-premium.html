@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JHUN — Bistrô Japonês · Salvador</title>
+<meta name="description" content="Cozinha japonesa de autor em Salvador. Quarenta lugares por noite. Reserva obrigatória.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A0808;
+    --bg-2: #131210;
+    --bg-3: #1A1612;
+    --bg-4: #221C16;
+    --red: #C0392B;
+    --red-soft: #8E2A20;
+    --gold: #D4A847;
+    --gold-bright: #E5BE5F;
+    --gold-deep: #A88336;
+    --terracotta: #8B6F47;
+    --text: #F0EBDE;
+    --text-soft: rgba(240, 235, 222, 0.7);
+    --text-mute: rgba(240, 235, 222, 0.4);
+    --line: rgba(212, 168, 71, 0.14);
+    --display: 'Cormorant Garamond', Georgia, serif;
+    --body: 'Inter', -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--body);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-weight: 300;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    cursor: none;
+  }
+  @media (hover: none), (pointer: coarse) { body { cursor: auto; } }
+  ::selection { background: var(--red); color: var(--text); }
+  a, button { cursor: none; }
+  @media (hover: none), (pointer: coarse) { a, button { cursor: pointer; } }
+
+  /* ───────── CUSTOM CURSOR ───────── */
+  .cursor, .cursor-ring {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    border-radius: 50%;
+    will-change: transform;
+    mix-blend-mode: difference;
+  }
+  .cursor {
+    width: 6px; height: 6px;
+    background: var(--gold-bright);
+    top: -3px; left: -3px;
+    transition: width 0.3s, height 0.3s, top 0.3s, left 0.3s;
+  }
+  .cursor-ring {
+    width: 32px; height: 32px;
+    border: 1px solid var(--gold);
+    top: -16px; left: -16px;
+    transition: width 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+                top 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), left 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+                background 0.3s, border-color 0.3s, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-property: width, height, top, left, background, border-color;
+  }
+  .cursor-ring.large {
+    width: 72px; height: 72px;
+    top: -36px; left: -36px;
+    background: rgba(212, 168, 71, 0.08);
+    border-color: var(--gold-bright);
+  }
+  @media (hover: none), (pointer: coarse) { .cursor, .cursor-ring { display: none; } }
+
+  /* ───────── LOADER ───────── */
+  .loader {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+  }
+  .loader.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+  .loader-logo {
+    width: clamp(220px, 32vw, 400px);
+    height: auto;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: loaderFade 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards;
+  }
+  @keyframes loaderFade { to { opacity: 1; transform: translateY(0); } }
+  .loader-bar {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 1px;
+    background: rgba(212, 168, 71, 0.2);
+    overflow: hidden;
+  }
+  .loader-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--gold);
+    transform: translateX(-100%);
+    animation: loaderBar 1.4s ease-in-out forwards;
+  }
+  @keyframes loaderBar { to { transform: translateX(100%); } }
+
+  /* ───────── TOPBAR ───────── */
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 28px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    transition: background 0.5s, padding 0.5s, border-color 0.5s;
+    border-bottom: 1px solid transparent;
+  }
+  .topbar.scrolled {
+    background: rgba(10, 8, 8, 0.85);
+    backdrop-filter: blur(14px);
+    padding: 18px 48px;
+    border-bottom-color: var(--line);
+  }
+  .mark {
+    display: inline-flex;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .logo-svg {
+    height: 38px;
+    width: auto;
+    display: block;
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .topbar.scrolled .logo-svg { height: 32px; }
+  .logo-fish-group {
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform-origin: center;
+  }
+  .mark:hover .logo-fish-group { transform: translateX(6px); }
+  .topbar nav { display: none; gap: 40px; }
+  .topbar nav a {
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    font-weight: 400;
+    transition: color 0.4s;
+    position: relative;
+  }
+  .topbar nav a::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    bottom: -8px;
+    height: 1px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .topbar nav a:hover { color: var(--gold); }
+  .topbar nav a:hover::after { transform: scaleX(1); }
+  @media (min-width: 960px) { .topbar nav { display: flex; } }
+  @media (max-width: 640px) { .topbar, .topbar.scrolled { padding: 16px 22px; } }
+
+  /* ───────── HERO ───────── */
+  .hero {
+    height: 100vh;
+    min-height: 720px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hero-bg {
+    position: absolute;
+    inset: -8%;
+    background:
+      linear-gradient(135deg, rgba(10, 8, 8, 0.55) 0%, rgba(10, 8, 8, 0.85) 100%),
+      url("https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=2400&q=85") center / cover no-repeat,
+      linear-gradient(135deg, #1F1612 0%, #0A0808 70%, #0A0808 100%);
+    background-blend-mode: normal;
+    animation: kenburns 32s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+  .hero-bg::after {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.92 0 0 0 0 0.85 0 0 0 0.1 0'/></filter><rect width='220' height='220' filter='url(%23n)'/></svg>");
+    mix-blend-mode: overlay;
+    opacity: 0.45;
+    pointer-events: none;
+  }
+  @keyframes kenburns {
+    0% { transform: scale(1) translate(0, 0); }
+    100% { transform: scale(1.22) translate(-2.5%, 1.5%); }
+  }
+  .hero-vignette {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at center, transparent 45%, rgba(10, 8, 8, 0.85) 100%),
+      linear-gradient(180deg, rgba(10, 8, 8, 0.65) 0%, transparent 22%, transparent 65%, rgba(10, 8, 8, 0.9) 100%);
+    pointer-events: none;
+  }
+  .hero-side {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent 0%, var(--red) 40%, var(--red) 60%, transparent 100%);
+  }
+  .hero-side.left { left: 48px; }
+  .hero-side.right { right: 48px; }
+  @media (max-width: 720px) {
+    .hero-side.left { left: 18px; }
+    .hero-side.right { right: 18px; }
+  }
+  .hero-content {
+    position: relative;
+    z-index: 5;
+    text-align: center;
+    padding: 0 32px;
+    max-width: 1300px;
+  }
+  .hero-kicker {
+    font-size: 11px;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 56px;
+    opacity: 0;
+    animation: fadeUp 1.4s ease-out 1.6s forwards;
+  }
+  .hero-kicker::before, .hero-kicker::after {
+    content: "—";
+    margin: 0 22px;
+    color: var(--text-mute);
+  }
+  .hero h1 {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(56px, 12vw, 168px);
+    line-height: 0.92;
+    letter-spacing: -0.025em;
+    margin-bottom: 60px;
+    color: var(--text);
+    min-height: 1em;
+  }
+  .hero h1 em { color: var(--gold); font-weight: 400; font-style: italic; }
+  .typewriter .caret {
+    display: inline-block;
+    width: 0.04em;
+    background: var(--gold);
+    margin-left: 0.04em;
+    animation: blink 1s steps(2) infinite;
+    vertical-align: -0.08em;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .hero-sub {
+    font-size: 16px;
+    color: var(--text-soft);
+    max-width: 560px;
+    margin: 0 auto 64px;
+    line-height: 1.8;
+    opacity: 0;
+    animation: fadeUp 1.4s ease-out 3.6s forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .magnetic-wrap {
+    display: inline-block;
+    opacity: 0;
+    animation: fadeUp 1.4s ease-out 3.9s forwards;
+  }
+  .magnetic {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    padding: 22px 48px;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    font-weight: 500;
+    transition: background 0.5s, color 0.5s, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1.2);
+    will-change: transform;
+    cursor: none;
+    position: relative;
+    overflow: hidden;
+  }
+  @media (hover: none), (pointer: coarse) { .magnetic { cursor: pointer; } }
+  .magnetic::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--gold);
+    transform: translateY(101%);
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: -1;
+  }
+  .magnetic:hover { color: var(--bg); }
+  .magnetic:hover::before { transform: translateY(0); }
+  .magnetic svg { width: 14px; height: 14px; transition: transform 0.4s; }
+  .magnetic:hover svg { transform: translateX(6px); }
+  .hero-bottom {
+    position: absolute;
+    bottom: 36px;
+    left: 0; right: 0;
+    z-index: 5;
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    opacity: 0;
+    animation: fadeUp 1.4s ease-out 4.4s forwards;
+  }
+
+  /* ───────── MARQUEE ───────── */
+  .marquee {
+    background: var(--bg-2);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+    padding: 28px 0;
+    position: relative;
+  }
+  .marquee-track {
+    display: flex;
+    gap: 80px;
+    width: max-content;
+    animation: scroll-marquee 32s linear infinite;
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    white-space: nowrap;
+  }
+  .marquee-track > span { display: flex; align-items: center; gap: 80px; }
+  .marquee-track > span::after {
+    content: "·";
+    color: var(--terracotta);
+    font-size: 32px;
+  }
+  @keyframes scroll-marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ───────── SECTION BASE ───────── */
+  section { padding: 160px 24px; position: relative; }
+  .container { max-width: 1180px; margin: 0 auto; }
+  .narrow { max-width: 780px; margin: 0 auto; }
+  .kicker {
+    font-size: 11px;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    margin-bottom: 28px;
+    font-weight: 500;
+  }
+  .reveal {
+    opacity: 0;
+    transform: translateY(48px);
+    transition: opacity 1.1s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  /* ───────── CHEF (sticky pinning) ───────── */
+  .chef { background: var(--bg-2); }
+  .chef-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+  @media (min-width: 960px) {
+    .chef-grid { grid-template-columns: 1fr 1.4fr; gap: 120px; }
+  }
+  .chef-left {
+    position: relative;
+  }
+  @media (min-width: 960px) {
+    .chef-left {
+      position: sticky;
+      top: 140px;
+      align-self: start;
+    }
+  }
+  .chef-quote {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(32px, 4.2vw, 56px);
+    line-height: 1.15;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .chef-quote::before {
+    content: "「";
+    color: var(--red);
+    font-size: 1.4em;
+    line-height: 0;
+    position: relative;
+    top: 0.08em;
+    margin-right: 10px;
+  }
+  .chef-name {
+    margin-top: 44px;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+  }
+  .chef-name span { color: var(--text-mute); margin-left: 14px; font-weight: 300; }
+  .chef-bio p {
+    color: var(--text-soft);
+    font-size: 18px;
+    line-height: 1.9;
+    margin-bottom: 36px;
+  }
+  .chef-bio p:first-of-type::first-letter {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 5em;
+    float: left;
+    line-height: 0.82;
+    margin: 0.06em 16px 0 0;
+    color: var(--gold);
+    font-weight: 400;
+  }
+
+  /* ───────── PULL QUOTE ───────── */
+  .pullquote {
+    background: var(--bg);
+    padding: 140px 24px;
+  }
+  .pullquote-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .pullquote-text {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(32px, 5vw, 68px);
+    line-height: 1.2;
+    color: var(--text);
+    letter-spacing: -0.015em;
+  }
+  .pullquote-text em {
+    color: var(--gold);
+    font-style: italic;
+    font-weight: 400;
+  }
+  .pullquote-source {
+    margin-top: 44px;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+  }
+
+  /* ───────── PRATOS ───────── */
+  .pratos { padding: 180px 24px; }
+  .section-head {
+    text-align: center;
+    margin-bottom: 120px;
+  }
+  .section-head h2 {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(48px, 7vw, 104px);
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .section-head h2 em { color: var(--gold); font-weight: 400; }
+  .prato {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 32px;
+    align-items: baseline;
+    padding: 72px 0;
+    border-top: 1px solid var(--line);
+    transition: padding 0.4s;
+  }
+  @media (min-width: 720px) {
+    .prato { grid-template-columns: 96px 1fr; gap: 56px; }
+  }
+  .prato:last-child { border-bottom: 1px solid var(--line); }
+  .prato-num {
+    font-family: var(--display);
+    font-size: 14px;
+    color: var(--terracotta);
+    letter-spacing: 0.3em;
+    padding-top: 16px;
+    font-weight: 500;
+  }
+  .prato-name {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(28px, 3.8vw, 52px);
+    color: var(--gold);
+    margin-bottom: 18px;
+    letter-spacing: -0.015em;
+    line-height: 1.05;
+  }
+  .prato-desc {
+    color: var(--text-soft);
+    font-size: 16px;
+    line-height: 1.8;
+    max-width: 680px;
+  }
+  .prato-jp {
+    display: block;
+    margin-top: 14px;
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--text-mute);
+    letter-spacing: 0.14em;
+  }
+
+  /* ───────── 40 LUGARES — STICKY PINNING ───────── */
+  .quarenta-section {
+    background: var(--bg);
+    position: relative;
+    border-top: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .quarenta-wrap {
+    position: relative;
+    height: 240vh;
+  }
+  @media (max-width: 960px) {
+    .quarenta-wrap { height: auto; padding: 100px 0; }
+  }
+  .quarenta-pin {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: center;
+    padding: 0 24px;
+  }
+  @media (min-width: 960px) {
+    .quarenta-pin {
+      grid-template-columns: minmax(0, 1.3fr) 1fr;
+      gap: 80px;
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 0 48px;
+    }
+  }
+  @media (max-width: 960px) {
+    .quarenta-pin { position: relative; height: auto; padding: 60px 24px; }
+  }
+  .quarenta-num {
+    font-family: var(--display);
+    font-weight: 200;
+    font-size: clamp(220px, 38vw, 540px);
+    line-height: 0.82;
+    color: var(--text);
+    letter-spacing: -0.05em;
+    position: relative;
+    display: inline-block;
+  }
+  .quarenta-num::after {
+    content: "";
+    position: absolute;
+    bottom: 0.42em;
+    right: -0.06em;
+    width: 0.1em;
+    height: 0.1em;
+    background: var(--red);
+    border-radius: 50%;
+  }
+  .quarenta-sub {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: clamp(20px, 2.6vw, 32px);
+    color: var(--terracotta);
+    margin-top: 24px;
+    letter-spacing: 0.04em;
+    font-weight: 300;
+    display: block;
+  }
+  .quarenta-copy h3 {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(28px, 3.6vw, 44px);
+    color: var(--gold);
+    margin-bottom: 32px;
+    line-height: 1.2;
+  }
+  .quarenta-copy p {
+    color: var(--text-soft);
+    font-size: 17px;
+    line-height: 1.9;
+    margin-bottom: 22px;
+  }
+  .quarenta-copy strong { color: var(--text); font-weight: 500; }
+
+  /* ───────── RESERVE ───────── */
+  .reserve {
+    background: var(--bg-2);
+    text-align: center;
+    padding: 200px 24px;
+  }
+  .reserve h2 {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(56px, 8vw, 120px);
+    color: var(--text);
+    margin-bottom: 36px;
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+  }
+  .reserve h2 em { color: var(--gold); font-weight: 400; }
+  .reserve > .container > p {
+    color: var(--text-soft);
+    font-size: 17px;
+    max-width: 620px;
+    margin: 0 auto 64px;
+    line-height: 1.85;
+  }
+  .reserve-meta {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 44px;
+    margin: 96px auto 0;
+    max-width: 800px;
+    padding-top: 72px;
+    border-top: 1px solid var(--line);
+  }
+  @media (min-width: 640px) {
+    .reserve-meta { grid-template-columns: 1fr 1fr; }
+  }
+  .meta-label {
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+  .meta-val {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 20px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ───────── DOUBLE ───────── */
+  .double { padding: 0; }
+  .double-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    border-top: 1px solid var(--line);
+  }
+  @media (min-width: 960px) {
+    .double-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .double-cell {
+    padding: 130px 56px;
+    border-top: 1px solid var(--line);
+    position: relative;
+  }
+  .double-cell:first-child { border-top: none; }
+  @media (min-width: 960px) {
+    .double-cell:first-child { border-top: none; border-right: 1px solid var(--line); }
+    .double-cell + .double-cell { border-top: none; }
+  }
+  @media (max-width: 720px) { .double-cell { padding: 90px 32px; } }
+  .double-cell h3 {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(32px, 4vw, 52px);
+    color: var(--text);
+    margin-bottom: 28px;
+    line-height: 1.1;
+  }
+  .double-cell p {
+    color: var(--text-soft);
+    font-size: 16px;
+    line-height: 1.85;
+    margin-bottom: 44px;
+    max-width: 480px;
+  }
+  .ghost-link {
+    color: var(--gold);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    font-weight: 500;
+    border-bottom: 1px solid var(--gold);
+    padding-bottom: 8px;
+    transition: opacity 0.4s, letter-spacing 0.4s;
+  }
+  .ghost-link:hover { opacity: 0.7; letter-spacing: 0.4em; }
+
+  /* ───────── FOOTER ───────── */
+  footer {
+    background: var(--bg-2);
+    padding: 100px 24px 44px;
+    border-top: 1px solid rgba(212, 168, 71, 0.2);
+  }
+  .footer-grid {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 56px;
+  }
+  @media (min-width: 720px) {
+    .footer-grid { grid-template-columns: 1.4fr 1fr 1fr; gap: 80px; }
+  }
+  .footer-logo {
+    width: 200px;
+    height: auto;
+    display: block;
+    margin-bottom: 18px;
+  }
+  .footer-block .footer-label {
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    margin-bottom: 22px;
+    font-weight: 500;
+  }
+  .footer-block p, .footer-block a {
+    color: var(--text-soft);
+    font-size: 14px;
+    line-height: 1.95;
+    text-decoration: none;
+  }
+  .footer-block a:hover { color: var(--gold); }
+  .footer-credit {
+    max-width: 1180px;
+    margin: 88px auto 0;
+    padding-top: 40px;
+    border-top: 1px solid var(--line);
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  /* ───────── VOZES — circular testimonials ───────── */
+  .vozes {
+    background: var(--bg-2);
+    padding: 180px 24px;
+    border-top: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .vozes-head {
+    text-align: center;
+    margin-bottom: 100px;
+  }
+  .vozes-head h2 {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(44px, 6vw, 88px);
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .vozes-head h2 em { color: var(--gold); font-weight: 400; }
+  .vozes-stage {
+    position: relative;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  @media (min-width: 920px) {
+    .vozes-stage { grid-template-columns: 440px 1fr; gap: 100px; }
+  }
+  .vozes-orbit {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+  .orbit-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(212, 168, 71, 0.3);
+  }
+  .orbit-center::after {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.92 0 0 0 0 0.85 0 0 0 0.12 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    mix-blend-mode: overlay;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .center-slot {
+    position: absolute; inset: 0;
+    opacity: 0;
+    transition: opacity 0.7s ease, transform 1.2s ease;
+    overflow: hidden;
+  }
+  .center-slot.on { opacity: 1; }
+  .center-slot img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: saturate(0.92) contrast(1.05) brightness(0.85);
+    transition: transform 8s ease-out;
+  }
+  .center-slot.on img { transform: scale(1.08); }
+  .center-slot::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(10,8,8,0.55) 100%);
+    pointer-events: none;
+  }
+  .orbit-avatar {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 76px; height: 76px;
+    border-radius: 50%;
+    border: 1px solid rgba(212, 168, 71, 0.3);
+    background: var(--bg);
+    overflow: hidden;
+    padding: 0;
+    cursor: none;
+    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+                border-color 0.4s, box-shadow 0.4s, filter 0.4s;
+    z-index: 3;
+  }
+  @media (hover: none), (pointer: coarse) { .orbit-avatar { cursor: pointer; } }
+  .orbit-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: grayscale(0.6) brightness(0.7);
+    transition: filter 0.5s;
+  }
+  .orbit-avatar.active {
+    border: 2px solid var(--gold);
+    box-shadow: 0 8px 28px rgba(212, 168, 71, 0.4);
+  }
+  .orbit-avatar.active img { filter: grayscale(0) brightness(1); }
+  .orbit-avatar:hover { border-color: var(--gold); }
+  .orbit-avatar:hover img { filter: grayscale(0.2) brightness(0.95); }
+  /* 5 avatars positioned around circle */
+  .orbit-avatar[data-idx="0"] { transform: translate(-50%, -50%) rotate(-90deg) translate(200px) rotate(90deg); }
+  .orbit-avatar[data-idx="1"] { transform: translate(-50%, -50%) rotate(-18deg) translate(200px) rotate(18deg); }
+  .orbit-avatar[data-idx="2"] { transform: translate(-50%, -50%) rotate(54deg) translate(200px) rotate(-54deg); }
+  .orbit-avatar[data-idx="3"] { transform: translate(-50%, -50%) rotate(126deg) translate(200px) rotate(-126deg); }
+  .orbit-avatar[data-idx="4"] { transform: translate(-50%, -50%) rotate(198deg) translate(200px) rotate(-198deg); }
+  @media (max-width: 640px) {
+    .orbit-avatar { width: 56px; height: 56px; font-size: 22px; }
+    .orbit-avatar[data-idx="0"] { transform: translate(-50%, -50%) rotate(-90deg) translate(150px) rotate(90deg); }
+    .orbit-avatar[data-idx="1"] { transform: translate(-50%, -50%) rotate(-18deg) translate(150px) rotate(18deg); }
+    .orbit-avatar[data-idx="2"] { transform: translate(-50%, -50%) rotate(54deg) translate(150px) rotate(-54deg); }
+    .orbit-avatar[data-idx="3"] { transform: translate(-50%, -50%) rotate(126deg) translate(150px) rotate(-126deg); }
+    .orbit-avatar[data-idx="4"] { transform: translate(-50%, -50%) rotate(198deg) translate(150px) rotate(-198deg); }
+  }
+  .vozes-text {
+    position: relative;
+    min-height: 320px;
+  }
+  .voz {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .voz.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .voz-quote {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(24px, 3.2vw, 38px);
+    line-height: 1.3;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    margin-bottom: 40px;
+  }
+  .voz-quote::before {
+    content: "「";
+    color: var(--red);
+    font-size: 1.4em;
+    line-height: 0;
+    position: relative;
+    top: 0.08em;
+    margin-right: 6px;
+  }
+  .voz-name {
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+  }
+  .voz-name span { color: var(--text-mute); margin-left: 14px; font-weight: 300; }
+  .vozes-controls {
+    margin-top: 56px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .voz-btn {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--gold);
+    display: grid; place-items: center;
+    cursor: none;
+    transition: border-color 0.4s, background 0.4s;
+  }
+  @media (hover: none), (pointer: coarse) { .voz-btn { cursor: pointer; } }
+  .voz-btn:hover { border-color: var(--gold); background: rgba(212, 168, 71, 0.1); }
+  .voz-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+  .voz-counter {
+    margin-left: 12px;
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--text-soft);
+    letter-spacing: 0.08em;
+  }
+  .voz-counter strong { color: var(--gold); font-weight: 400; }
+
+  @media (max-width: 640px) {
+    .prato { gap: 24px; padding: 56px 0; }
+    section { padding: 100px 24px; }
+    .quarenta-wrap { height: auto; padding: 60px 0; }
+    .pratos { padding: 110px 24px; }
+    .reserve { padding: 110px 24px; }
+    .vozes { padding: 110px 24px; }
+    .vozes-text { min-height: 280px; }
+    .chef-bio p:first-of-type::first-letter { font-size: 3.8em; }
+    .marquee-track { font-size: 16px; gap: 56px; }
+    .marquee-track > span { gap: 56px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ───────── LOADER ───────── -->
+<div class="loader" id="loader">
+  <svg class="loader-logo" viewBox="0 0 220 50" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="JHUN">
+    <g>
+      <path d="M 5 25 L 22 12 L 30 23 L 22 38 Z" fill="#C0392B"/>
+      <ellipse cx="120" cy="25" rx="100" ry="11.5" fill="#C0392B"/>
+      <circle cx="200" cy="22" r="1.6" fill="#E8DDC8"/>
+    </g>
+    <text x="110" y="35" font-family="Cormorant Garamond, Georgia, serif" font-size="32" font-weight="500" font-style="italic" fill="#E8DDC8" text-anchor="middle" letter-spacing="6">JHUN</text>
+  </svg>
+  <div class="loader-bar"></div>
+</div>
+
+<!-- ───────── CUSTOM CURSOR ───────── -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- ───────── TOPBAR ───────── -->
+<div class="topbar" id="topbar">
+  <a href="#top" class="mark" data-magnetic-light aria-label="JHUN Bistrô">
+    <svg class="logo-svg" viewBox="0 0 220 50" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="JHUN">
+      <g class="logo-fish-group">
+        <path d="M 5 25 L 22 12 L 30 23 L 22 38 Z" fill="#C0392B"/>
+        <ellipse cx="120" cy="25" rx="100" ry="11.5" fill="#C0392B"/>
+        <circle cx="200" cy="22" r="1.6" fill="#E8DDC8"/>
+      </g>
+      <text x="110" y="35" font-family="Cormorant Garamond, Georgia, serif" font-size="32" font-weight="500" font-style="italic" fill="#E8DDC8" text-anchor="middle" letter-spacing="6">JHUN</text>
+    </svg>
+  </a>
+  <nav>
+    <a href="#pratos" data-magnetic-light>Pratos</a>
+    <a href="#vozes" data-magnetic-light>Vozes</a>
+    <a href="#reserve" data-magnetic-light>Reservas</a>
+    <a href="#delivery" data-magnetic-light>Delivery</a>
+    <a href="#eventos" data-magnetic-light>Eventos</a>
+  </nav>
+</div>
+
+<!-- ───────── HERO ───────── -->
+<section class="hero" id="top">
+  <div class="hero-bg"></div>
+  <div class="hero-vignette"></div>
+  <div class="hero-side left"></div>
+  <div class="hero-side right"></div>
+
+  <div class="hero-content">
+    <div class="hero-kicker">Bistrô Japonês · Salvador · Barra</div>
+    <h1 class="typewriter"><span class="tw-text"></span><span class="caret"></span></h1>
+    <p class="hero-sub">
+      Cozinha de autor. Mãos treinadas no Japão. Quarenta lugares por noite — mão a mão entre quem prepara e quem prova.
+    </p>
+    <div class="magnetic-wrap">
+      <a href="https://wa.me/5571994152643?text=Boa%20noite%2C%20gostaria%20de%20reservar%20uma%20mesa%20no%20Jhun" class="magnetic" target="_blank" rel="noopener" data-magnetic>
+        Reservar mesa
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <div class="hero-bottom">desça para conhecer</div>
+</section>
+
+<!-- ───────── MARQUEE ───────── -->
+<div class="marquee">
+  <div class="marquee-track">
+    <span>本鮪 honmaguro</span>
+    <span>帆立貝 hotategai</span>
+    <span>鮭 sake</span>
+    <span>蛸 tako</span>
+    <span>海老 ebi</span>
+    <span>OMAKASE</span>
+    <span>40 LUGARES</span>
+    <!-- duplicate -->
+    <span>本鮪 honmaguro</span>
+    <span>帆立貝 hotategai</span>
+    <span>鮭 sake</span>
+    <span>蛸 tako</span>
+    <span>海老 ebi</span>
+    <span>OMAKASE</span>
+    <span>40 LUGARES</span>
+  </div>
+</div>
+
+<!-- ───────── CHEF (sticky) ───────── -->
+<section class="chef">
+  <div class="container">
+    <div class="chef-grid">
+      <div class="chef-left reveal">
+        <div class="kicker">Quem cozinha</div>
+        <blockquote class="chef-quote">
+          Mãos treinadas no Japão. Fogo aprendido em Salvador.
+        </blockquote>
+        <div class="chef-name">Vinícius Kikuti <span>@viniciustetsuo · Chef · 20+ anos</span></div>
+      </div>
+      <div class="chef-bio reveal">
+        <p>
+          O Jhun é um bistrô. Não é restaurante, não é casa de eventos, não é cadeia. É um lugar de quarenta lugares com cozinha aberta, onde o chef serve enquanto cozinha e responde quando perguntam. O nome saiu de um fragmento de caractere que o Vinícius leva tatuado desde os anos de aprendizado em Tóquio.
+        </p>
+        <p>
+          A carta muda com o que o mar entrega. Bluefin chega quando a corrente trás, vieira quando a Patagônia libera. A cozinha trabalha em cima do que existe naquele dia — não há freezer entre o ingrediente e o prato.
+        </p>
+        <p>
+          Por isso a reserva é obrigatória. Cada serviço é privado.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── PULL QUOTE ───────── -->
+<section class="pullquote">
+  <div class="pullquote-inner reveal">
+    <blockquote class="pullquote-text">
+      "No Jhun, <em>tempo é técnica</em>. A autoria nasce das mãos do chef — não dá pra apressar o que a mão precisa entender."
+    </blockquote>
+    <div class="pullquote-source">— @jhunbistro</div>
+  </div>
+</section>
+
+<!-- ───────── PRATOS ───────── -->
+<section class="pratos" id="pratos">
+  <div class="section-head reveal">
+    <div class="kicker">A carta</div>
+    <h2>O que <em>servimos</em><br>hoje</h2>
+  </div>
+  <div class="container narrow">
+
+    <article class="prato reveal">
+      <div class="prato-num">01</div>
+      <div>
+        <h3 class="prato-name">Sashimi de Bluefin</h3>
+        <p class="prato-desc">
+          Atum bluefin de cinco dias da água. O corte é feito na hora, com a fibra viva. Servimos cinco fatias do lombo, com pouca soja e wasabi raspado no instante.
+          <span class="prato-jp">本鮪 — honmaguro</span>
+        </p>
+      </div>
+    </article>
+
+    <article class="prato reveal">
+      <div class="prato-num">02</div>
+      <div>
+        <h3 class="prato-name">Salmão Brûlée</h3>
+        <p class="prato-desc">
+          Talhada do salmão fresco, açúcar mascavo queimado no maçarico. O contraste do frio com a crosta quente é o ponto. Inspirado num prato que o Vinícius comeu em Tóquio em 2009.
+        </p>
+      </div>
+    </article>
+
+    <article class="prato reveal">
+      <div class="prato-num">03</div>
+      <div>
+        <h3 class="prato-name">Ceviche de frutos do mar</h3>
+        <p class="prato-desc">
+          Polvo, camarão e vieira marinados em limão galego, leite de tigre quente e pimenta dedo-de-moça. Brasil entra na cozinha japonesa pelo cítrico — aqui é o gesto mais explícito.
+        </p>
+      </div>
+    </article>
+
+    <article class="prato reveal">
+      <div class="prato-num">04</div>
+      <div>
+        <h3 class="prato-name">Vieira canadense, trufa e fumaça</h3>
+        <p class="prato-desc">
+          Duas vieiras grossas seladas em manteiga noisette, raspas de trufa preta e finalização em fumaça fria de cedro. Servido sob redoma — abrimos na frente do convidado.
+          <span class="prato-jp">帆立貝 — hotategai</span>
+        </p>
+      </div>
+    </article>
+
+    <article class="prato reveal">
+      <div class="prato-num">05</div>
+      <div>
+        <h3 class="prato-name">Tartar do dia</h3>
+        <p class="prato-desc">
+          O peixe muda conforme a entrega. Cortado na faca, gema curada, cebolinha picada fina, gergelim tostado. Acompanha pão de fermentação natural feito na casa.
+        </p>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ───────── VOZES — circular testimonials ───────── -->
+<section class="vozes" id="vozes">
+  <div class="vozes-head reveal">
+    <div class="kicker">Vozes</div>
+    <h2>Quem já <em>sentou aqui</em>.</h2>
+  </div>
+
+  <div class="vozes-stage reveal">
+    <div class="vozes-orbit">
+      <div class="orbit-center">
+        <div class="center-slot on" data-slot="0"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&h=600&q=85" alt="Marina"></div>
+        <div class="center-slot" data-slot="1"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&h=600&q=85" alt="Felipe"></div>
+        <div class="center-slot" data-slot="2"><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=600&h=600&q=85" alt="Beatriz"></div>
+        <div class="center-slot" data-slot="3"><img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=600&h=600&q=85" alt="Rodrigo"></div>
+        <div class="center-slot" data-slot="4"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&h=600&q=85" alt="Luana"></div>
+      </div>
+      <button class="orbit-avatar active" data-idx="0" data-magnetic-light type="button" aria-label="Marina">
+        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&h=200&q=85" alt="">
+      </button>
+      <button class="orbit-avatar" data-idx="1" data-magnetic-light type="button" aria-label="Felipe">
+        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&h=200&q=85" alt="">
+      </button>
+      <button class="orbit-avatar" data-idx="2" data-magnetic-light type="button" aria-label="Beatriz">
+        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&h=200&q=85" alt="">
+      </button>
+      <button class="orbit-avatar" data-idx="3" data-magnetic-light type="button" aria-label="Rodrigo">
+        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&h=200&q=85" alt="">
+      </button>
+      <button class="orbit-avatar" data-idx="4" data-magnetic-light type="button" aria-label="Luana">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=85" alt="">
+      </button>
+    </div>
+
+    <div class="vozes-text">
+      <div class="voz active" data-idx="0">
+        <blockquote class="voz-quote">Saí entendendo o que é cozinha de autor de verdade. O ceviche é poesia — não vou mais conseguir comer em outro lugar.</blockquote>
+        <div class="voz-name">Marina <span>Cliente · jantar de aniversário</span></div>
+      </div>
+      <div class="voz" data-idx="1">
+        <blockquote class="voz-quote">Cheguei achando que ia ser mais um japonês caro de Salvador. Saí entendendo a diferença entre fazer comida e ser cozinheiro.</blockquote>
+        <div class="voz-name">Felipe <span>Cliente · primeira visita</span></div>
+      </div>
+      <div class="voz" data-idx="2">
+        <blockquote class="voz-quote">O Vinícius cozinha como se cada prato fosse o último. Os preços refletem o valor — e o valor está no detalhe que ninguém mais entrega.</blockquote>
+        <div class="voz-name">Beatriz <span>Crítica de gastronomia</span></div>
+      </div>
+      <div class="voz" data-idx="3">
+        <blockquote class="voz-quote">A reserva valeu cada minuto de espera. Bluefin de outro nível. A vieira na fumaça de cedro vai entrar na memória.</blockquote>
+        <div class="voz-name">Rodrigo <span>Cliente · jantar de negócios</span></div>
+      </div>
+      <div class="voz" data-idx="4">
+        <blockquote class="voz-quote">Pequeno por escolha. Por isso é especial. Não é um restaurante a mais — é um lugar a menos pra todos, e por isso ficou na minha cabeça.</blockquote>
+        <div class="voz-name">Luana <span>Cliente · jantar a dois</span></div>
+      </div>
+
+      <div class="vozes-controls">
+        <button class="voz-btn" id="voz-prev" data-magnetic-light type="button" aria-label="Voz anterior">
+          <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button class="voz-btn" id="voz-next" data-magnetic-light type="button" aria-label="Próxima voz">
+          <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <span class="voz-counter"><strong id="voz-current">01</strong> / 05</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 40 LUGARES — STICKY PIN ───────── -->
+<section class="quarenta-section">
+  <div class="quarenta-wrap">
+    <div class="quarenta-pin">
+      <div>
+        <div class="quarenta-num">40<span class="quarenta-sub">lugares · por noite</span></div>
+      </div>
+      <div class="quarenta-copy reveal">
+        <h3>Não cabemos todos. É proposital.</h3>
+        <p>
+          Quarenta cadeiras é o que a cozinha do Vinícius prepara bem. <strong>Cinco mesas de quatro, duas mesas de seis, balcão para oito.</strong> Crescer trocaria o que somos — então não crescemos.
+        </p>
+        <p>
+          Servimos uma vez por noite, sem rodízio. A reserva é confirmada por mensagem. Quem chega sem mesa marcada não é atendido — e quem chegou na hora certa nunca é apressado a sair.
+        </p>
+        <p>
+          Se está cheio pra hoje, é normal. Tente sexta ou sábado da semana seguinte.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── RESERVE ───────── -->
+<section class="reserve" id="reserve">
+  <div class="container narrow reveal">
+    <div class="kicker">Reservar</div>
+    <h2>Sua mesa,<br><em>sua noite</em>.</h2>
+    <p>
+      A reserva é feita por mensagem — o Vinícius ou alguém do salão responde pessoalmente. Avise se for ocasião especial: aniversário, primeira vez do parceiro no japonês, um pedido específico. A gente prepara.
+    </p>
+    <div class="magnetic-wrap" style="opacity: 1; animation: none;">
+      <a href="https://wa.me/5571994152643?text=Boa%20noite%2C%20gostaria%20de%20reservar%20uma%20mesa%20no%20Jhun" class="magnetic" target="_blank" rel="noopener" data-magnetic>
+        Reservar pelo WhatsApp
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <div class="reserve-meta">
+      <div>
+        <div class="meta-label">Funcionamento</div>
+        <div class="meta-val">
+          Domingo a Quarta · 18h – 23h<br>
+          Quinta a Sábado · 18h – 0h
+        </div>
+      </div>
+      <div>
+        <div class="meta-label">Onde</div>
+        <div class="meta-val">
+          Av. Almirante Marques de Leão, 415<br>
+          Barra · Salvador · BA
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── DOUBLE ───────── -->
+<section class="double">
+  <div class="double-grid">
+    <div class="double-cell reveal" id="delivery">
+      <div class="kicker">Delivery</div>
+      <h3>A experiência Jhun na sua casa.</h3>
+      <p>
+        Carta reduzida feita pra viajar. Embalagens próprias, refrigeração controlada, instrução de finalização na sua cozinha. Entrega na Barra, Vitória, Graça e Canela.
+      </p>
+      <a href="https://wa.me/5571994152643?text=Boa%20noite%2C%20gostaria%20de%20pedir%20delivery%20Jhun" class="ghost-link" target="_blank" rel="noopener" data-magnetic-light>Pedir pelo WhatsApp →</a>
+    </div>
+    <div class="double-cell reveal" id="eventos">
+      <div class="kicker">Eventos privados</div>
+      <h3>Sua comemoração com nossa assinatura.</h3>
+      <p>
+        Aniversários, jantares de empresa, ocasiões fechadas. A casa toda — quarenta lugares — ou só o balcão para oito. Carta desenhada para a noite, em conversa com você.
+      </p>
+      <a href="https://wa.me/5571994152643?text=Boa%20noite%2C%20gostaria%20de%20conversar%20sobre%20um%20evento%20no%20Jhun" class="ghost-link" target="_blank" rel="noopener" data-magnetic-light>Combinar pelo WhatsApp →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── FOOTER ───────── -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-block">
+      <svg class="footer-logo" viewBox="0 0 220 50" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="JHUN">
+        <g>
+          <path d="M 5 25 L 22 12 L 30 23 L 22 38 Z" fill="#C0392B"/>
+          <ellipse cx="120" cy="25" rx="100" ry="11.5" fill="#C0392B"/>
+          <circle cx="200" cy="22" r="1.6" fill="#E8DDC8"/>
+        </g>
+        <text x="110" y="35" font-family="Cormorant Garamond, Georgia, serif" font-size="32" font-weight="500" font-style="italic" fill="#E8DDC8" text-anchor="middle" letter-spacing="6">JHUN</text>
+      </svg>
+      <p>Bistrô japonês contemporâneo. Salvador, Bahia. Reserva obrigatória.</p>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Horários</div>
+      <p>
+        Dom – Qua · 18h – 23h<br>
+        Qui – Sáb · 18h – 0h
+      </p>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Encontrar</div>
+      <p>
+        <a href="https://www.instagram.com/jhunbistro" target="_blank" rel="noopener" data-magnetic-light>@jhunbistro</a><br>
+        <a href="https://wa.me/5571994152643" target="_blank" rel="noopener" data-magnetic-light>+55 71 99415-2643</a><br>
+        Av. Almirante Marques de Leão, 415
+      </p>
+    </div>
+  </div>
+  <div class="footer-credit">
+    <span>© Jhun Bistrô · Salvador</span>
+    <span>本鮪 · 帆立貝 · 鮭</span>
+  </div>
+</footer>
+
+<script>
+  // ───── LOADER ─────
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.getElementById('loader').classList.add('gone');
+    }, 1400);
+  });
+
+  // ───── CUSTOM CURSOR ─────
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let cx = 0, cy = 0, rx = 0, ry = 0, mx = 0, my = 0;
+  let cursorActive = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (cursorActive) {
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+    });
+    function loop() {
+      cx += (mx - cx) * 0.55;
+      cy += (my - cy) * 0.55;
+      rx += (mx - rx) * 0.18;
+      ry += (my - ry) * 0.18;
+      cursor.style.transform = `translate(${cx}px, ${cy}px)`;
+      ring.style.transform = `translate(${rx}px, ${ry}px)`;
+      requestAnimationFrame(loop);
+    }
+    loop();
+    document.querySelectorAll('[data-magnetic], [data-magnetic-light]').forEach(el => {
+      el.addEventListener('mouseenter', () => ring.classList.add('large'));
+      el.addEventListener('mouseleave', () => ring.classList.remove('large'));
+    });
+  } else {
+    cursor.style.display = 'none';
+    ring.style.display = 'none';
+  }
+
+  // ───── TOPBAR scrolled ─────
+  const topbar = document.getElementById('topbar');
+  window.addEventListener('scroll', () => {
+    topbar.classList.toggle('scrolled', window.scrollY > 60);
+  }, { passive: true });
+
+  // ───── TYPEWRITER ─────
+  const twEl = document.querySelector('.tw-text');
+  const twFull = 'A experiência começa na chegada.';
+  let twI = 0;
+  function tw() {
+    if (twI <= twFull.length) {
+      twEl.textContent = twFull.slice(0, twI++);
+      setTimeout(tw, 55 + Math.random() * 40);
+    }
+  }
+  setTimeout(tw, 2400);
+
+  // ───── MAGNETIC (offset on hover) ─────
+  document.querySelectorAll('[data-magnetic]').forEach(btn => {
+    btn.addEventListener('mousemove', e => {
+      const r = btn.getBoundingClientRect();
+      const x = e.clientX - r.left - r.width / 2;
+      const y = e.clientY - r.top - r.height / 2;
+      btn.style.transform = `translate(${x * 0.28}px, ${y * 0.28}px)`;
+    });
+    btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
+  });
+
+  // ───── VOZES carousel ─────
+  const slots = document.querySelectorAll('.center-slot');
+  const avatars = document.querySelectorAll('.orbit-avatar');
+  const vozes = document.querySelectorAll('.voz');
+  const vozCurrent = document.getElementById('voz-current');
+  const vozTotal = vozes.length;
+  let vozIdx = 0;
+  let vozTimer = null;
+  function setVoz(i) {
+    vozIdx = (i + vozTotal) % vozTotal;
+    slots.forEach((s) => s.classList.toggle('on', parseInt(s.dataset.slot, 10) === vozIdx));
+    avatars.forEach((a, k) => a.classList.toggle('active', k === vozIdx));
+    vozes.forEach((v, k) => v.classList.toggle('active', k === vozIdx));
+    if (vozCurrent) vozCurrent.textContent = String(vozIdx + 1).padStart(2, '0');
+  }
+  function startVozAuto() {
+    if (vozTimer) clearInterval(vozTimer);
+    vozTimer = setInterval(() => setVoz(vozIdx + 1), 6000);
+  }
+  function pauseVozAuto() {
+    if (vozTimer) { clearInterval(vozTimer); vozTimer = null; }
+  }
+  avatars.forEach(a => {
+    a.addEventListener('click', () => {
+      setVoz(parseInt(a.dataset.idx, 10));
+      pauseVozAuto();
+      setTimeout(startVozAuto, 10000);
+    });
+  });
+  document.getElementById('voz-prev').addEventListener('click', () => { setVoz(vozIdx - 1); pauseVozAuto(); setTimeout(startVozAuto, 10000); });
+  document.getElementById('voz-next').addEventListener('click', () => { setVoz(vozIdx + 1); pauseVozAuto(); setTimeout(startVozAuto, 10000); });
+  // start auto only when section is in view
+  const vozObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) startVozAuto();
+      else pauseVozAuto();
+    });
+  }, { threshold: 0.3 });
+  const vozSection = document.getElementById('vozes');
+  if (vozSection) vozObs.observe(vozSection);
+
+  // ───── INTERSECTION OBSERVER ─────
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.14, rootMargin: '0px 0px -8% 0px' });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>

@@ -29,6 +29,7 @@ export default function O6Hero() {
         </div>
 
         <nav className="hidden md:flex items-center gap-8 text-[11px] font-bold tracking-widest text-brand-graphite/60 uppercase">
+          <a href="/produto/diagnostico" className="hover:text-brand-graphite transition-colors">Diagnóstico</a>
           <a href="#metodo" className="hover:text-brand-graphite transition-colors">Método</a>
           <a href="#nichos" className="hover:text-brand-graphite transition-colors">Nichos</a>
           <a href="#processo" className="hover:text-brand-graphite transition-colors">Como Funciona</a>

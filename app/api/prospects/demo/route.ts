@@ -92,7 +92,7 @@ Eixos mais fracos: ${weakAxes}` : ""}
 REQUISITOS OBRIGATÓRIOS:
 1. HTML completo, auto-contido, arquivo único — CSS APENAS inline no <style>
 2. ZERO JavaScript — NÃO inclua nenhuma tag <script>. Nenhuma. A página deve funcionar sem JS.
-3. ZERO dependências externas — sem Google Fonts, sem CDNs, sem @import de URLs externas, sem imagens de URL externa
+3. ZERO dependências externas EXCETO imagens do Unsplash (source.unsplash.com) — sem Google Fonts, sem CDNs, sem @import de URLs externas
 4. Tipografia: font-family: system-ui, -apple-system, 'Segoe UI', sans-serif — apenas fontes do sistema
 5. Mobile first (viewport meta, flexbox/grid responsivo, mínimo 375px)
 6. Tema profissional claro com acentos modernos (não genérico, não branco simples)
@@ -104,16 +104,23 @@ REQUISITOS OBRIGATÓRIOS:
 12. Formulário de contato simples (nome, telefone, mensagem) — estético, sem backend, apenas HTML
 13. Schema.org LocalBusiness em JSON-LD no <head>
 14. Meta tags Open Graph para redes sociais
-15. Imagens: usar gradientes CSS, ícones SVG inline ou emojis — sem imagens externas
+
+VISUAL — REGRAS RÍGIDAS (mais importante que o resto):
+15. PROIBIDO usar emoji em QUALQUER lugar como ícone, elemento decorativo ou ponto focal visual. Nada de 🌸💎✨🦷👗💆‍♀️ etc. nos cards, hero, diferenciais, lista de serviços, badges. Emoji em landing page de serviço profissional grita "feito por IA amador" e queima credibilidade.
+16. Para ícones de serviços/diferenciais: SVG line-icons inline (stroke="currentColor", stroke-width="1.5", 24x24 ou 32x32, viewBox 0 0 24 24). Estilo Lucide/Heroicons: linhas finas, monocromático, herda cor do tema. Exemplo: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="..."/></svg>
+17. Para o visual principal do hero: ESCOLHA UMA das duas opções (não as duas):
+    (a) Foto Unsplash — <img src="https://source.unsplash.com/800x800/?KEYWORD" alt="..." style="width:100%;height:100%;object-fit:cover;border-radius:24px"> onde KEYWORD é 1-2 palavras em inglês relevantes ao nicho específico (ex.: para clínica estética → "skincare,spa"; odontologia → "dentist,smile"; advocacia → "lawoffice"). Adapte ao segmento "${categoria}".
+    (b) Ilustração SVG abstrata sofisticada — composição de formas geométricas em camadas com gradiente da paleta, blur sutil, opacidade variada. NÃO um ícone simples. NÃO um emoji desenhado.
+18. NUNCA use o padrão "emoji-dentro-de-círculo-colorido" no hero. Substitua sempre por (a) ou (b).
 
 DESIGN DIRECTION:
-- Paleta: branco/cinza claro de fundo, um acento forte (azul petróleo, verde-esmeralda ou violeta, conforme o segmento)
+- Paleta: branco/cinza claro de fundo, um acento forte (azul petróleo, verde-esmeralda ou violeta, conforme o segmento). Mantenha sistema teal/gold ou similar por nicho.
 - Tipografia bold e clean para headlines, regular para body
 - Cards com sombra sutil, border-radius generoso (12-16px)
-- Hero com gradiente suave ou padrão geométrico CSS
+- Hero com gradiente suave ou padrão geométrico CSS + visual principal por regra 17
 - Não genérico: personalize a copy para ${p.nome} em ${categoria}
 
-CRÍTICO: A resposta deve ser HTML puro estático. NÃO use <script>. NÃO use @import de fontes externas. NÃO use src= com URLs externas.
+CRÍTICO: A resposta deve ser HTML puro estático. NÃO use <script>. NÃO use @import de fontes externas. Imagens APENAS do source.unsplash.com são permitidas. ZERO emoji decorativo.
 Responda APENAS com o código HTML completo. Sem explicações. Sem markdown. Comece com <!DOCTYPE html>.`;
 }
 
