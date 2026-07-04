@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, CheckCircle } from "lucide-react";
 
 const proofs = [
@@ -12,6 +13,14 @@ const proofs = [
 ];
 
 export default function O6Hero() {
+  const statCardRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: statCardRef,
+    offset: ["start end", "end start"],
+  });
+  const videoScale = useTransform(scrollYProgress, [0, 1], [1.08, 1.3]);
+  const videoOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.35, 0.5, 0.28]);
+
   return (
     <section className="relative w-full min-h-screen bg-brand-offwhite flex flex-col overflow-hidden">
       {/* Subtle grid */}
@@ -128,13 +137,28 @@ export default function O6Hero() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-col gap-4"
           >
-            {/* Main stat card */}
-            <div className="bg-brand-graphite text-white p-8 border-4 border-brand-graphite shadow-[8px_8px_0px_0px_#FF5722]">
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Realidade do mercado</p>
-              <p className="text-5xl font-black tracking-tighter text-brand-orange mb-3">80%</p>
-              <p className="text-sm text-white/80 leading-relaxed">
-                dos leads que não são atendidos em até 5 minutos <strong className="text-white">nunca fecham</strong>. Seu concorrente está aproveitando essa janela.
-              </p>
+            {/* Main stat card — video background with scroll-linked scale/fade */}
+            <div
+              ref={statCardRef}
+              className="relative overflow-hidden bg-brand-graphite text-white p-8 border-4 border-brand-graphite shadow-[8px_8px_0px_0px_#FF5722]"
+            >
+              <motion.video
+                src="/videos/o6-growth-hero.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                style={{ scale: videoScale, opacity: videoOpacity }}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-graphite/90 via-brand-graphite/75 to-brand-graphite/90" />
+              <div className="relative z-10">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Realidade do mercado</p>
+                <p className="text-5xl font-black tracking-tighter text-brand-orange mb-3">80%</p>
+                <p className="text-sm text-white/80 leading-relaxed">
+                  dos leads que não são atendidos em até 5 minutos <strong className="text-white">nunca fecham</strong>. Seu concorrente está aproveitando essa janela.
+                </p>
+              </div>
             </div>
 
             {/* 3 small cards */}
