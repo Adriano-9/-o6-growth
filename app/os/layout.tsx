@@ -52,7 +52,7 @@ export default function OsLayout({ children }: { children: React.ReactNode }) {
                 }`}
               >
                 <Icon className="h-4 w-4" strokeWidth={1.75} />
-                {item.label}
+                <span translate="no">{item.label}</span>
               </Link>
             );
           })}
@@ -76,7 +76,7 @@ export default function OsLayout({ children }: { children: React.ReactNode }) {
                   : "border-[#222222] text-[#888888]"
               }`}
             >
-              {item.label}
+              <span translate="no">{item.label}</span>
             </Link>
           );
         })}
