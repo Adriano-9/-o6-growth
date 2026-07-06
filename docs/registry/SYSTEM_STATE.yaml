@@ -1,0 +1,118 @@
+# O6 Registry v1 — SYSTEM_STATE
+# Fonte da verdade operacional: o que existe, o que está em desenvolvimento,
+# o que é planejado. Consumido por Hermes, Claude Code, Codex e ChatGPT.
+#
+# Regra de honestidade: nunca marcar algo como "implemented" se não há
+# código real rodando. Ver docs/registry/README.md para a legenda completa
+# de status.
+#
+# Última verificação factual: 2026-07-06 (grep no código + Vercel MCP +
+# git remote -v + git log — não é um snapshot inventado)
+
+updated_at: "2026-07-06"
+version: 1
+
+o6_stage: "fase_1_operacional"
+o6_stage_description: >
+  O6 OS tem módulos de negócio reais em produção (Offer Book, CRM,
+  Oportunidades, Agenda, Print) e uma camada de agentes parcial (audit,
+  opener, demo, sintese, generate). Orquestração central (Hermes como
+  motor, não só bot) e agentes pós-venda (onboarding, outreach, proposta)
+  ainda não existem. Não é MVP em validação de mercado — é produto
+  interno em uso pelo operador, sem clientes externos ainda no CRM real.
+
+modules:
+  implemented:
+    - name: "Offer Book"
+      path: "app/offer-book/**"
+      description: "Coletor de inteligência comercial: cliente, ICP, psicografia, concorrentes, oferta, diagnóstico, dashboard, resumo, plano de ação, roadmap, ROI"
+    - name: "CRM"
+      path: "app/crm/**"
+      description: "Kanban 7 etapas, stage history automático, templates de follow-up, dashboard comercial"
+    - name: "Oportunidades"
+      path: "app/oportunidades/**"
+      description: "Prospecção fria via Apify Google Maps, dedup tri-chave, drawer com ações de agente (audit/opener/demo/video)"
+    - name: "Agenda Comercial"
+      path: "app/agenda/**"
+      description: "Calendário semanal, slots, buffer 10min, vínculo prospect/lead/cliente"
+    - name: "PDF Generator"
+      path: "app/print/**"
+      description: "window.print() + CSS de impressão, zero deps"
+    - name: "Dashboard OS (Mission Control)"
+      path: "app/os/**"
+      description: "KPIs, health do sistema, pipeline por estágio, seção Integrações (conectores)"
+    - name: "Dashboard global de clientes"
+      path: "app/clientes-dashboard/**, app/dashboard-o6/**, app/offer-book-dashboard/**"
+      description: "Lista/CRUD de clientes e síntese consolidada"
+    - name: "Camada de integração central"
+      path: "app/_lib/integrations/**"
+      description: "Registry de conectores (Connector interface), health check, logs — ver INTEGRATIONS_REGISTRY.yaml"
+  developing:
+    - name: "Intelligence Engine (VPS)"
+      path: "scripts/vps-bootstrap-intelligence.sh (/opt/o6-intelligence/main.py na VPS)"
+      description: "Scan de oportunidades + scoring rodando via cron na VPS. Expansão offer_book_mini (score >= 80) testada apenas por simulação manual, não por acionamento real em produção ainda."
+    - name: "Hermes Telegram Bot"
+      path: "scripts/vps-bootstrap-hermes-bot.sh, scripts/vps-patch-hermes-bot-resilience.sh (/opt/o6-hermes-bot na VPS)"
+      description: "Bot ativo via systemd, comandos /ping /status /skills /criar_skill /brief /ajuda testados em produção. Patch de resiliência de polling criado, aplicação em produção pendente de confirmação do operador."
+    - name: "Hermes Dashboard"
+      path: "scripts/vps-publish-hermes-dashboard.sh (/opt/o6-hermes-dashboard na VPS)"
+      description: "Apenas STUB placeholder publicado (systemd + Nginx + Basic Auth) para validar infraestrutura. Nenhum dashboard real de Hermes existe ainda."
+    - name: "Squad copy (copywriters)"
+      path: "squads/copy/**, app/_lib/copywriters.ts"
+      description: "24 agentes de copy documentados; só 4 destilados e conectados em código real (dan-kennedy, eugene-schwartz, gary-halbert, jon-benson) via param opcional em /api/prospects/pipeline"
+  planned:
+    - name: "Website Audit Engine (produto standalone)"
+      path: "/audit (futuro)"
+      description: "Hoje existe só como parte do fluxo Oportunidades (app/api/audit/route.ts), não como produto/rota dedicada"
+    - name: "SEO Engine"
+      path: "/seo (futuro)"
+      description: "Não iniciado"
+    - name: "Outreach (WhatsApp/Email automático)"
+      path: "app/api/outreach-wpp, app/api/outreach-email (não existem)"
+      description: "Só existe geração de mensagem (opener); disparo automático não existe"
+    - name: "Proposta (agente)"
+      path: "app/api/proposta (não existe)"
+      description: "Nenhum código"
+    - name: "Onboarding (agente)"
+      path: "app/api/onboarding (não existe)"
+      description: "Nenhum código — depende de G7 (campos pós-venda) que também não existe"
+    - name: "Dark Factory"
+      path: "indefinido"
+      description: "Conceito sem definição em nenhum lugar do histórico do projeto — charter em aberto, ver docs/bootstrap/12_BOOTSTRAP_DARK_FACTORY.md"
+    - name: "Hermes como orquestrador central"
+      path: "indefinido"
+      description: "Hoje Hermes é só um bot Telegram com comandos fixos. Orquestração real de outros agentes (fila, scheduler, agent_runs table) não existe."
+
+links:
+  repository:
+    url: "https://github.com/Adriano-9/-o6-growth.git"
+    branch_default: "main"
+    remote_status: "configurado e sincronizado (verificado via git remote -v / git status em 2026-07-06)"
+  vercel:
+    project_name: "o6-growth"
+    project_id: "prj_YEKZd4kA5daS9D1nuw7WJQAseXTN"
+    team_id: "team_SNIie8znLhAVOddVyHg6dYKJ"
+    production_url: "https://o6-growth.vercel.app"
+    production_status: "READY (confirmado via Vercel MCP get_project em 2026-07-06)"
+  dashboards:
+    mission_control: "https://o6-growth.vercel.app/os"
+    clientes: "https://o6-growth.vercel.app/clientes-dashboard"
+    crm: "https://o6-growth.vercel.app/crm"
+    hermes_dashboard_stub: "http://147.182.135.206/ (stub, Basic Auth — ver docs/bootstrap/06_BOOTSTRAP_HERMES.md)"
+  vps:
+    ip: "147.182.135.206"
+    provider: "DigitalOcean"
+    services:
+      - "o6-hermes-bot.service (systemd, Telegram bot)"
+      - "o6-hermes-dashboard.service (systemd, stub)"
+      - "/opt/o6-intelligence (cron, Intelligence Engine)"
+    access: "console DigitalOcean (sem SSH direto disponível para o Claude Code nesta sessão — workflow é script preparado localmente, colado manualmente pelo operador)"
+  supabase:
+    project_name: "O6 growth"
+    project_id: "wphrwidjokimfjfvyaym"
+    region: "us-west-2"
+    status_last_check: "instável em 2026-07-06 — MCP e conector reportaram timeout/fetch failed por indisponibilidade de DNS/rede no ambiente, não por erro de configuração"
+  github:
+    org_or_user: "Adriano-9"
+    repo_name: "-o6-growth"
+    token_configured: false

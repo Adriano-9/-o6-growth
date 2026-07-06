@@ -1,0 +1,103 @@
+# O6 Registry v1 — INTEGRATIONS_REGISTRY
+# Espelha app/_lib/integrations/registry.ts (fonte de verdade em código —
+# se este arquivo divergir do código, o código vence). Consumido por
+# GET /api/integrations/status e pela seção "Integrações" em /os.
+
+updated_at: "2026-07-06"
+version: 1
+
+integrations:
+  - id: "claude-code"
+    name: "Claude Code"
+    category: "agent"
+    status: unavailable
+    reason: >
+      Claude Code é o próprio agente executando a sessão de
+      desenvolvimento — não existe API externa para "conectar com ele
+      mesmo" a partir do runtime da aplicação.
+    code_path: "app/_lib/integrations/connectors/unavailable.ts"
+
+  - id: "codex"
+    name: "Codex"
+    category: "agent"
+    status: unavailable
+    reason: >
+      Codex nunca foi instalado ou executado neste repositório.
+      AGENTS.md define convenções para quando ele for ativado, mas não
+      há endpoint ou credencial hoje.
+    code_path: "app/_lib/integrations/connectors/unavailable.ts"
+
+  - id: "github"
+    name: "GitHub"
+    category: "vcs"
+    status: not_configured
+    reason: >
+      Conector real implementado (chamaria GET /repos/{owner}/{repo}),
+      mas GITHUB_TOKEN não está configurado — hoje o repositório é
+      operado via git CLI local (push/commit manual pelo Claude Code).
+    code_path: "app/_lib/integrations/connectors/github.ts"
+    required_config: ["GITHUB_TOKEN"]
+
+  - id: "supabase"
+    name: "Supabase"
+    category: "data"
+    status: implemented
+    status_last_check: degraded
+    reason: >
+      Conector real, testado (.select("id").limit(1) em clientes).
+      Implementado e funcional; última leitura em 2026-07-06 reportou
+      "degraded" (TypeError: fetch failed) por instabilidade de
+      rede/DNS no ambiente de execução, não por erro de código ou
+      configuração — confirmado via teste de reachability direto
+      (curl retornou "Couldn't resolve host").
+    code_path: "app/_lib/integrations/connectors/supabase.ts"
+    required_config: ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+
+  - id: "telegram"
+    name: "Telegram Bot"
+    category: "notification"
+    status: implemented
+    status_last_check: connected
+    reason: "Conector real (getMe da Bot API), testado e confirmado connected em produção."
+    code_path: "app/_lib/integrations/connectors/telegram.ts"
+    required_config: ["TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"]
+
+  - id: "higgsfield-mcp"
+    name: "MCP Higgsfield"
+    category: "mcp"
+    status: unavailable
+    reason: >
+      Só existe como MCP connector OAuth do claude.ai (Claude Chat).
+      Não há API key própria para chamar a partir de uma rota
+      server-side do Next.js.
+    code_path: "app/_lib/integrations/connectors/unavailable.ts"
+
+  - id: "21dev-mcp"
+    name: "MCP 21st.dev"
+    category: "mcp"
+    status: unavailable
+    reason: >
+      Nunca foi autorizado com sucesso nesta conta — aparece como MCP
+      pendente de autenticação, sem credencial disponível para uso
+      programático.
+    code_path: "app/_lib/integrations/connectors/unavailable.ts"
+
+  - id: "dashboard-os"
+    name: "Dashboard OS"
+    category: "consumer"
+    status: implemented
+    reason: >
+      Não é um conector — é o consumidor do registry
+      (GET /api/integrations/status → seção "Integrações" em
+      app/os/page.tsx). Não existe API de "conectar consigo mesmo",
+      por isso não entra na lista CONNECTORS de registry.ts.
+    code_path: "app/os/page.tsx, app/api/integrations/status/route.ts"
+
+pending:
+  - item: "supabase/migrations/013_connector_logs.sql"
+    description: >
+      Migration para persistência de logs de conector — criada mas não
+      confirmada aplicada em produção (Supabase MCP com timeout de
+      conexão em múltiplas tentativas em 2026-07-06). Código é
+      fail-soft: cai em buffer de memória se a tabela não existir ou a
+      escrita falhar.

@@ -1,0 +1,133 @@
+# O6 Registry v1 — AGENTS_REGISTRY
+# Agentes de negócio da O6 (não confundir com TOOLS_REGISTRY, que lista
+# as ferramentas de IA/dev que constroem o sistema). Um "agente" aqui é
+# uma capacidade end-to-end que produz valor de negócio — pode ou não
+# ser uma rota app/api/**/route.ts real. Ver skills/agents.md para o
+# padrão canônico de implementação.
+
+updated_at: "2026-07-06"
+version: 1
+
+agents:
+  - id: "scout-intelligence"
+    name: "Scout / Intelligence"
+    role: "Prospecção fria + scan de oportunidades + scoring"
+    status: developing
+    real_code:
+      - "app/api/apify-search/route.ts (captura Google Maps, implementado)"
+      - "app/api/places/route.ts (legacy, Serper.dev)"
+      - "scripts/vps-bootstrap-intelligence.sh → /opt/o6-intelligence/main.py (scan + scoring via cron, implementado)"
+    notes: >
+      Captura e scoring básico funcionam em produção. Expansão
+      offer_book_mini (gera mini Offer Book quando opportunity_score
+      >= 80) foi adicionada ao main.py e testada apenas via simulação
+      manual da função com score fictício — nenhum item real atingiu o
+      threshold no teste, então não houve acionamento real em produção
+      ainda. Por isso "developing", não "implemented".
+
+  - id: "offerbook"
+    name: "OfferBook"
+    role: "Síntese estratégica + plano de ação + roadmap + strategic engine"
+    status: implemented
+    real_code:
+      - "app/api/offer-book/generate/route.ts (claude-opus-4-8, cache 7d)"
+      - "app/api/offer-book/sintese/route.ts (claude-sonnet-4-20250514, cache 7d)"
+    notes: "Ambas as rotas chamam Claude de verdade e persistem em Supabase. Testado em produção."
+
+  - id: "sales-crm"
+    name: "Sales / CRM"
+    role: "Pipeline de vendas (Kanban 7 etapas)"
+    status: implemented
+    real_code:
+      - "app/crm/** (Kanban, drawer, dashboard comercial, stage history automático)"
+    notes: >
+      É um módulo de negócio operacional real, não um agente de IA —
+      não chama Claude. Scoring é manual (não sincronizado
+      automaticamente com o score do Offer Book — gap G4 documentado
+      em CLAUDE.md).
+
+  - id: "communication-followup"
+    name: "Communication / Follow-up"
+    role: "Geração de abordagem (WhatsApp opener) + templates de follow-up"
+    status: developing
+    real_code:
+      - "app/api/prospects/pipeline/route.ts (gera opener via Claude, orquestra audit+demo, implementado)"
+      - "app/crm/page.tsx DEFAULT_TEMPLATES (templates de mensagem com fallback hardcoded)"
+    notes: >
+      Geração de mensagem é real e testada. Disparo automático de
+      follow-up (lembrete 24h antes de reunião, reengajamento) não
+      existe — outreach-wpp/outreach-email são apenas planejados.
+
+  - id: "dashboard-reporting"
+    name: "Dashboard / Reporting"
+    role: "KPIs, health do sistema, pipeline por estágio"
+    status: implemented
+    real_code:
+      - "app/api/dashboard-o6/route.ts"
+      - "app/api/os/summary/route.ts"
+      - "app/api/os/pipeline/route.ts"
+      - "app/api/integrations/status/route.ts"
+    notes: "Leitura pura de Supabase (sem IA) — mas 100% funcional e em produção."
+
+  - id: "customer-success"
+    name: "Customer Success"
+    role: "Pós-venda, retenção, expansão de contrato"
+    status: planned
+    real_code: []
+    notes: >
+      Nenhum código. Depende de G7 (campos pós-venda em crm_leads:
+      data_contrato, status_pagamento) que também não existe ainda —
+      ver gaps de integração em CLAUDE.md.
+
+  - id: "web-factory"
+    name: "Web Factory"
+    role: "Geração de landing page/demo HTML + deploy Vercel"
+    status: implemented
+    real_code:
+      - "app/api/prospects/demo/route.ts (Claude gera HTML, deploy real via app/_lib/vercel-deploy.ts)"
+      - "app/api/prospects/video/route.ts (template determinístico, sem IA, deploy real)"
+    notes: "Ambas testadas em produção, com smoke test GET ?test=1 no demo."
+
+  - id: "landing-factory"
+    name: "Landing Factory"
+    role: "Construção de landing pages de alta conversão (produto O6, não demo de prospect)"
+    status: developing
+    real_code:
+      - "skills/o6-landing.md (playbook, 7 seções obrigatórias)"
+      - "app/saude/**, app/advocacia/** (LPs construídas manualmente seguindo o playbook, conforme lição aprendida 2026-06-09)"
+    notes: >
+      Não é um agente automatizado — é um playbook seguido manualmente
+      por Claude Code por pedido humano. Distinto de Web Factory (que é
+      uma rota automatizada para demos de prospect).
+
+  - id: "dark-factory"
+    name: "Dark Factory"
+    role: "Indefinido"
+    status: planned
+    real_code: []
+    notes: >
+      Conceito sem definição em nenhum lugar do histórico do projeto.
+      Charter em aberto, perguntas bloqueantes documentadas em
+      docs/bootstrap/12_BOOTSTRAP_DARK_FACTORY.md. Não inventar escopo.
+
+  - id: "qa"
+    name: "QA"
+    role: "Garantia de qualidade automatizada"
+    status: planned
+    real_code: []
+    notes: >
+      Nenhum agente de QA de negócio da O6. Existe a skill genérica
+      coderabbit-review (.claude/skills/coderabbit-review) — é
+      ferramenta de code review, não um agente O6 de QA de produto/entrega.
+
+  - id: "deploy"
+    name: "Deploy"
+    role: "Publicação de artefatos (demos, vídeos, o próprio OS)"
+    status: implemented
+    real_code:
+      - "app/_lib/vercel-deploy.ts (deployToVercel, toSlug — usado por demo e video)"
+      - "vercel --prod (deploy do próprio O6 OS, manual via Claude Code)"
+    notes: >
+      Não é um "agente" dedicado com rota própria — é uma capacidade
+      compartilhada (helper) consumida por outros agentes (web-factory).
+      Marcado implemented porque o código e o uso em produção são reais.

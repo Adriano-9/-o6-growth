@@ -1,0 +1,89 @@
+# O6 Registry v1 — PIPELINES_REGISTRY
+# Cadeias de agentes/etapas que compõem um fluxo de negócio ponta a
+# ponta. Uma "pipeline" aqui pode ser: (a) uma orquestração real de
+# múltiplas rotas chamando umas às outras, (b) um fluxo manual seguido
+# por humano + Claude Code, ou (c) apenas planejado. Ver seção "Agent
+# Swarm Architecture" em CLAUDE.md para o diagrama completo de
+# orquestração via Supabase (sem fila/webhook entre rotas O6).
+
+updated_at: "2026-07-06"
+version: 1
+
+pipelines:
+  - id: "intelligence-pipeline"
+    name: "Intelligence Pipeline"
+    status: developing
+    steps:
+      - "Apify Google Maps scan (app/api/apify-search, implementado)"
+      - "Scoring de oportunidade (VPS cron, /opt/o6-intelligence/main.py, implementado)"
+      - "offer_book_mini quando score >= 80 (implementado no código, testado só por simulação manual — não acionado por dado real ainda)"
+    notes: "Core funcional; a extensão mais nova não teve acionamento real confirmado."
+
+  - id: "offerbook-pipeline"
+    name: "OfferBook Pipeline"
+    status: implemented
+    steps:
+      - "Coleta manual: Cliente → ICP → Psicografia → Concorrentes → Oferta → Diagnóstico (app/offer-book/**)"
+      - "Geração IA: síntese + plano de ação + roadmap + strategic (app/api/offer-book/generate)"
+      - "Exportação: /print (window.print())"
+    notes: "Fluxo de 10 passos documentado em skills/o6-offerbook.md, testado em produção."
+
+  - id: "diagnostico-completo-pipeline"
+    name: "Diagnóstico Completo Pipeline"
+    status: developing
+    steps:
+      - "Coleta de dados de diagnóstico (app/offer-book/diagnostico, implementado)"
+      - "4 scores determinísticos + 2 scores estratégicos (app/offer-book/_lib/scores.ts, implementado)"
+      - "canal_timing.py (diagnostico-o6/, mede latência WhatsApp/Instagram — implementado, standalone, não integrado ao fluxo principal ainda)"
+    notes: >
+      Peças existem e funcionam isoladamente; não há uma orquestração
+      única que amarre coleta + scores + canal_timing num só
+      "Diagnóstico Completo" — por isso developing, não implemented.
+
+  - id: "crm-pipeline"
+    name: "CRM Pipeline"
+    status: implemented
+    steps:
+      - "Kanban 7 etapas (app/crm/**, implementado)"
+      - "Stage history automático em cada mudança (crm_stage_history, implementado)"
+      - "Templates de mensagem com fallback hardcoded (implementado)"
+    notes: "Testado em produção. Score sync com Offer Book (gap G4) ainda não existe."
+
+  - id: "followup-pipeline"
+    name: "Follow-up Pipeline"
+    status: developing
+    steps:
+      - "Geração de opener WhatsApp via Claude (app/api/prospects/pipeline, implementado)"
+      - "Templates de follow-up manual no CRM (implementado)"
+      - "Disparo automático / lembrete 24h antes de reunião (planejado — G6, requer WhatsApp API/Twilio, não existe)"
+    notes: "Geração de conteúdo funciona; automação de disparo não existe."
+
+  - id: "onboarding-pipeline"
+    name: "Onboarding Pipeline"
+    status: planned
+    steps: []
+    notes: >
+      Nenhum código. Depende de G3 (Lead Fechado → Cliente automático)
+      e G7 (campos pós-venda), ambos ainda não implementados conforme
+      roadmap de gaps em CLAUDE.md.
+
+  - id: "delivery-pipeline"
+    name: "Delivery Pipeline"
+    status: planned
+    steps:
+      - "/print existe como exportação manual pontual (implementado), mas não é uma pipeline de entrega orquestrada (sem envio automático, sem tracking de entrega)"
+    notes: "Só a peça de exportação existe; o conceito de pipeline de entrega ponta a ponta é planejado."
+
+  - id: "customer-success-pipeline"
+    name: "Customer Success Pipeline"
+    status: planned
+    steps: []
+    notes: "Nenhum código — mesmo gap do agente Customer Success em AGENTS_REGISTRY.yaml."
+
+  - id: "dark-factory-pipeline"
+    name: "Dark Factory Pipeline"
+    status: planned
+    steps: []
+    notes: >
+      Charter indefinido — ver docs/bootstrap/12_BOOTSTRAP_DARK_FACTORY.md.
+      Não inventar etapas para um conceito sem definição registrada.

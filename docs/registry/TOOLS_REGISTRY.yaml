@@ -1,0 +1,116 @@
+# O6 Registry v1 — TOOLS_REGISTRY
+# Ferramentas/agentes de IA e serviços externos que operam sobre o O6 —
+# quem faz o quê, e com que grau de acesso real.
+
+updated_at: "2026-07-06"
+version: 1
+
+tools:
+  - id: "chatgpt"
+    name: "ChatGPT"
+    role: "Estratégia e revisão"
+    status: developing
+    notes: >
+      Uso humano manual (chat externo) para estratégia e revisão de
+      decisões. Não há integração de API/webhook com o repositório —
+      nenhum código chama ChatGPT programaticamente.
+
+  - id: "claude-chat"
+    name: "Claude Chat (claude.ai)"
+    role: "Pesquisa, copy, estratégia"
+    status: developing
+    notes: >
+      Uso humano manual via claude.ai. É onde MCP connectors como
+      Higgsfield foram usados manualmente pelo menos uma vez. Não há
+      chamada de API a partir do runtime Next.js.
+
+  - id: "claude-code"
+    name: "Claude Code"
+    role: "Arquitetura, backend, integrações, git"
+    status: implemented
+    notes: >
+      Ferramenta usada nesta própria sessão para implementar rotas,
+      migrations, integrações e operar git (commit/push manual, nunca
+      via API). Não é uma integração "chamável" do runtime — é o agente
+      executando o desenvolvimento.
+
+  - id: "codex"
+    name: "Codex"
+    role: "Frontend, dashboards, UX"
+    status: not_configured
+    notes: >
+      Nunca foi instalado ou executado neste repositório. AGENTS.md
+      define convenções para quando ele for ativado (rotas, estilo,
+      commits), mas não há execução real registrada até 2026-07-06.
+
+  - id: "hermes-agent"
+    name: "Hermes Agent (orquestração e skills)"
+    role: "Orquestração central planejada + skills sob demanda"
+    status: planned
+    notes: >
+      Hoje não existe orquestração — só o bot Telegram com comandos
+      fixos (ver hermes-telegram-bot). "Hermes Agent" como motor de
+      decisão/scheduler de outros agentes ainda não tem nenhuma linha
+      de código. `/criar_skill` cria arquivos .md em
+      ~/.hermes/skills/o6/, mas nenhuma skill foi criada via esse
+      comando em produção ainda (pasta vazia, confirmado em
+      docs/bootstrap/06_BOOTSTRAP_HERMES.md).
+
+  - id: "hermes-telegram-bot"
+    name: "Hermes Telegram Bot"
+    role: "Operação via Telegram (ping/status/skills/criar_skill/brief/ajuda)"
+    status: implemented
+    notes: >
+      systemd service ativo na VPS (147.182.135.206), /ping testado e
+      confirmado em produção pelo operador. Patch de resiliência de
+      polling (timeouts HTTPX + error handler + logging) escrito em
+      scripts/vps-patch-hermes-bot-resilience.sh, aplicação em produção
+      ainda não confirmada pelo operador nesta data.
+
+  - id: "github"
+    name: "GitHub"
+    role: "Versionamento e remoto do repositório"
+    status: implemented
+    notes: >
+      Remoto configurado (https://github.com/Adriano-9/-o6-growth.git),
+      operado via git CLI local (push/commit manual pelo Claude Code).
+      Não há integração via API REST do GitHub (GITHUB_TOKEN ausente —
+      ver connector em INTEGRATIONS_REGISTRY.yaml).
+
+  - id: "supabase"
+    name: "Supabase"
+    role: "Banco de dados / fonte única de verdade de dados de cliente"
+    status: implemented
+    notes: >
+      Projeto wphrwidjokimfjfvyaym (região us-west-2), RLS anon-all
+      habilitado em todas as tabelas. Instabilidade de rede/DNS
+      observada em 2026-07-06 (MCP e conector reportando timeout) —
+      tratado como degradação transitória de ambiente, não falha de
+      configuração.
+
+  - id: "telegram"
+    name: "Telegram (Bot API)"
+    role: "Canal de notificação e comando (Hermes)"
+    status: implemented
+    notes: >
+      Bot API usada pelo Hermes Telegram Bot e pelo conector
+      app/_lib/integrations/connectors/telegram.ts (health check via
+      getMe, confirmado "connected" em teste real).
+
+  - id: "higgsfield-mcp"
+    name: "Higgsfield MCP"
+    role: "Geração de vídeo/imagem (planejado)"
+    status: unavailable
+    notes: >
+      Só existe como MCP connector OAuth do claude.ai (Claude Chat).
+      Não há API key própria para chamada server-side a partir do
+      Next.js. Ver app/_lib/integrations/connectors/unavailable.ts.
+
+  - id: "21dev-mcp"
+    name: "21st.dev MCP"
+    role: "Geração/inspiração de componentes UI (planejado)"
+    status: unavailable
+    notes: >
+      Nunca autorizado com sucesso nesta conta — aparece como MCP
+      pendente de autenticação, sem credencial disponível para uso
+      programático.
