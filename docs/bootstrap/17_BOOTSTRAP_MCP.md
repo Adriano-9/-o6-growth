@@ -36,3 +36,9 @@ MCPs que escrevem em sistemas de terceiros (Zapier, HubSpot, Slack, etc.) exigem
 - [ ] Já está autorizado, ou precisa de OAuth interativo que esta sessão não consegue rodar?
 - [ ] Existe alternativa manual caso o MCP não esteja disponível agora?
 - [ ] Se for MCP de escrita (não leitura), o usuário confirmou a ação antes de executar?
+
+## Camada de integração O6 (2026-07-06)
+
+A distinção MCP-vs-connector acima é exatamente o que motivou o design de `app/_lib/integrations/` (ver `memory/o6.md`). Higgsfield e 21st.dev viraram conectores `not_available` no registry — não `not_configured` — porque a causa raiz é a mesma documentada nesta página: eles só existem como OAuth connector do claude.ai, sem API key chamável a partir de uma rota server-side do Next.js. Claude Code e Codex têm o mesmo status pelo motivo inverso (Claude Code é o próprio agente rodando a sessão; Codex nunca foi instalado neste repo).
+
+`/api/integrations/status` é a fonte única de verdade que o Dashboard OS (`/os`) consulta para mostrar isso de forma honesta ao operador, em vez de esconder ou fingir que a integração existe.

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Users, FolderKanban, Bot, Activity } from "lucide-react";
+import { TrendingUp, Users, FolderKanban, Bot, Activity, Plug } from "lucide-react";
 import { Card, Counter, Reveal, SectionLabel, HealthBadge, StatusDot } from "./_lib/ui";
 
 type SummaryData = {
@@ -23,9 +23,33 @@ const FALLBACK: SummaryData = {
   fonte: "fallback",
 };
 
+type ConnectorStatus = "connected" | "degraded" | "not_configured" | "not_available";
+
+type ConnectorSnapshot = {
+  id: string;
+  name: string;
+  category: string;
+  requiredConfig: string[];
+  health: { status: ConnectorStatus; message: string; latencyMs?: number };
+};
+
+type IntegrationsData = {
+  summary: { total: number; connected: number; degraded: number; notConfigured: number; notAvailable: number };
+  connectors: ConnectorSnapshot[];
+};
+
+const CONNECTOR_STATUS_LABEL: Record<ConnectorStatus, string> = {
+  connected: "Conectado",
+  degraded: "Degradado",
+  not_configured: "Não configurado",
+  not_available: "Não disponível",
+};
+
 export default function OsDashboard() {
   const [data, setData] = useState<SummaryData>(FALLBACK);
   const [loading, setLoading] = useState(true);
+  const [integrations, setIntegrations] = useState<IntegrationsData | null>(null);
+  const [loadingIntegrations, setLoadingIntegrations] = useState(true);
 
   useEffect(() => {
     fetch("/api/os/summary")
@@ -33,6 +57,14 @@ export default function OsDashboard() {
       .then((d: SummaryData) => setData(d))
       .catch(() => setData(FALLBACK))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/integrations/status")
+      .then((r) => r.json())
+      .then((d: IntegrationsData) => setIntegrations(d))
+      .catch(() => setIntegrations(null))
+      .finally(() => setLoadingIntegrations(false));
   }, []);
 
   const cards = [
@@ -120,6 +152,65 @@ export default function OsDashboard() {
                   </div>
                 ))}
               </div>
+            </Card>
+          </Reveal>
+        </div>
+
+        {/* Integrações — camada de conectores (Hermes orquestrador) */}
+        <div className="mt-12">
+          <SectionLabel
+            right={
+              integrations && (
+                <span className="text-xs text-[#888888]">
+                  {integrations.summary.connected} conectado ·{" "}
+                  {integrations.summary.degraded} degradado ·{" "}
+                  {integrations.summary.notConfigured} não configurado ·{" "}
+                  {integrations.summary.notAvailable} não disponível
+                </span>
+              )
+            }
+          >
+            Integrações
+          </SectionLabel>
+          <Reveal>
+            <Card>
+              <div className="flex items-center gap-3 border-b border-[#222222] pb-4">
+                <Plug className="h-5 w-5 text-[#FF5722]" strokeWidth={1.75} />
+                <div>
+                  <div className="text-sm font-semibold">Camada de integração O6</div>
+                  <div className="text-xs text-[#888888]">
+                    Claude Code · Codex · GitHub · Supabase · Telegram · MCP Higgsfield · MCP 21st.dev
+                  </div>
+                </div>
+              </div>
+
+              {loadingIntegrations ? (
+                <div className="pt-6 text-sm text-[#888888]">Carregando…</div>
+              ) : integrations ? (
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {integrations.connectors.map((c) => (
+                    <div
+                      key={c.id}
+                      className="rounded-lg border border-[#222222] bg-white/[0.02] px-4 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-medium text-[#EDEDED]">{c.name}</span>
+                        <div className="flex items-center gap-2">
+                          <StatusDot active={c.health.status === "connected"} />
+                          <span className="text-[10px] font-semibold uppercase tracking-widest text-[#888888]">
+                            {CONNECTOR_STATUS_LABEL[c.health.status]}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="mt-1.5 text-xs text-[#666666]">{c.health.message}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="pt-6 text-sm text-[#888888]">
+                  Não foi possível carregar o status das integrações.
+                </div>
+              )}
             </Card>
           </Reveal>
         </div>
