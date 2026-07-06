@@ -272,6 +272,10 @@ Plan → Magic MCP → Build → Review → Update CLAUDE.md
 - **Decisão**: JSONB em `offer_books` para essas 4 seções. Migrations apenas para campos flat compartilhados entre clientes.
 - **Trade-off**: queries não-indexadas — aceitável porque cardinalidade é baixa (1 row por cliente).
 
+## O6 Bootstrap Pack (`docs/bootstrap/`)
+
+Documentação estrutural de onboarding — 20 arquivos temáticos por agente/pilar (Claude Chat, Claude Code, Codex, Hermes, Higgsfield, 21st.dev, Factory, Intelligence, CRM, Offer Book, Dashboard, Agentes, MCP, Pipelines, Skills, Deploy) + `README.md` + `INDEX.md`. Complementa este arquivo e `memory/*` sem duplicar — organiza por pilar/agente em vez de cronologia. Ver [`docs/bootstrap/INDEX.md`](docs/bootstrap/INDEX.md) para o mapa completo com status honesto (🟢🟡🔴) de cada sistema.
+
 ## Memória permanente (`memory/`)
 
 Decisões técnicas vivem em `memory/*.md`, **uma por escopo**:
