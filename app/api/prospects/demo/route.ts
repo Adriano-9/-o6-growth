@@ -90,37 +90,41 @@ ${problems}
 Eixos mais fracos: ${weakAxes}` : ""}
 
 REQUISITOS OBRIGATÓRIOS:
-1. HTML completo, auto-contido, arquivo único — CSS APENAS inline no <style>
-2. ZERO JavaScript — NÃO inclua nenhuma tag <script>. Nenhuma. A página deve funcionar sem JS.
-3. ZERO dependências externas EXCETO imagens do Unsplash (source.unsplash.com) — sem Google Fonts, sem CDNs, sem @import de URLs externas
-4. Tipografia: font-family: system-ui, -apple-system, 'Segoe UI', sans-serif — apenas fontes do sistema
-5. Mobile first (viewport meta, flexbox/grid responsivo, mínimo 375px)
-6. Tema profissional claro com acentos modernos (não genérico, não branco simples)
-7. Seções: Hero (nome + tagline + CTA), Serviços (3-4 cards), Diferenciais, Contato + WhatsApp, Footer
-8. Botão WhatsApp flutuante ${whatsappNumber ? `linkando para https://wa.me/55${whatsappNumber}` : "(placeholder wa.me/55XX)"}
-9. CTA principal: "Agendar Consulta" ou "Marcar Avaliação" — tom consultivo, não agressivo
-10. Copy em pt-BR, tom profissional e acolhedor, específico para o segmento
-11. Animações suaves apenas via CSS transitions e @keyframes — NENHUM JavaScript
-12. Formulário de contato simples (nome, telefone, mensagem) — estético, sem backend, apenas HTML
-13. Schema.org LocalBusiness em JSON-LD no <head>
-14. Meta tags Open Graph para redes sociais
+1. HTML completo, arquivo ÚNICO deployável (sem build step) — CSS inline no <style>, JS inline no <script> ou via CDN permitido abaixo
+2. Framer Motion via CDN é OBRIGATÓRIO, e a tag DEVE ficar no <head> (nunca no fim do body):
+   <script src="https://cdn.jsdelivr.net/npm/framer-motion@12/dist/framer-motion.js" defer></script>
+   (expõe window.Motion — use Motion.animate / Motion.inView para scroll reveal; o JS de animação pode ficar num <script defer> também no <head> ou no fim do body)
+3. Google Fonts é PERMITIDO e recomendado — escolha 1-2 famílias premium adequadas ao segmento (ex.: display serif elegante para estética, grotesque moderna para saúde) via <link> no <head>. Tipografia de sistema só como fallback na stack.
+4. Mobile first (viewport meta, flexbox/grid responsivo, mínimo 375px)
+5. Tema profissional claro com acentos modernos (não genérico, não branco simples)
+6. Seções: Hero (nome + tagline + CTA), Serviços (3-4 cards), Diferenciais, Contato + WhatsApp, Footer
+7. Botão WhatsApp flutuante ${whatsappNumber ? `linkando para https://wa.me/55${whatsappNumber}` : "(placeholder wa.me/55XX)"}
+8. CTA principal: "Agendar Consulta" ou "Marcar Avaliação" — tom consultivo, não agressivo
+9. Copy em pt-BR, tom profissional e acolhedor, específico para o segmento
+10. ANIMAÇÕES (padrão obrigatório em todas as seções):
+    - Scroll reveal fade-up em TODA seção ao entrar no viewport (via Framer Motion inView ou IntersectionObserver + classe CSS — degradar graciosamente se o CDN falhar: conteúdo visível mesmo sem JS)
+    - Hero com efeito Ken Burns (zoom lento na imagem/fundo via @keyframes) OU parallax sutil no background — escolha um dos dois
+    - Micro-interações de hover nos cards e CTAs
+11. Formulário de contato simples (nome, telefone, mensagem) — estético, sem backend, apenas HTML
+12. Schema.org LocalBusiness em JSON-LD no <head>
+13. Meta tags Open Graph para redes sociais
 
 VISUAL — REGRAS RÍGIDAS (mais importante que o resto):
-15. PROIBIDO usar emoji em QUALQUER lugar como ícone, elemento decorativo ou ponto focal visual. Nada de 🌸💎✨🦷👗💆‍♀️ etc. nos cards, hero, diferenciais, lista de serviços, badges. Emoji em landing page de serviço profissional grita "feito por IA amador" e queima credibilidade.
-16. Para ícones de serviços/diferenciais: SVG line-icons inline (stroke="currentColor", stroke-width="1.5", 24x24 ou 32x32, viewBox 0 0 24 24). Estilo Lucide/Heroicons: linhas finas, monocromático, herda cor do tema. Exemplo: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="..."/></svg>
-17. Para o visual principal do hero: ESCOLHA UMA das duas opções (não as duas):
-    (a) Foto Unsplash — <img src="https://source.unsplash.com/800x800/?KEYWORD" alt="..." style="width:100%;height:100%;object-fit:cover;border-radius:24px"> onde KEYWORD é 1-2 palavras em inglês relevantes ao nicho específico (ex.: para clínica estética → "skincare,spa"; odontologia → "dentist,smile"; advocacia → "lawoffice"). Adapte ao segmento "${categoria}".
+14. PROIBIDO usar emoji em QUALQUER lugar como ícone, elemento decorativo ou ponto focal visual. Nada de 🌸💎✨🦷👗💆‍♀️ etc. nos cards, hero, diferenciais, lista de serviços, badges. Emoji em landing page de serviço profissional grita "feito por IA amador" e queima credibilidade.
+15. Para ícones de serviços/diferenciais: SVG line-icons inline (stroke="currentColor", stroke-width="1.5", 24x24 ou 32x32, viewBox 0 0 24 24). Estilo Lucide/Heroicons: linhas finas, monocromático, herda cor do tema. Exemplo: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="..."/></svg>
+16. Para o visual principal do hero: ESCOLHA UMA das duas opções (não as duas):
+    (a) Foto Unsplash — <img src="https://source.unsplash.com/800x800/?KEYWORD" alt="..." style="width:100%;height:100%;object-fit:cover;border-radius:24px"> onde KEYWORD é 1-2 palavras em inglês relevantes ao nicho específico (ex.: para clínica estética → "skincare,spa"; odontologia → "dentist,smile"; advocacia → "lawoffice"). Adapte ao segmento "${categoria}". Se usar como fundo do hero, aplique o Ken Burns aqui.
     (b) Ilustração SVG abstrata sofisticada — composição de formas geométricas em camadas com gradiente da paleta, blur sutil, opacidade variada. NÃO um ícone simples. NÃO um emoji desenhado.
-18. NUNCA use o padrão "emoji-dentro-de-círculo-colorido" no hero. Substitua sempre por (a) ou (b).
+17. NUNCA use o padrão "emoji-dentro-de-círculo-colorido" no hero. Substitua sempre por (a) ou (b).
 
 DESIGN DIRECTION:
 - Paleta: branco/cinza claro de fundo, um acento forte (azul petróleo, verde-esmeralda ou violeta, conforme o segmento). Mantenha sistema teal/gold ou similar por nicho.
-- Tipografia bold e clean para headlines, regular para body
+- Tipografia: headline com a família display do Google Fonts escolhida; body com a família de texto — bold e clean para headlines, regular para body
 - Cards com sombra sutil, border-radius generoso (12-16px)
-- Hero com gradiente suave ou padrão geométrico CSS + visual principal por regra 17
+- Hero com gradiente suave ou padrão geométrico CSS + visual principal por regra 16 + Ken Burns/parallax por regra 10
 - Não genérico: personalize a copy para ${p.nome} em ${categoria}
 
-CRÍTICO: A resposta deve ser HTML puro estático. NÃO use <script>. NÃO use @import de fontes externas. Imagens APENAS do source.unsplash.com são permitidas. ZERO emoji decorativo.
+CRÍTICO: Arquivo único deployável. CDNs permitidos: APENAS cdn.jsdelivr.net (Framer Motion), fonts.googleapis.com/fonts.gstatic.com (Google Fonts) e source.unsplash.com (imagens). Nenhum outro domínio externo. O conteúdo deve permanecer legível se o JS falhar (progressive enhancement — nunca esconder conteúdo por padrão esperando JS revelar sem fallback). ZERO emoji decorativo.
 Responda APENAS com o código HTML completo. Sem explicações. Sem markdown. Comece com <!DOCTYPE html>.`;
 }
 
@@ -254,12 +258,12 @@ async function generateHtml(p: ProspectRow): Promise<string> {
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      // 20k tokens leaves room for ~60k chars of inline-styled HTML.
-      // Direct probes showed sonnet-4-6 happily produces 40k+ chars
-      // when not constrained and hits stop_reason=max_tokens — losing
-      // the closing </html>. Branch 2 auto-closes truncated docs, but
-      // we'd rather Claude finish cleanly when it can.
-      max_tokens: 20000,
+      // 32k tokens (~100k chars de HTML inline). Probes anteriores com
+      // 20k batiam em stop_reason=max_tokens perdendo o </html> — landing
+      // pages premium com Framer Motion + Google Fonts + scroll reveal
+      // passam de 50k chars. Branch 2 auto-fecha docs truncados, mas
+      // preferimos Claude terminar limpo. Abaixo do máximo do sonnet-4-6.
+      max_tokens: 32000,
       messages: [{ role: "user", content: buildHtmlPrompt(p) }],
     }),
   });
@@ -305,7 +309,9 @@ async function generateHtml(p: ProspectRow): Promise<string> {
   }
 
   // ─── Robust extraction
-  let { html, source } = extractHtmlFromResponse(rawText);
+  const extracted = extractHtmlFromResponse(rawText);
+  let html = extracted.html;
+  const source = extracted.source;
 
   if (!html) {
     throw new Error(
@@ -314,24 +320,9 @@ async function generateHtml(p: ProspectRow): Promise<string> {
     );
   }
 
-  // ─── Safety net: strip any <script> tags Claude may have generated
-  const scriptCount = (html.match(/<script[\s\S]*?<\/script>/gi) ?? []).length;
-  if (scriptCount > 0) {
-    console.warn(
-      `[prospects/demo] removendo ${scriptCount} <script>(s) gerado(s) por Claude`,
-    );
-    html = html.replace(/<script[\s\S]*?<\/script>/gi, "");
-  }
-
-  // ─── Safety net: strip Google Fonts @import lines
-  const importCount = (html.match(/@import\s+url\([^)]+google[^)]+\)/gi) ?? [])
-    .length;
-  if (importCount > 0) {
-    console.warn(
-      `[prospects/demo] removendo ${importCount} Google Fonts @import gerado(s)`,
-    );
-    html = html.replace(/@import\s+url\([^)]+google[^)]+\)[^;]*;?/gi, "");
-  }
+  // <script> e Google Fonts agora são permitidos (Framer Motion via CDN +
+  // tipografia premium) — os antigos safety nets que os removiam foram
+  // desativados junto com a regra "zero JS" do prompt.
 
   // ─── Final structural check (post-extraction).
   // We don't throw here anymore — extractHtmlFromResponse already wraps
@@ -349,8 +340,6 @@ async function generateHtml(p: ProspectRow): Promise<string> {
     hasHtml,
     hasHead,
     hasBody,
-    scriptTagsRemoved: scriptCount,
-    googleImportsRemoved: importCount,
   });
 
   // Final structural check is now DEFENSIVE ONLY — we only wrap when
