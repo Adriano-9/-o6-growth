@@ -51,6 +51,10 @@ Bloco DSPC:
 
 Inputs estruturados opcionais adicionais:
 - pain_summary — síntese da dor (alimenta seção 2)
+- pain_evidence — evidência REAL medida da dor (ex.: "tempo de
+  resposta medido: 1h12min no WhatsApp em teste de DD/MM").
+  Alimenta seção 2. Se não fornecido, NÃO fabricar evidência —
+  vale a regra de placeholder já existente na skill.
 - recommended_sprint — sprint recomendada (alimenta seções 4, 5)
 - buyer_persona — persona compradora (alimenta tom das seções 2, 12)
 - estimated_roi — ROI estimado COM premissas explícitas (alimenta seção 9)
@@ -58,6 +62,19 @@ Inputs estruturados opcionais adicionais:
 - next_step — próximo passo único (alimenta seção 13)
 - diagnosis_summary — síntese do diagnóstico real feito (alimenta seções 2, 3)
 - offer_strategy — estratégia da oferta (alimenta seções 7, 9)
+
+### Framing DSPC dentro das seções existentes
+
+Quando os inputs sustentarem (nunca por invenção):
+
+- Seção 2 (Problema do mercado): identificar explicitamente a
+  "Dor cara" — dor que é recorrente, custa dinheiro, tem comprador
+  claro e é fácil de explicar. Usar pain_evidence como âncora
+  factual quando existir; sem evidência, apresentar a dor como
+  declarada/hipótese, nunca como medição.
+- Seções 4 (Solução) e 5 (Como funciona): enquadrar a abordagem
+  recomendada como o "Sprint" — a MENOR entrega que resolve a dor
+  identificada, não o pacote máximo.
 
 ### Regras de uso do DSPC
 

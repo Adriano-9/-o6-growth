@@ -44,17 +44,22 @@ tools:
       commits), mas não há execução real registrada até 2026-07-06.
 
   - id: "hermes-agent"
-    name: "Hermes Agent (orquestração e skills)"
-    role: "Orquestração central planejada + skills sob demanda"
-    status: planned
+    name: "Hermes Agent (CLI + orquestração e skills)"
+    role: "CLI `hermes` na VPS (inclui `hermes dashboard`) + orquestração/skills planejadas"
+    status: developing
     notes: >
-      Hoje não existe orquestração — só o bot Telegram com comandos
-      fixos (ver hermes-telegram-bot). "Hermes Agent" como motor de
-      decisão/scheduler de outros agentes ainda não tem nenhuma linha
-      de código. `/criar_skill` cria arquivos .md em
+      Corrigido em 2026-07-06: existe um binário/CLI `hermes` real
+      instalado na VPS (fora deste repositório — nenhum script em
+      scripts/vps-*.sh o instala) — comando `hermes dashboard` já foi
+      executado manualmente pelo operador e retornou
+      "HERMES_DASHBOARD_READY port=9119". Publicação persistente via
+      systemd em scripts/vps-publish-hermes-agent-dashboard.sh (não
+      aplicado ainda). Orquestração real de outros agentes (motor de
+      decisão/scheduler, agent_runs table) continua não implementada —
+      por isso "developing", não "implemented". `/criar_skill` (via
+      Telegram bot, não via este CLI) cria arquivos .md em
       ~/.hermes/skills/o6/, mas nenhuma skill foi criada via esse
-      comando em produção ainda (pasta vazia, confirmado em
-      docs/bootstrap/06_BOOTSTRAP_HERMES.md).
+      comando em produção ainda.
 
   - id: "hermes-telegram-bot"
     name: "Hermes Telegram Bot"

@@ -35,10 +35,14 @@ pipelines:
       - "Coleta de dados de diagnóstico (app/offer-book/diagnostico, implementado)"
       - "4 scores determinísticos + 2 scores estratégicos (app/offer-book/_lib/scores.ts, implementado)"
       - "canal_timing.py (diagnostico-o6/, mede latência WhatsApp/Instagram — implementado, standalone, não integrado ao fluxo principal ainda)"
+      - "O6 Intelligence Diagnosis Engine (app/_lib/diagnosis-engine/**, motor capability-based novo — implementado como lib, sem rota/UI/persistência ainda, ver AGENTS_REGISTRY não aplicável — é infraestrutura, não agente)"
     notes: >
       Peças existem e funcionam isoladamente; não há uma orquestração
-      única que amarre coleta + scores + canal_timing num só
-      "Diagnóstico Completo" — por isso developing, não implemented.
+      única que amarre coleta + scores + canal_timing + o novo diagnosis-engine
+      num só "Diagnóstico Completo" — por isso developing, não implemented.
+      O novo engine (2026-07-07) é candidato natural a substituir
+      scores.ts no médio prazo (é capability-based e reusável por
+      vertical), mas essa migração não foi feita nem decidida ainda.
 
   - id: "crm-pipeline"
     name: "CRM Pipeline"
