@@ -1,39 +1,54 @@
 #!/usr/bin/env bash
-# O6 Hermes Telegram Bot — VPS bootstrap (one-shot)
-# Cole inteiro no console root do VPS 147.182.135.206
-# Idempotente: roda 2x sem quebrar
+# O6 Hermes Bot — patch de resiliência de polling (VPS 147.182.135.206)
+# Cole inteiro no console root do VPS. Idempotente: roda 2x sem quebrar.
 #
-# Reusa /opt/o6-intelligence/.env já existente (TELEGRAM_TOKEN,
-# TELEGRAM_CHAT_ID). Não duplica secrets — se o Intelligence Engine
-# ainda não foi instalado, rode primeiro scripts/vps-bootstrap-intelligence.sh
-# (ou crie /opt/o6-intelligence/.env manualmente com essas 2 chaves).
+# Problema alvo: telegram.error.NetworkError: httpx.ReadError durante get_updates
+# (long-polling do Telegram derrubando a conexão HTTP intermitentemente).
+#
+# O que este patch faz:
+#   1. Backup do bot.py e da unit systemd atuais (timestamped, nunca sobrescreve backup antigo)
+#   2. Reporta a versão instalada de python-telegram-bot e httpx (para o registro)
+#   3. Reescreve bot.py com:
+#      - timeouts HTTPX mais tolerantes no ApplicationBuilder (connect/read/write/pool)
+#      - error handler global (app.add_error_handler) — NetworkError vira log, não crash
+#      - logging configurado (silencia ruído de httpx/httpcore em DEBUG, mantém INFO próprio)
+#   4. Ajusta a unit systemd para não bater no rate-limit de restart do systemd
+#      (StartLimitIntervalSec=0 — Restart=always continua válido mesmo sob falhas em rajada)
+#   5. Reinicia o serviço e mostra status + log
+#
+# NÃO toca em: /opt/o6-intelligence/** (Intelligence Engine), TELEGRAM_TOKEN,
+# TELEGRAM_CHAT_ID, nem em nenhum outro secret.
 set -euo pipefail
 
 BASE=/opt/o6-hermes-bot
-ENV_FILE=/opt/o6-intelligence/.env
-SKILLS_DIR="$HOME/.hermes/skills/o6"
+UNIT=/etc/systemd/system/o6-hermes-bot.service
+STAMP=$(date +%Y%m%d%H%M%S)
 
-if [ ! -f "$ENV_FILE" ]; then
-  echo "ERRO: $ENV_FILE não existe. Crie-o com TELEGRAM_TOKEN e TELEGRAM_CHAT_ID antes de continuar."
+if [ ! -f "$BASE/bot.py" ]; then
+  echo "ERRO: $BASE/bot.py não existe. Rode scripts/vps-bootstrap-hermes-bot.sh primeiro."
   exit 1
 fi
 
-mkdir -p "$BASE" "$SKILLS_DIR"
-cd "$BASE"
+# ── 1. Backup ──
+BACKUP_DIR="$BASE/backups/$STAMP"
+mkdir -p "$BACKUP_DIR"
+cp "$BASE/bot.py" "$BACKUP_DIR/bot.py.bak"
+[ -f "$UNIT" ] && cp "$UNIT" "$BACKUP_DIR/o6-hermes-bot.service.bak"
+echo "=== BACKUP CRIADO EM: $BACKUP_DIR ==="
 
-# ── 1. requirements.txt ──
-cat > requirements.txt <<'REQ'
-python-telegram-bot>=20.0
-python-dotenv
-psutil
-REQ
+# ── 2. Versões instaladas (antes do patch) ──
+echo
+echo "=== VERSÕES INSTALADAS (antes do patch) ==="
+pip3 show python-telegram-bot 2>/dev/null | grep -E "^(Name|Version)" || echo "python-telegram-bot: não encontrado via pip3 show"
+pip3 show httpx 2>/dev/null | grep -E "^(Name|Version)" || echo "httpx: não encontrado via pip3 show"
 
-# ── 2. bot.py ──
-# Inclui, desde 2026-07-06, os timeouts HTTPX tolerantes + error handler
-# global + logging limpo do patch de resiliência de polling (ver
-# scripts/vps-patch-hermes-bot-resilience.sh e
-# docs/bootstrap/06_BOOTSTRAP_HERMES.md — seção Troubleshooting).
-cat > bot.py <<'PY'
+# ── 3. Garante versão mínima que suporta os métodos de timeout usados abaixo ──
+# ApplicationBuilder.get_updates_read_timeout() etc. existem a partir do PTB v20.
+# Não força downgrade/upgrade agressivo — só garante piso de versão.
+pip3 install --break-system-packages "python-telegram-bot>=20.0" psutil python-dotenv
+
+# ── 4. Novo bot.py ──
+cat > "$BASE/bot.py" <<'PY'
 """
 O6 Hermes Telegram Bot — daemon de comunicação bidirecional.
 
@@ -42,9 +57,16 @@ Segurança: só responde ao TELEGRAM_CHAT_ID configurado em
 /opt/o6-intelligence/.env — qualquer outro remetente é ignorado
 silenciosamente (sem eco, sem log de conteúdo de terceiros).
 
-Resiliência de rede: timeouts HTTPX tolerantes no polling (get_updates)
-+ error handler global (NetworkError vira log, nunca crash) + logging
-configurado (sem ruído DEBUG de httpx/httpcore).
+Resiliência de rede (patch 2026-07-06):
+- Timeouts HTTPX tolerantes no polling (get_updates) e nas chamadas normais
+  da API — long-polling em redes de VPS instáveis derruba conexões com
+  timeouts default (padrão da lib é ~5-10s, curto demais para isso).
+- Error handler global: NetworkError (httpx.ReadError/ConnectError/etc.)
+  vira log estruturado, nunca derruba o processo. PTB já faz retry
+  automático internamente no polling; o handler aqui cobre exceções que
+  escapam dos handlers de comando individuais.
+- Logging configurado para não poluir o log com DEBUG de httpx/httpcore,
+  mantendo apenas o que é relevante para o Hermes.
 """
 import logging
 import os
@@ -58,6 +80,9 @@ from telegram import Update
 from telegram.error import NetworkError, TimedOut, TelegramError
 from telegram.ext import Application, CommandHandler, ContextTypes
 
+# ── Logging ──
+# Silencia ruído DEBUG de httpx/httpcore (a lib HTTP usada pelo PTB) mas
+# mantém INFO/WARNING/ERROR — é aí que um NetworkError real aparece.
 logging.basicConfig(
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
     level=logging.INFO,
@@ -199,9 +224,15 @@ async def cmd_ajuda(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def global_error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Nunca deixa uma exceção derrubar o processo. NetworkError/TimedOut
-    (httpx.ReadError, ConnectError etc.) é ruído esperado de rede — PTB já
-    retenta o get_updates internamente — então só logamos em WARNING."""
+    """
+    Handler global de exceções — nunca deixa uma falha derrubar o processo.
+
+    NetworkError/TimedOut (httpx.ReadError, ConnectError, etc.) durante
+    get_updates já são retentados internamente pelo PTB; aqui só logamos
+    em nível WARNING (é ruído esperado de rede, não bug) e seguimos.
+    Qualquer outra exceção vira ERROR com stack trace completo para
+    investigação, mas também não derruba o polling.
+    """
     err = context.error
     if isinstance(err, (NetworkError, TimedOut)):
         logger.warning("Falha de rede transitória (retry automático do PTB): %s", err)
@@ -216,16 +247,20 @@ def main() -> None:
     app = (
         Application.builder()
         .token(TELEGRAM_TOKEN)
+        # Timeouts das chamadas normais da API (sendMessage, etc.)
         .connect_timeout(30.0)
         .read_timeout(30.0)
         .write_timeout(30.0)
         .pool_timeout(30.0)
+        # Timeouts específicos do long-polling (get_updates) — mais generosos
+        # porque get_updates fica com a conexão aberta esperando updates.
         .get_updates_connect_timeout(30.0)
         .get_updates_read_timeout(40.0)
         .get_updates_write_timeout(30.0)
         .get_updates_pool_timeout(30.0)
         .build()
     )
+
     app.add_handler(CommandHandler("ping", cmd_ping))
     app.add_handler(CommandHandler("status", cmd_status))
     app.add_handler(CommandHandler("skills", cmd_skills))
@@ -233,6 +268,7 @@ def main() -> None:
     app.add_handler(CommandHandler("brief", cmd_brief))
     app.add_handler(CommandHandler("ajuda", cmd_ajuda))
     app.add_error_handler(global_error_handler)
+
     logger.info("Hermes bot iniciando polling...")
     app.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
 
@@ -241,11 +277,14 @@ if __name__ == "__main__":
     main()
 PY
 
-# ── 3. install deps ──
-pip3 install -r requirements.txt --break-system-packages
+echo
+echo "=== bot.py atualizado ==="
 
-# ── 4. systemd service ──
-cat > /etc/systemd/system/o6-hermes-bot.service <<'UNIT'
+# ── 5. Unit systemd — evita o systemd desistir de reiniciar sob falhas em rajada ──
+# StartLimitIntervalSec=0 desativa o rate-limit de restart do systemd (default:
+# 5 tentativas em 10s e ele para de tentar). Restart=always + RestartSec=5 já
+# existiam; isso só garante que rajadas de NetworkError não esgotem o limite.
+cat > "$UNIT" <<'UNIT'
 [Unit]
 Description=O6 Hermes Telegram Bot
 After=network-online.target
@@ -267,20 +306,26 @@ WantedBy=multi-user.target
 UNIT
 
 systemctl daemon-reload
-systemctl enable o6-hermes-bot
 systemctl restart o6-hermes-bot
 
 echo
-echo "=== STATUS DO SERVIÇO ==="
+echo "=== STATUS DO SERVIÇO (após patch) ==="
 sleep 2
 systemctl status o6-hermes-bot --no-pager -l
 
 echo
 echo "=== ÚLTIMAS LINHAS DO LOG ==="
-tail -n 20 /opt/o6-hermes-bot/bot.log 2>/dev/null || echo "(log ainda vazio)"
+tail -n 30 /opt/o6-hermes-bot/bot.log 2>/dev/null || echo "(log ainda vazio)"
+
+echo
+echo "=== VERSÕES INSTALADAS (depois do patch) ==="
+pip3 show python-telegram-bot 2>/dev/null | grep -E "^(Name|Version)"
+pip3 show httpx 2>/dev/null | grep -E "^(Name|Version)"
 
 echo
 echo "=== PRÓXIMO PASSO ==="
-echo "Abra o Telegram e envie /ping para o bot. Deve responder:"
-echo '  Hermes ativo ✅ <timestamp UTC>'
-echo "Se não responder em 10s, rode: journalctl -u o6-hermes-bot -n 50 --no-pager"
+echo "1. Envie /ping no Telegram — deve responder normalmente."
+echo "2. Monitore por alguns minutos: journalctl -u o6-hermes-bot -f"
+echo "   Se aparecer 'Falha de rede transitória (retry automático do PTB)' em nível WARNING,"
+echo "   é o comportamento esperado agora (antes derrubava o processo, agora só loga e segue)."
+echo "3. Backup do bot.py e da unit anteriores está em: $BACKUP_DIR"
