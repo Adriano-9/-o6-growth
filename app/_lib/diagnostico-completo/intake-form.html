@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico Completo O6 — Intake</title>
+<style>
+  :root {
+    --bg: #0D0D0D;
+    --fg: #FFFFFF;
+    --accent: #C0392B;
+    --card: #161616;
+    --border: #262626;
+    --muted: #8A8A8A;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    line-height: 1.5;
+    padding: 32px 16px 80px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px;
+  }
+  .sub { color: var(--muted); font-size: 13px; margin: 0 0 32px; }
+  fieldset {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    padding: 20px;
+    margin: 0 0 20px;
+  }
+  legend {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    padding: 0 8px;
+  }
+  label {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    margin: 16px 0 6px;
+  }
+  label:first-of-type { margin-top: 4px; }
+  label .req { color: var(--accent); margin-left: 2px; }
+  label .hint { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  input[type="text"], input[type="number"], select, textarea {
+    width: 100%;
+    background: #1A1A1A;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--fg);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  .checks { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+  .check-item { display: flex; align-items: center; gap: 6px; font-weight: 400; font-size: 13.5px; }
+  .check-item input { width: auto; }
+  .followup {
+    margin-top: 12px;
+    padding: 12px;
+    border-left: 2px solid var(--accent);
+    background: #1A1414;
+    display: none;
+  }
+  .followup.visible { display: block; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+  button {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  button:hover { opacity: 0.9; }
+  .error-msg {
+    color: var(--accent);
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+  #output-section {
+    display: none;
+    margin-top: 32px;
+  }
+  #output-section.visible { display: block; }
+  #output-json {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #9FE870;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    padding: 3px 10px;
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Diagnóstico Completo O6</h1>
+  <p class="sub">Formulário de intake — substitui a entrevista ao vivo. Todas as respostas são declaradas pelo cliente, não medidas por acesso a sistema (mesma regra do playbook: nunca inventar dado).</p>
+
+  <form id="intake-form" novalidate>
+
+    <fieldset>
+      <legend>1. Contexto do negócio</legend>
+
+      <label for="nomeNegocio">Nome do negócio<span class="req">*</span></label>
+      <input type="text" id="nomeNegocio" required>
+      <div class="error-msg" data-for="nomeNegocio">Campo obrigatório.</div>
+
+      <label for="segmento">Segmento / nicho<span class="req">*</span>
+        <span class="hint">Ex.: clínica de estética, restaurante, escritório de advocacia</span>
+      </label>
+      <input type="text" id="segmento" required>
+      <div class="error-msg" data-for="segmento">Campo obrigatório.</div>
+
+      <label>Canais de atendimento usados<span class="req">*</span></label>
+      <div class="checks">
+        <span class="check-item"><input type="checkbox" name="canal" value="WhatsApp" checked> WhatsApp</span>
+        <span class="check-item"><input type="checkbox" name="canal" value="Instagram Direct"> Instagram Direct</span>
+        <span class="check-item"><input type="checkbox" name="canal" value="Telefone"> Telefone</span>
+        <span class="check-item"><input type="checkbox" name="canal" value="Site/Formulário"> Site/Formulário</span>
+      </div>
+      <div class="error-msg" data-for="canal">Selecione ao menos um canal.</div>
+    </fieldset>
+
+    <fieldset>
+      <legend>2. Tempo de resposta autodeclarado por canal</legend>
+
+      <label for="respostaWhatsapp">WhatsApp — tempo médio de resposta<span class="req">*</span>
+        <span class="hint">Estimativa do próprio dono/equipe, em minutos</span>
+      </label>
+      <input type="number" id="respostaWhatsapp" min="0" required>
+      <div class="error-msg" data-for="respostaWhatsapp">Informe um número (pode ser 0).</div>
+
+      <label for="respostaInstagram">Instagram Direct — tempo médio de resposta
+        <span class="hint">Em minutos. Deixe em branco se o canal não é usado.</span>
+      </label>
+      <input type="number" id="respostaInstagram" min="0">
+
+      <label for="respostaTelefone">Telefone — tempo médio de resposta
+        <span class="hint">Em minutos (tempo até atender ou retornar). Deixe em branco se não aplicável.</span>
+      </label>
+      <input type="number" id="respostaTelefone" min="0">
+    </fieldset>
+
+    <fieldset>
+      <legend>3. Volume</legend>
+
+      <div class="row2">
+        <div>
+          <label for="contatosSemana">Contatos recebidos por semana<span class="req">*</span></label>
+          <input type="number" id="contatosSemana" min="0" required>
+          <div class="error-msg" data-for="contatosSemana">Informe um número.</div>
+        </div>
+        <div>
+          <label for="conversoesSemana">Quantos desses convertem em venda/agendamento<span class="req">*</span></label>
+          <input type="number" id="conversoesSemana" min="0" required>
+          <div class="error-msg" data-for="conversoesSemana">Informe um número.</div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>4. Financeiro</legend>
+
+      <label for="ticketMedio">Ticket médio (R$)<span class="req">*</span>
+        <span class="hint">Valor médio por venda/atendimento — número, não faixa</span>
+      </label>
+      <input type="number" id="ticketMedio" min="0" step="0.01" required>
+      <div class="error-msg" data-for="ticketMedio">Informe um valor numérico em R$.</div>
+
+      <label for="processoConfirmacao">Existe processo de confirmação de horário/pedido?<span class="req">*</span></label>
+      <select id="processoConfirmacao" required>
+        <option value="">Selecione</option>
+        <option value="sim_automatizado">Sim, automatizado</option>
+        <option value="sim_manual">Sim, manual (alguém liga/manda mensagem)</option>
+        <option value="nao">Não existe processo de confirmação</option>
+      </select>
+      <div class="error-msg" data-for="processoConfirmacao">Selecione uma opção.</div>
+
+      <div class="followup" id="followup-noshow">
+        <label for="noShowSemana">Quantos no-shows/faltas por semana, aproximadamente?<span class="req">*</span></label>
+        <input type="number" id="noShowSemana" min="0">
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>5. Retenção</legend>
+
+      <label for="percentualRecompra">% estimado de clientes que voltam (recompra)<span class="req">*</span>
+        <span class="hint">Estimativa do dono, 0 a 100</span>
+      </label>
+      <input type="number" id="percentualRecompra" min="0" max="100" required>
+      <div class="error-msg" data-for="percentualRecompra">Informe um número entre 0 e 100.</div>
+
+      <label for="acoesFidelizacao">Existe alguma ação ativa de fidelização/retorno de cliente?</label>
+      <select id="acoesFidelizacao">
+        <option value="nenhuma">Nenhuma</option>
+        <option value="informal">Algo informal (lembrar de vez em quando)</option>
+        <option value="programa">Programa estruturado (cadastro, cupom, lembrete recorrente)</option>
+      </select>
+    </fieldset>
+
+    <fieldset>
+      <legend>6. Aberta</legend>
+
+      <label for="umaCoisa">Se você pudesse consertar UMA coisa no atendimento/vendas hoje, qual seria e por quê?<span class="req">*</span></label>
+      <textarea id="umaCoisa" required></textarea>
+      <div class="error-msg" data-for="umaCoisa">Campo obrigatório.</div>
+    </fieldset>
+
+    <button type="submit">Gerar JSON estruturado</button>
+  </form>
+
+  <div id="output-section">
+    <span class="badge">Relatório gerado via buildDiagnosisReport() + formatFinalReport() reais (servidor de teste local)</span>
+    <pre id="output-json"></pre>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var form = document.getElementById("intake-form");
+  var processoSel = document.getElementById("processoConfirmacao");
+  var followup = document.getElementById("followup-noshow");
+  var noShowInput = document.getElementById("noShowSemana");
+
+  // ── Lógica condicional: "não existe processo de confirmação" → pede no-shows ──
+  processoSel.addEventListener("change", function () {
+    var show = processoSel.value === "nao";
+    followup.classList.toggle("visible", show);
+    noShowInput.required = show;
+    if (!show) noShowInput.value = "";
+  });
+
+  function showError(id, show) {
+    var el = document.querySelector('.error-msg[data-for="' + id + '"]');
+    if (el) el.classList.toggle("visible", !!show);
+  }
+
+  function clearErrors() {
+    document.querySelectorAll(".error-msg").forEach(function (el) {
+      el.classList.remove("visible");
+    });
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    clearErrors();
+
+    var valid = true;
+    var requiredNumberIds = [
+      "respostaWhatsapp", "contatosSemana", "conversoesSemana",
+      "ticketMedio", "percentualRecompra",
+    ];
+    var requiredTextIds = ["nomeNegocio", "segmento", "umaCoisa"];
+
+    requiredTextIds.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el.value.trim()) { showError(id, true); valid = false; }
+    });
+
+    requiredNumberIds.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el.value === "" || isNaN(Number(el.value))) { showError(id, true); valid = false; }
+    });
+
+    var canais = Array.from(document.querySelectorAll('input[name="canal"]:checked')).map(function (c) { return c.value; });
+    if (canais.length === 0) { showError("canal", true); valid = false; }
+
+    if (!processoSel.value) { showError("processoConfirmacao", true); valid = false; }
+
+    if (processoSel.value === "nao" && (noShowInput.value === "" || isNaN(Number(noShowInput.value)))) {
+      valid = false;
+      noShowInput.style.borderColor = "var(--accent)";
+    } else {
+      noShowInput.style.borderColor = "";
+    }
+
+    if (!valid) return;
+
+    var val = function (id) { return document.getElementById(id).value; };
+    var num = function (id) {
+      var v = document.getElementById(id).value;
+      return v === "" ? undefined : Number(v);
+    };
+
+    var nowIso = new Date().toISOString();
+    var respostaInstagram = num("respostaInstagram");
+    var respostaTelefone = num("respostaTelefone");
+
+    // ── clientContext: app/_lib/diagnostico-completo/types.ts → ClientContext ──
+    var clientContext = {
+      nomeNegocio: val("nomeNegocio").trim(),
+      segmento: val("segmento").trim(),
+      canaisAtendimento: canais,
+      ticketMedio: num("ticketMedio"),
+      volumeMensalAproximado: num("contatosSemana") * 4,
+      percentualRecompraEstimado: num("percentualRecompra"),
+    };
+
+    // ── painEvidence: PainEvidence[] — fonte "declarado_entrevista" (não é
+    // teste manual medido, é autodeclarado no intake) ──
+    var painEvidence = [];
+
+    painEvidence.push({
+      canal: "WhatsApp",
+      descricao: "tempo de resposta autodeclarado no intake",
+      valorMedido: num("respostaWhatsapp") + "min",
+      dataMedicao: nowIso.slice(0, 10),
+      fonte: "declarado_entrevista",
+    });
+
+    if (respostaInstagram !== undefined) {
+      painEvidence.push({
+        canal: "Instagram Direct",
+        descricao: "tempo de resposta autodeclarado no intake",
+        valorMedido: respostaInstagram + "min",
+        dataMedicao: nowIso.slice(0, 10),
+        fonte: "declarado_entrevista",
+      });
+    }
+
+    if (respostaTelefone !== undefined) {
+      painEvidence.push({
+        canal: "Telefone",
+        descricao: "tempo de resposta autodeclarado no intake",
+        valorMedido: respostaTelefone + "min",
+        dataMedicao: nowIso.slice(0, 10),
+        fonte: "declarado_entrevista",
+      });
+    }
+
+    if (processoSel.value === "nao") {
+      painEvidence.push({
+        canal: "Confirmação de horário/pedido",
+        descricao: "sem processo de confirmação — no-shows/faltas semanais autodeclarados",
+        valorMedido: val("noShowSemana") + " no-shows/semana",
+        dataMedicao: nowIso.slice(0, 10),
+        fonte: "declarado_entrevista",
+      });
+    }
+
+    // ── interviewAnswers: Record<string, string> — respostas cruas do
+    // questionário, incluindo as que não viram PainEvidence (volume,
+    // conversão, retenção, aberta) para o gerador de relatório consultar ──
+    var interviewAnswers = {
+      contatos_por_semana: val("contatosSemana"),
+      conversoes_por_semana: val("conversoesSemana"),
+      taxa_conversao_pct: (Number(val("conversoesSemana")) / Math.max(1, Number(val("contatosSemana"))) * 100).toFixed(1),
+      processo_confirmacao: processoSel.value,
+      acoes_fidelizacao: val("acoesFidelizacao"),
+      uma_coisa_para_consertar: val("umaCoisa").trim(),
+    };
+
+    var payload = {
+      clientContext: clientContext,
+      painEvidence: painEvidence,
+      interviewAnswers: interviewAnswers,
+    };
+
+    // ── Chama o servidor de teste local, que roda as funções REAIS
+    // buildDiagnosisReport() + formatFinalReport() (app/_lib/diagnostico-completo/
+    // build-report.ts e format-final-report.ts) — sem duplicar a lógica
+    // aqui em JS. Ver __smoke__/intake-server.mjs.
+    var out = document.getElementById("output-json");
+    var section = document.getElementById("output-section");
+    out.textContent = "Gerando relatório (chamando buildDiagnosisReport + formatFinalReport)...";
+    section.classList.add("visible");
+    section.scrollIntoView({ behavior: "smooth" });
+
+    fetch("http://localhost:4174/generate-report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (e) { throw new Error(e.error || "erro desconhecido"); });
+        return r.json();
+      })
+      .then(function (result) {
+        out.textContent = result.markdown;
+      })
+      .catch(function (err) {
+        out.textContent =
+          "ERRO ao chamar o servidor de teste (intake-server.mjs precisa estar rodando em :4174):\n\n" +
+          err.message +
+          "\n\n--- JSON de input (fallback, para debug) ---\n" +
+          JSON.stringify(payload, null, 2);
+      });
+  });
+})();
+</script>
+</body>
+</html>
