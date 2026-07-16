@@ -107,7 +107,7 @@ export function formatFinalReport(report: DiagnosisReport, clientName: string): 
       lines.push(formatServico(s));
     }
   } else {
-    lines.push(`Nenhum serviço recomendado neste momento — sem gaps que justifiquem.`);
+    lines.push(`Negócio já está bem estruturado, sem serviço adicional necessário no momento.`);
   }
   lines.push("");
 

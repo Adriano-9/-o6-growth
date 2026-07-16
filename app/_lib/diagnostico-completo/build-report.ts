@@ -189,6 +189,48 @@ const SERVICE_CATALOG: ServiceRecommendation[] = [
   { servico: "sprint", preco: 4800, escopoDefinido: false }, // escopo indefinido — não prometer conteúdo
 ];
 
+/** Pior severidade entre os gaps encontrados — alta > media > baixa. */
+function worstSeverity(gaps: DiagnosisGap[]): SeveridadeGap | undefined {
+  if (gaps.some((g) => g.severidade === "alta")) return "alta";
+  if (gaps.some((g) => g.severidade === "media")) return "media";
+  if (gaps.some((g) => g.severidade === "baixa")) return "baixa";
+  return undefined;
+}
+
+function serviceByName(nome: ServiceRecommendation["servico"]): ServiceRecommendation {
+  const s = SERVICE_CATALOG.find((c) => c.servico === nome);
+  if (!s) throw new Error(`serviço desconhecido no catálogo: ${nome}`);
+  return s;
+}
+
+/**
+ * Recomendação escala com a pior severidade encontrada — não recomenda o
+ * mesmo pacote pesado pra negócio saudável e pra negócio em crise.
+ */
+function recommendServices(gaps: DiagnosisGap[]): ServiceRecommendation[] {
+  const worst = worstSeverity(gaps);
+
+  if (worst === "alta") {
+    return [
+      serviceByName("manutencao_mensal"),
+      serviceByName("site_simples"),
+      serviceByName("sprint"),
+    ];
+  }
+
+  if (worst === "media") {
+    const hasResponseTimeGap = gaps.some(
+      (g) => typeof g.fonte !== "string" && isResponseTimeEvidence(g.fonte),
+    );
+    return hasResponseTimeGap
+      ? [serviceByName("manutencao_mensal"), serviceByName("site_simples")]
+      : [serviceByName("manutencao_mensal")];
+  }
+
+  // "baixa" ou sem gaps — negócio já está bem estruturado, nada a empurrar.
+  return [];
+}
+
 export function buildDiagnosisReport(input: BuildDiagnosisReportInput): DiagnosisReport {
   const { clientContext, painEvidence, interviewAnswers } = input;
 
@@ -227,14 +269,10 @@ export function buildDiagnosisReport(input: BuildDiagnosisReportInput): Diagnosi
       ? ` + entrevista estruturada com o dono (${Object.keys(interviewAnswers).length} respostas registradas).`
       : ". Entrevista estruturada ainda não realizada.");
 
-  // Recomenda o que resolve o GAP #1 primeiro (playbook seção 9): gap de
-  // resposta/atendimento → manutenção mensal cobre rotina de atendimento;
-  // site entra como opção complementar. Sprint listado sem escopo.
-  const proximosPassosRecomendados: ServiceRecommendation[] = pior
-    ? SERVICE_CATALOG.filter((s) =>
-        ["manutencao_mensal", "site_simples", "sprint"].includes(s.servico),
-      )
-    : [];
+  // Recomendação escala com a pior severidade encontrada (não empurra o
+  // mesmo pacote pesado — site + manutenção + sprint — pra negócio saudável
+  // com só gaps de severidade baixa).
+  const proximosPassosRecomendados = recommendServices(gaps);
 
   return {
     cliente: clientContext,
