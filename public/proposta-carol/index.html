@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>O6 Growth — Proposta Estratégica Jhun Bistrô & Empório dos Grãos</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0D0D0D;
+    color: #FFFFFF;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    line-height: 1.7;
+  }
+  .container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+
+  .header { text-align: center; margin-bottom: 56px; }
+  .logo { font-size: 14px; letter-spacing: 0.2em; color: #666; margin-bottom: 16px; }
+  .header h1 { font-size: 30px; font-weight: 600; margin-bottom: 12px; line-height: 1.3; }
+  .header p { color: #888; font-size: 15px; }
+
+  .section { margin-bottom: 52px; }
+  .section-label {
+    color: #C0392B; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.15em; margin-bottom: 12px;
+  }
+  .section h2 { font-size: 24px; font-weight: 600; margin-bottom: 18px; line-height: 1.35; }
+  .section h3 { font-size: 18px; font-weight: 600; margin: 24px 0 12px; }
+  .section p { color: #ccc; font-size: 15px; margin-bottom: 14px; }
+  .section p.lead { font-size: 17px; color: #eee; }
+
+  .problem-grid { display: grid; gap: 14px; margin: 24px 0; }
+  .problem-card {
+    background: #111; border-left: 3px solid #C0392B;
+    border-radius: 8px; padding: 18px 20px;
+  }
+  .problem-card .num { color: #C0392B; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; }
+  .problem-card .title { font-size: 16px; font-weight: 600; margin: 6px 0; }
+  .problem-card .detail { color: #aaa; font-size: 14px; }
+
+  .evidence-table {
+    width: 100%; border-collapse: collapse; margin: 20px 0;
+    background: #111; border-radius: 12px; overflow: hidden;
+  }
+  .evidence-table th, .evidence-table td {
+    padding: 14px 16px; text-align: left; border-bottom: 1px solid #222;
+    font-size: 14px;
+  }
+  .evidence-table th { color: #888; font-weight: 500; font-size: 12px; letter-spacing: 0.05em; }
+  .badge-critico { color: #C0392B; font-weight: 600; }
+
+  .quote-box {
+    border-left: 3px solid #C0392B; padding-left: 20px; margin: 20px 0;
+    color: #ddd; font-style: italic; font-size: 15px;
+  }
+  .quote-box cite { display: block; color: #888; font-size: 13px; margin-top: 6px; font-style: normal; }
+
+  .highlight-box {
+    background: #1a1010; border: 1px solid #C0392B;
+    border-radius: 14px; padding: 24px; margin: 20px 0;
+  }
+  .highlight-box .stat { font-size: 34px; font-weight: 700; color: #C0392B; }
+  .highlight-box .stat-label { color: #ccc; font-size: 14px; margin-top: 4px; }
+
+  .opportunity-box {
+    background: #0f1a10; border: 1px solid #2d6a4f;
+    border-radius: 14px; padding: 22px; margin: 20px 0;
+  }
+  .opportunity-box .tag { color: #52b788; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .opportunity-box p { color: #ddd; margin: 0; }
+
+  .diagnostic-hero {
+    background: linear-gradient(135deg, #1a1010, #0D0D0D);
+    border: 1px solid #C0392B; border-radius: 16px;
+    padding: 32px; margin: 24px 0;
+  }
+  .diagnostic-hero h3 { font-size: 20px; margin-bottom: 16px; }
+  .diagnostic-step {
+    display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start;
+  }
+  .diagnostic-step .step-num {
+    background: #C0392B; color: #fff; width: 28px; height: 28px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .diagnostic-step .step-content .step-title { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+  .diagnostic-step .step-content .step-desc { color: #aaa; font-size: 13px; }
+
+  .service-card {
+    background: #111; border: 1px solid #222; border-radius: 12px;
+    padding: 22px; margin-bottom: 14px;
+  }
+  .service-card .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .service-card .name { font-weight: 600; font-size: 16px; }
+  .service-card .price { color: #C0392B; font-weight: 700; font-size: 16px; white-space: nowrap; }
+  .service-card .why { color: #aaa; font-size: 14px; }
+  .service-card .why strong { color: #ccc; }
+
+  .objection {
+    background: #111; border: 1px solid #222; border-radius: 12px;
+    padding: 20px; margin-bottom: 12px;
+  }
+  .objection .q { color: #C0392B; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+  .objection .a { color: #ccc; font-size: 14px; }
+
+  .pricing-box {
+    background: linear-gradient(135deg, #1a1010, #0D0D0D);
+    border: 2px solid #C0392B; border-radius: 16px;
+    padding: 36px; text-align: center; margin: 32px 0;
+  }
+  .pricing-box .label { color: #888; font-size: 13px; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .pricing-box .price { font-size: 48px; font-weight: 700; margin-bottom: 8px; }
+  .pricing-box .note { color: #888; font-size: 13px; margin-bottom: 24px; }
+  .pricing-box .bonus {
+    background: #0D0D0D; border-radius: 10px; padding: 16px; margin-bottom: 24px;
+    text-align: left; font-size: 14px; color: #ccc;
+  }
+  .pricing-box .bonus strong { color: #fff; }
+
+  .cta-button {
+    display: inline-block; background: #C0392B; color: #fff;
+    padding: 16px 40px; border-radius: 10px; font-weight: 600;
+    font-size: 16px; text-decoration: none; margin-top: 8px;
+  }
+
+  .payment-options {
+    display: flex; gap: 12px; justify-content: center; margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .payment-pill {
+    background: #0D0D0D; border: 1px solid #333; border-radius: 20px;
+    padding: 8px 16px; font-size: 13px; color: #ccc;
+  }
+
+  .footer {
+    text-align: center; padding-top: 40px; border-top: 1px solid #222;
+    color: #666; font-size: 13px;
+  }
+
+  .divider { height: 1px; background: #222; margin: 40px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="logo">O6 GROWTH</div>
+    <h1>Jhun Bistrô e Empório dos Grãos:<br>onde o dinheiro está sendo deixado na mesa</h1>
+    <p>Proposta estratégica preparada para Carol Boaventura · Julho 2026</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">O QUE ESTÁ EM JOGO</div>
+    <p class="lead">Carol, dois negócios diferentes, dois times diferentes — mas o mesmo padrão exato de perda. Não é coincidência. É sintoma de uma coisa só: ausência de processo estruturado de atendimento e conversão.</p>
+    <p>Testei os canais reais dos dois negócios, como cliente comum faria, e cruzei com o que você mesma me contou no questionário. O resultado não é opinião — é medição.</p>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="num">PROBLEMA 01</div>
+        <div class="title">Atendimento sem dono</div>
+        <div class="detail">No Jhun, só o maitre responde WhatsApp, só à tarde. Fora desse horário, cliente que tenta reservar fica sem resposta — e você mesma confirmou que isso acontece "com frequência".</div>
+      </div>
+      <div class="problem-card">
+        <div class="num">PROBLEMA 02</div>
+        <div class="title">Delivery sem estrutura</div>
+        <div class="detail">Você mesma descreveu: "Não tenho pessoas qualificadas para atender no WhatsApp. E o iFood tá recente, bem poucos pedidos." Isso explica por que as avaliações do delivery nunca avançaram — não é falta de qualidade da comida, é falta de gente pra atender.</div>
+      </div>
+      <div class="problem-card">
+        <div class="num">PROBLEMA 03</div>
+        <div class="title">Inconsistência no Empório</div>
+        <div class="detail">O Direct não é lento — é imprevisível. Uma mensagem foi respondida na hora, a próxima foi ignorada, a terceira levou 2h32min. Isso é mais perigoso que lentidão constante, porque mascara o problema.</div>
+      </div>
+      <div class="problem-card">
+        <div class="num">PROBLEMA 04</div>
+        <div class="title">Zero estrutura de fidelização</div>
+        <div class="detail">Sua própria resposta: "não tenho nada estruturado" para comunicação com clientes recorrentes, e "não faço nada estruturado ainda" para fidelização — em ambos os negócios. Cliente que já compra é tratado igual a cliente novo.</div>
+      </div>
+      <div class="problem-card">
+        <div class="num">PROBLEMA 05</div>
+        <div class="title">Presença digital sem estratégia</div>
+        <div class="detail">Nenhum dos dois negócios tem gestão de redes com direção clara hoje. O Jhun paga agência sem receber relatório. O Empório depende de posts esporádicos, sem plano.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">A EVIDÊNCIA</div>
+    <h2>Não é impressão. É medição real.</h2>
+
+    <table class="evidence-table">
+      <tr><th>Canal</th><th>Negócio</th><th>Resultado</th></tr>
+      <tr><td>WhatsApp</td><td>Empório</td><td class="badge-critico">2h11min para responder</td></tr>
+      <tr><td>Instagram Direct</td><td>Empório</td><td class="badge-critico">Imediato → ignorado → 2h32min</td></tr>
+      <tr><td>WhatsApp</td><td>Jhun</td><td class="badge-critico">Mais de 20min sem resposta</td></tr>
+    </table>
+
+    <div class="quote-box">
+      "O maitre da casa. Só à tarde quando ele chega para trabalhar."
+      <cite>— sua resposta sobre quem responde o WhatsApp do Jhun fora do horário</cite>
+    </div>
+
+    <div class="quote-box">
+      "Sim, com frequência." — sobre clientes que tentaram reservar fora do horário e não conseguiram falar com ninguém.
+    </div>
+
+    <div class="quote-box">
+      "Não recebo nenhum relatório." — sobre a agência de marketing que atende o Jhun atualmente.
+    </div>
+
+    <div class="highlight-box">
+      <div class="stat">21x</div>
+      <div class="stat-label">mais conversão em contatos respondidos em até 5 minutos, comparado a respostas após 30 min (Lead Response Management Study, Dr. James Oldroyd)</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">PRESENÇA DIGITAL — QUANDO INVESTIR, E QUANDO NÃO</div>
+    <h2>Antes de anúncio, o funil precisa estar pronto para receber</h2>
+    <p>Durante a análise, não encontrei nenhum anúncio ativo em qualquer um dos dois negócios — nem no Meta Ads, nem em campanhas visíveis. Isso não é falha, é <strong style="color:#fff">oportunidade não explorada</strong>: você ainda não gastou dinheiro tentando atrair mais gente para um funil que já vaza.</p>
+
+    <div class="opportunity-box">
+      <div class="tag">OPORTUNIDADE IDENTIFICADA</div>
+      <p>Sem investimento prévio em tráfego pago desperdiçado, o próximo passo certo é diferente do que a maioria dos negócios faz. A maioria investe em anúncio primeiro e descobre depois que o atendimento não aguenta o volume. Vocês têm a chance de fazer na ordem certa: primeiro resolver o funil, depois — se fizer sentido — escalar atração.</p>
+    </div>
+
+    <p><strong style="color:#fff">Quando anúncio faz sentido:</strong> depois que o atendimento responde rápido e converte de forma consistente. Nesse momento, cada real investido em tráfego tem retorno maior, porque o funil não vaza.</p>
+    <p><strong style="color:#fff">Quando ainda não faz sentido:</strong> agora. Investir em atrair mais gente para um atendimento que demora 2h11min ou que só responde à tarde é pagar para perder mais rápido.</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-label">A PORTA DE ENTRADA</div>
+    <div class="diagnostic-hero">
+      <h3>Diagnóstico Consultivo Completo</h3>
+      <p style="margin-bottom:20px">Isso não é auditoria nem checklist. É investigação estratégica do negócio — o processo que revela não só o que está errado, mas por que está errado, o que isso custa, e o que fazer primeiro.</p>
+
+      <div class="diagnostic-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">Teste de canais real</div>
+          <div class="step-desc">WhatsApp, Instagram, reserva, delivery e eventos — testados por mim, em horários diferentes, com registro de cada interação</div>
+        </div>
+      </div>
+      <div class="diagnostic-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">Investigação estruturada</div>
+          <div class="step-desc">Entrevista que revela o que só vocês sabem — volume real, causa raiz, tentativas anteriores que não funcionaram e por quê</div>
+        </div>
+      </div>
+      <div class="diagnostic-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">Priorização por impacto</div>
+          <div class="step-desc">Não lista todos os problemas — identifica os 3 que mais custam dinheiro, ordenados por facilidade de resolver primeiro</div>
+        </div>
+      </div>
+      <div class="diagnostic-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-title">Plano de ação, não só diagnóstico</div>
+          <div class="step-desc">Cada gargalo vem com recomendação prática — o que fazer, em que ordem, e qual serviço resolve especificamente aquele problema</div>
+        </div>
+      </div>
+
+      <p style="margin-top:20px;color:#aaa;font-size:14px">O diagnóstico não é preparação para vender serviço — é o que garante que qualquer serviço vendido depois resolve o problema real, não o que parece óbvio de fora.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">QUEBRA DE OBJEÇÕES</div>
+    <h2>O que você pode estar pensando</h2>
+
+    <div class="objection">
+      <div class="q">"Isso não é meio parecido com o que você já me falou de graça?"</div>
+      <div class="a">O que te falei foi olhando de fora, sem medir nada. O diagnóstico testa de verdade — tempo de resposta, fluxo de reserva, fluxo de delivery, fluxo de evento — e investiga a causa raiz, não só o sintoma.</div>
+    </div>
+    <div class="objection">
+      <div class="q">"Já contratei agência antes e não funcionou"</div>
+      <div class="a">Você mesma confirmou que não recebe relatório da agência do Jhun. O diagnóstico existe justamente para dar clareza que nenhuma agência anterior te deu — com ou sem agência ativa, você vai saber exatamente onde está o problema.</div>
+    </div>
+    <div class="objection">
+      <div class="q">"Tá caro"</div>
+      <div class="a">R$600 pelos dois negócios é menos do que uma única campanha de tráfego mal direcionada custaria em uma semana. A diferença é que isso te diz onde investir, não só gasta dinheiro na esperança de funcionar.</div>
+    </div>
+    <div class="objection">
+      <div class="q">"Preciso pensar"</div>
+      <div class="a">Claro. Só me ajuda a entender: é o valor que preocupa, ou é dúvida sobre o que está incluído? Se for isso, esclareço agora.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">PROVA, NÃO PROMESSA</div>
+    <h2>Isso não é conceito. É o que você recebe de verdade.</h2>
+    <p>Toda proposta fala em "melhorar seu site". A diferença aqui é que você não precisa imaginar como isso ficaria — já existe versão real, no ar, que qualquer cliente seu poderia acessar hoje.</p>
+
+    <div class="service-card">
+      <div class="head"><div class="name">Empório dos Grãos — versão nova</div></div>
+      <div class="why">Você já viu esse e disse que gostou. É exatamente esse padrão de qualidade — visual limpo, carregamento rápido, foco em fazer o cliente agir — que aplicamos em qualquer site ou landing page que vier depois do diagnóstico. <a href="https://o6-demo-emporio-premium.vercel.app" style="color:#C0392B" target="_blank">Abrir demo →</a></div>
+    </div>
+    <div class="service-card">
+      <div class="head"><div class="name">Jhun Bistrô — versão nova</div></div>
+      <div class="why">Essa você ainda não viu — é MVP, versão inicial focada no essencial: mostrar o restaurante, facilitar reserva, sem enrolação. A partir daqui podemos evoluir para o completo, com delivery e eventos integrados. <a href="https://o6-demo-jhun-bistro-premium.vercel.app" style="color:#C0392B" target="_blank">Abrir demo →</a></div>
+    </div>
+
+    <p style="margin-top:16px;font-size:14px;color:#888">Essas duas demos existem porque construir e testar faz parte do nosso processo — não vendemos conceito, mostramos resultado antes de você decidir.</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="pricing-box">
+    <div class="label">DIAGNÓSTICO CONSULTIVO COMPLETO</div>
+    <div class="price">R$ 600</div>
+    <div class="note">Jhun Bistrô + Empório dos Grãos (R$400 cada, separadamente) · Resultado em 5 dias úteis</div>
+
+    <div class="bonus">
+      <strong>Bônus incluso:</strong> análise cruzada dos dois negócios — como a experiência de um pode reforçar o outro, sem custo adicional.
+    </div>
+
+    <a href="https://wa.me/5571987791890?text=Oi%20Adriano%2C%20quero%20fechar%20o%20Diagn%C3%B3stico%20Consultivo%20Completo" class="cta-button">Quero começar o diagnóstico</a>
+
+    <div class="payment-options">
+      <span class="payment-pill">PIX com 10% off — R$540</span>
+      <span class="payment-pill">Até 3x sem juros</span>
+      <span class="payment-pill">Maquininha disponível</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">DEPOIS DO DIAGNÓSTICO</div>
+    <h2>Cada serviço resolve um problema específico — não é pacote genérico</h2>
+    <p>O que vem a seguir depende do que o diagnóstico revelar. Nenhum desses serviços é vendido antes de saber, com precisão, que problema ele resolve no seu caso.</p>
+
+    <div class="service-card">
+      <div class="head"><div class="name">Landing Page focada em conversão</div><div class="price">A definir</div></div>
+      <div class="why"><strong>Resolve:</strong> quando o objetivo é uma ação específica (reservar, pedir, agendar) sem a complexidade de um site completo — página única, direta, otimizada para converter visita em ação. Ideal para campanha ou promoção pontual.</div>
+    </div>
+    <div class="service-card">
+      <div class="head"><div class="name">Site Empório</div><div class="price">R$800</div></div>
+      <div class="why"><strong>Resolve:</strong> ausência de presença digital estruturada — hoje quem busca o Empório online não encontra experiência que reflita a qualidade real do negócio.</div>
+    </div>
+    <div class="service-card">
+      <div class="head"><div class="name">Site Jhun (completo)</div><div class="price">R$1.500</div></div>
+      <div class="why"><strong>Resolve:</strong> reserva, delivery e consulta de eventos sem depender de WhatsApp manual — reduz diretamente o gargalo do "só o maitre responde".</div>
+    </div>
+    <div class="service-card">
+      <div class="head"><div class="name">Manutenção mensal</div><div class="price">R$500/mês</div></div>
+      <div class="why"><strong>Resolve:</strong> a ausência de relatório que você sente falta hoje com a agência atual — acompanhamento real, não silêncio.</div>
+    </div>
+    <div class="service-card">
+      <div class="head"><div class="name">Dashboard de vendas</div><div class="price">A definir</div></div>
+      <div class="why"><strong>Resolve:</strong> falta de visibilidade sobre equipe, produtos e metas — decisão com dado, não impressão.</div>
+    </div>
+    <div class="service-card">
+      <div class="head"><div class="name">CRM</div><div class="price">A definir</div></div>
+      <div class="why"><strong>Resolve:</strong> ausência de processo de recompra estruturado — hoje cliente recorrente não é tratado diferente de cliente novo.</div>
+    </div>
+
+    <p style="margin-top:16px;font-size:14px;color:#888">Todos os serviços podem ser personalizados e combinados conforme a necessidade real identificada no diagnóstico — não existe pacote único obrigatório.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">GARANTIA</div>
+    <p>Garantia de entrega — você recebe o relatório completo com dados reais em 5 dias úteis. Não é garantia de receita, porque isso depende das decisões que vocês tomam depois de ver os números.</p>
+  </div>
+
+  <div class="footer">
+    <p><strong>Adriano Oliveira — O6 Growth</strong></p>
+    <p>71 99405-4891</p>
+  </div>
+
+</div>
+</body>
+</html>
