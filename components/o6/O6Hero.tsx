@@ -10,6 +10,8 @@ const proofs = [
   "Estética",
   "Fisioterapia",
   "Advocacia",
+  "Food Service (restaurantes, lojas)",
+  "Imobiliárias",
 ];
 
 export default function O6Hero() {

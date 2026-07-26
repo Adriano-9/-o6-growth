@@ -3,11 +3,13 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, CheckCircle2, ShieldAlert, Cpu, Sparkles } from "lucide-react";
 import React, { useState } from "react";
+import { createLead } from "@/app/crm/_lib/api";
+import { emptyLeadInput } from "@/app/crm/_lib/types";
 
 export default function O6Footer() {
   const [email, setEmail] = useState("");
   const [volume, setVolume] = useState("< 50");
-  const [formState, setFormState] = useState<"idle" | "calculating" | "success">("idle");
+  const [formState, setFormState] = useState<"idle" | "calculating" | "success" | "error">("idle");
   const [progress, setProgress] = useState(0);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -17,13 +19,26 @@ export default function O6Footer() {
     setFormState("calculating");
     setProgress(0);
 
+    // Persistência real roda em paralelo com a animação de progresso —
+    // a animação é só percepção de responsividade (pedido explícito do
+    // usuário), o resultado exibido depende do insert de verdade, nunca
+    // de um timer fixo.
+    const savePromise = createLead({
+      ...emptyLeadInput("Novo Lead"),
+      email,
+      notas: `Formulário "Diagnóstico Gratuito" do site — volume de leads informado: ${volume}/mês`,
+      origem: "site_o6",
+    });
+
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          setTimeout(() => {
-            setFormState("success");
-          }, 400);
+          savePromise
+            .then((lead) => {
+              setFormState(lead ? "success" : "error");
+            })
+            .catch(() => setFormState("error"));
           return 100;
         }
         return prev + 10;
@@ -180,10 +195,10 @@ export default function O6Footer() {
                 >
                   <CheckCircle2 className="w-14 h-14 text-brand-cyan mb-6" />
                   <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite mb-2">
-                    DIAGNÓSTICO AGENDADO!
+                    DADOS RECEBIDOS!
                   </h3>
                   <p className="text-xs text-brand-graphite/70 max-w-sm leading-relaxed mb-6">
-                    Recebemos seus dados. Um consultor da O6 vai entrar em contato em até 15 minutos para agendar sua sessão de diagnóstico gratuita.
+                    Recebemos seus dados e vamos te contatar em breve para agendar seu diagnóstico gratuito.
                   </p>
 
                   <div className="w-full bg-brand-offwhite border border-brand-cyan/20 p-4 font-mono text-[9px] text-left text-brand-graphite/70 space-y-1">
@@ -192,8 +207,32 @@ export default function O6Footer() {
                     </p>
                     <p>EMAIL: {email}</p>
                     <p>VOLUME: {volume} leads/mês</p>
-                    <p>STATUS: PRIORIDADE ALTA — RETORNO EM ATÉ 15 MIN</p>
+                    <p>STATUS: RECEBIDO</p>
                   </div>
+                </motion.div>
+              )}
+
+              {formState === "error" && (
+                <motion.div
+                  key="form-error"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="py-8 flex flex-col items-center justify-center text-center"
+                >
+                  <ShieldAlert className="w-14 h-14 text-red-400 mb-6" />
+                  <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite mb-2">
+                    ALGO DEU ERRADO
+                  </h3>
+                  <p className="text-xs text-brand-graphite/70 max-w-sm leading-relaxed mb-6">
+                    Não conseguimos salvar seus dados agora. Tente novamente em instantes.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setFormState("idle")}
+                    className="px-6 py-3 bg-brand-graphite text-white font-black uppercase tracking-widest text-xs hover:bg-brand-graphite/90 transition-all"
+                  >
+                    TENTAR NOVAMENTE
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>

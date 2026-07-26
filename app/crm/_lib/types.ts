@@ -32,6 +32,7 @@ export type Lead = {
   dataProximaAcao: string | null;
   notas: string;
   statusPagamento: StatusPagamento;
+  origem: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -60,6 +61,7 @@ export const emptyLeadInput = (stage: Stage = "Novo Lead"): LeadInput => ({
   dataProximaAcao: null,
   notas: "",
   statusPagamento: "pendente",
+  origem: "manual",
 });
 
 export function rowToLead(r: Record<string, unknown>): Lead {
@@ -82,6 +84,7 @@ export function rowToLead(r: Record<string, unknown>): Lead {
     dataProximaAcao: (r.data_proxima_acao as string | null) ?? null,
     notas: (r.notas as string) ?? "",
     statusPagamento: ((r.status_pagamento as StatusPagamento) ?? "pendente"),
+    origem: (r.origem as string) ?? "manual",
     createdAt: (r.created_at as string) ?? "",
     updatedAt: (r.updated_at as string) ?? "",
   };
@@ -108,6 +111,7 @@ export function leadToRow(l: Partial<LeadInput> & { sortOrder?: number }) {
   if (l.notas !== undefined) row.notas = l.notas;
   if (l.statusPagamento !== undefined)
     row.status_pagamento = l.statusPagamento;
+  if (l.origem !== undefined) row.origem = l.origem;
   return row;
 }
 

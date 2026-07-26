@@ -1,7 +1,28 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Layers, Activity, Compass, Eye, ShieldCheck, ArrowUpRight } from "lucide-react";
+import { Layers, Activity, Compass, Eye, ShieldCheck, Wrench, Clock, ArrowUpRight } from "lucide-react";
+import type { ReactNode } from "react";
+
+type SquadStatus = "ativo" | "construcao" | "aguardando";
+
+const STATUS_META: Record<SquadStatus, { label: string; icon: ReactNode; textClass: string }> = {
+  ativo: {
+    label: "Ativo",
+    icon: <ShieldCheck className="w-3 h-3 text-brand-cyan animate-pulse" />,
+    textClass: "text-brand-graphite/40",
+  },
+  construcao: {
+    label: "Em Construção",
+    icon: <Wrench className="w-3 h-3 text-brand-orange" />,
+    textClass: "text-brand-graphite/40",
+  },
+  aguardando: {
+    label: "Aguardando Dados Reais",
+    icon: <Clock className="w-3 h-3 text-brand-graphite/40" />,
+    textClass: "text-brand-graphite/40",
+  },
+};
 
 export default function O6XSquad() {
   const containerVariants = {
@@ -31,6 +52,7 @@ export default function O6XSquad() {
       icon: <Layers className="w-5 h-5 text-brand-orange" />,
       description: "Organizamos seus canais de atração (Google, Instagram, indicações) para que cada lead chegue qualificado e pronto para ser atendido — sem desperdício de verba.",
       highlight: "Menos Desperdício",
+      status: "construcao" as SquadStatus,
     },
     {
       unit: "02",
@@ -38,6 +60,7 @@ export default function O6XSquad() {
       icon: <Activity className="w-5 h-5 text-brand-cyan" />,
       description: "O sistema avalia cada lead em segundos: perfil, interesse e potencial de fechamento. Sua equipe só recebe quem realmente tem chance de virar cliente.",
       highlight: "Resposta em Segundos",
+      status: "construcao" as SquadStatus,
     },
     {
       unit: "03",
@@ -45,6 +68,7 @@ export default function O6XSquad() {
       icon: <Compass className="w-5 h-5 text-brand-orange" />,
       description: "Cada lead qualificado é direcionado automaticamente para a pessoa certa da equipe, no canal certo. O tempo de resposta cai de horas para segundos.",
       highlight: "Zero Atraso",
+      status: "construcao" as SquadStatus,
     },
     {
       unit: "04",
@@ -52,6 +76,7 @@ export default function O6XSquad() {
       icon: <Eye className="w-5 h-5 text-brand-cyan" />,
       description: "Acompanhe em tempo real quanto cada canal de marketing traz de retorno. Saiba exatamente onde investir mais e onde cortar — com números, não com achismo.",
       highlight: "ROI Visível",
+      status: "aguardando" as SquadStatus,
     },
   ];
 
@@ -103,8 +128,8 @@ export default function O6XSquad() {
                       {squad.icon}
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-brand-graphite/40 font-bold uppercase tracking-wider flex items-center gap-1">
-                    Ativo <ShieldCheck className="w-3 h-3 text-brand-cyan animate-pulse" />
+                  <span className={`text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 ${STATUS_META[squad.status].textClass}`}>
+                    {STATUS_META[squad.status].label} {STATUS_META[squad.status].icon}
                   </span>
                 </div>
 

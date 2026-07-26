@@ -952,6 +952,7 @@ function LeadDrawer({
         dataProximaAcao: input!.dataProximaAcao,
         notas: input!.notas,
         statusPagamento: input!.statusPagamento,
+        origem: input!.origem,
         createdAt: "",
         updatedAt: "",
       };
@@ -1464,6 +1465,7 @@ export default function CRMPage() {
         dataProximaAcao: lead.dataProximaAcao,
         notas: lead.notas,
         statusPagamento: lead.statusPagamento,
+        origem: lead.origem,
       },
     });
     setDrawerKey((k) => k + 1);

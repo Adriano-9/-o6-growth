@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BarChart3, Database, RefreshCw, Eye, TrendingUp, Zap, ArrowUpRight } from "lucide-react";
+import { BarChart3, Database, RefreshCw, Eye, TrendingUp, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function O6Metrics() {
@@ -38,33 +38,6 @@ export default function O6Metrics() {
 
     return () => clearInterval(interval);
   }, [activeTab]);
-
-  const [counters, setCounters] = useState({ leads: 0, roi: 0, latency: 0 });
-  useEffect(() => {
-    const targets = { leads: 127, roi: 380, latency: 94 };
-    const duration = 1800;
-    const steps = 60;
-    const increment = {
-      leads: targets.leads / steps,
-      roi: targets.roi / steps,
-      latency: targets.latency / steps,
-    };
-    let step = 0;
-    const timer = setInterval(() => {
-      step++;
-      if (step >= steps) {
-        setCounters(targets);
-        clearInterval(timer);
-      } else {
-        setCounters({
-          leads: Math.floor(increment.leads * step),
-          roi: Math.floor(increment.roi * step),
-          latency: Math.floor(increment.latency * step),
-        });
-      }
-    }, duration / steps);
-    return () => clearInterval(timer);
-  }, []);
 
   return (
     <section id="metricas" className="w-full py-24 md:py-32 bg-brand-graphite text-white relative overflow-hidden">
@@ -111,19 +84,11 @@ export default function O6Metrics() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-12 border border-white/10 bg-black/30 p-6">
-          <div className="text-center border-r border-white/10">
-            <span className="text-[10px] font-mono text-white/40 uppercase block mb-1">Leads Este Mês</span>
-            <span className="text-4xl font-black tabular-nums text-brand-orange">{counters.leads}</span>
-          </div>
-          <div className="text-center border-r border-white/10">
-            <span className="text-[10px] font-mono text-white/40 uppercase block mb-1">Retorno sobre Investimento</span>
-            <span className="text-4xl font-black tabular-nums text-brand-cyan">{(counters.roi / 100).toFixed(1)}x</span>
-          </div>
-          <div className="text-center">
-            <span className="text-[10px] font-mono text-white/40 uppercase block mb-1">Taxa de Atendimento</span>
-            <span className="text-4xl font-black tabular-nums text-white">{counters.latency}%</span>
-          </div>
+        <div className="flex items-center justify-center gap-3 mb-12 border border-white/10 bg-black/30 p-6 text-center">
+          <span className="w-2 h-2 rounded-full bg-white/20" />
+          <span className="text-xs font-mono text-white/50 uppercase tracking-widest">
+            Aguardando primeiros dados reais — o painel ativa automaticamente assim que os primeiros leads entrarem pelo sistema
+          </span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch">
@@ -215,10 +180,9 @@ export default function O6Metrics() {
 
                 <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/10 text-[9px] text-white/40">
                   <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping" />
-                    SISTEMA ATIVO
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                    AGUARDANDO PRIMEIROS DADOS REAIS
                   </span>
-                  <span>127 LEADS ESTE MÊS — 94% ATENDIDOS EM ATÉ 5 MIN</span>
                 </div>
               </motion.div>
             )}
@@ -238,50 +202,30 @@ export default function O6Metrics() {
 
                   <div className="grid grid-cols-2 gap-3 mb-5">
                     {[
-                      { label: "Leads Este Mês", value: "127", color: "text-white" },
-                      { label: "Taxa de Conversão", value: "18.4%", color: "text-brand-cyan" },
-                      { label: "Custo por Lead", value: "R$ 38", color: "text-brand-orange" },
-                      { label: "Retorno sobre Investimento", value: "3.8x", color: "text-brand-cyan" },
-                      { label: "Ticket Médio", value: "R$ 2.500", color: "text-white" },
-                      { label: "Leads Perdidos por Atraso", value: "3", color: "text-green-400" },
+                      { label: "Leads Este Mês" },
+                      { label: "Taxa de Conversão" },
+                      { label: "Custo por Lead" },
+                      { label: "Retorno sobre Investimento" },
+                      { label: "Ticket Médio" },
+                      { label: "Leads Perdidos por Atraso" },
                     ].map((stat, i) => (
                       <div key={i} className="bg-white/5 p-3 border border-white/10 flex flex-col gap-1">
                         <span className="text-[8px] text-white/40 uppercase">{stat.label}</span>
-                        <span className={`text-lg font-black tracking-tighter ${stat.color}`}>{stat.value}</span>
+                        <span className="text-lg font-black tracking-tighter text-white/25">—</span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="space-y-4 pt-2">
-                    {[
-                      { label: "COM O6 GROWTH (RESPOSTA EM ATÉ 5 MIN)", value: 94, color: "bg-brand-cyan", shadow: "shadow-[0_0_8px_rgba(0,229,255,0.5)]", textColor: "text-brand-cyan" },
-                      { label: "SEM SISTEMA (RESPOSTA QUANDO DÁ)", value: 22, color: "bg-brand-orange", shadow: "shadow-[0_0_8px_rgba(255,87,34,0.5)]", textColor: "text-brand-orange" },
-                    ].map((bar, i) => (
-                      <div key={i}>
-                        <div className="flex justify-between text-[10px] text-white/70 mb-1">
-                          <span>{bar.label}</span>
-                          <span className={`${bar.textColor} font-bold`}>{bar.value}% CONVERSÃO</span>
-                        </div>
-                        <div className="w-full h-3 bg-white/10">
-                          <motion.div className={`h-full ${bar.color} ${bar.shadow}`} initial={{ width: 0 }} animate={{ width: `${bar.value}%` }} transition={{ duration: 1, ease: "easeOut" }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-5 p-3 bg-brand-cyan/5 border border-brand-cyan/20 flex gap-3 items-start">
-                    <TrendingUp className="w-4 h-4 text-brand-cyan shrink-0 mt-0.5" />
-                    <p className="text-[10px] text-white/80 leading-snug">
-                      <span className="text-brand-cyan font-bold">OPORTUNIDADE:</span> A diferença entre atender em 5 minutos e atender em 30 representa <span className="text-brand-orange font-bold">+72% de leads convertidos</span> no mês.
+                  <div className="p-4 border border-white/10 bg-black/30 flex items-start gap-3">
+                    <TrendingUp className="w-4 h-4 text-white/30 shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-white/50 leading-snug">
+                      Aguardando primeiros dados reais. Assim que os leads começarem a entrar pelo sistema, este painel mostra conversão por canal, custo por lead e ROI atualizados automaticamente.
                     </p>
                   </div>
                 </div>
 
                 <div className="text-[10px] text-white/40 border-t border-white/10 pt-4 mt-4 flex justify-between">
-                  <span>ATUALIZAÇÃO AUTOMÁTICA: A CADA 15s</span>
-                  <span className="text-brand-cyan flex items-center gap-1 cursor-pointer hover:underline">
-                    EXPORTAR RELATÓRIO <ArrowUpRight className="w-3 h-3" />
-                  </span>
+                  <span>SEM DADOS REAIS AINDA</span>
                 </div>
               </motion.div>
             )}
