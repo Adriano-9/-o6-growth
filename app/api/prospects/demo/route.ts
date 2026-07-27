@@ -117,6 +117,9 @@ VISUAL — REGRAS RÍGIDAS (mais importante que o resto):
     (b) Ilustração SVG abstrata sofisticada — composição de formas geométricas em camadas com gradiente da paleta, blur sutil, opacidade variada. NÃO um ícone simples. NÃO um emoji desenhado.
 17. NUNCA use o padrão "emoji-dentro-de-círculo-colorido" no hero. Substitua sempre por (a) ou (b).
 
+HONESTIDADE — REGRA CRÍTICA (violação = página rejeitada):
+18. NUNCA invente estatísticas sobre o negócio do prospect (anos de experiência, número de clientes, taxa de satisfação, quantidade de atendimentos, garantias de resultado). Se não houver dado real disponível sobre isso (via audit ou scraping), omita completamente essa informação da página — não crie número placeholder, não estime, não generalize com número redondo. Foque em descrever o serviço, diferenciais qualitativos verificáveis (ex: tecnologia usada, se mencionada no site original), e apelo visual — nunca em número quantitativo inventado sobre o negócio. Isso vale para QUALQUER seção (hero, diferenciais, prova social, footer) — não só para um "contador de anos" isolado. Prova social sem dado real (depoimentos, selos, "+X clientes") também é proibida pela mesma razão: é fabricação atribuída a um terceiro real, não à O6.
+
 DESIGN DIRECTION:
 - Paleta: branco/cinza claro de fundo, um acento forte (azul petróleo, verde-esmeralda ou violeta, conforme o segmento). Mantenha sistema teal/gold ou similar por nicho.
 - Tipografia: headline com a família display do Google Fonts escolhida; body com a família de texto — bold e clean para headlines, regular para body
@@ -245,28 +248,108 @@ ${bodyCandidate}
   return { html: "", source: "empty" };
 }
 
-async function generateHtml(p: ProspectRow): Promise<string> {
+/**
+ * Heurística de detecção — NÃO exaustiva, propositalmente conservadora
+ * pra evitar falso-positivo em copy legítima (preço, telefone, endereço).
+ * Procura o padrão clássico de "número + unidade de prova social" que
+ * apareceu no caso real (Ice Laser Maceió): "10+ Anos", "98% Clientes
+ * satisfeitas", "15k+ Atendimentos", "+15.000 Clientes", "Garantido".
+ * Roda só como alerta de log (ver chamada em generateHtml) — nunca
+ * strip automático, ver comentário no call site.
+ */
+function detectFabricatedStats(html: string): string[] {
+  const hits: string[] = [];
+  const patterns: RegExp[] = [
+    /\b\d[\d.,]*\s*\+?\s*(anos?)\b/gi,
+    /\b\+?\s*\d[\d.,]*\s*k?\+?\s*(clientes|pacientes|atendimentos|atendidos)\b/gi,
+    /\b\d[\d.,]*\s*%\s*(de\s+)?(satisfa[çc][ãa]o|clientes|pacientes|aprova[çc][ãa]o)/gi,
+    /\bresultados?\s+garantidos?\b/gi,
+    /\bgarantia\s+de\s+resultado/gi,
+  ];
+  for (const re of patterns) {
+    const matches = html.match(re);
+    if (matches) hits.push(...matches.map((m) => m.trim()));
+  }
+  return [...new Set(hits)];
+}
+
+/**
+ * Detecta depoimento fabricado: nome curto no formato "Primeiro X."
+ * (padrão clássico de testimonial — "Mariana C.", "Ricardo A.") ocorrendo
+ * perto de estrelas de avaliação (★★★★★, "5 estrelas", classe
+ * review/rating) ou de um bloco de texto entre aspas longo o bastante
+ * pra ser uma citação. `AuditJson` (ver types acima) não tem campo de
+ * review/depoimento real — o sistema nunca fornece dado de terceiro
+ * verificável aqui, então qualquer ocorrência é fabricação por
+ * definição. `hasRealReviewData` existe só pra não quebrar o dia em que
+ * um campo desses for adicionado ao audit.
+ */
+function detectFabricatedTestimonials(
+  html: string,
+  hasRealReviewData = false,
+): string[] {
+  if (hasRealReviewData) return [];
+  const hits: string[] = [];
+  const nameRe = /\b[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]{2,}\s[A-ZÀ-ÖØ-Ý]\.(?![A-Za-zÀ-ÿ])/g;
+  let m: RegExpExecArray | null;
+  while ((m = nameRe.exec(html))) {
+    const start = Math.max(0, m.index - 500);
+    const context = html.slice(start, m.index + m[0].length);
+    const hasStars =
+      /★{3,5}|\d\s*estrelas|class="[^"]*(?:star|rating)[^"]*"/i.test(
+        context,
+      );
+    const hasQuoteBlock =
+      /["“][^"”]{25,300}["”]/.test(context) ||
+      /class="[^"]*(?:review|testimonial|depoimento)[^"]*"/i.test(context);
+    if (hasStars || hasQuoteBlock) {
+      hits.push(m[0].trim());
+    }
+  }
+  return [...new Set(hits)];
+}
+
+type GenerateHtmlResult = { html: string; warnings: string[] };
+
+async function generateHtml(p: ProspectRow): Promise<GenerateHtmlResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY não configurada");
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      // 32k tokens (~100k chars de HTML inline). Probes anteriores com
-      // 20k batiam em stop_reason=max_tokens perdendo o </html> — landing
-      // pages premium com Framer Motion + Google Fonts + scroll reveal
-      // passam de 50k chars. Branch 2 auto-fecha docs truncados, mas
-      // preferimos Claude terminar limpo. Abaixo do máximo do sonnet-4-6.
-      max_tokens: 32000,
-      messages: [{ role: "user", content: buildHtmlPrompt(p) }],
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        // 32k tokens (~100k chars de HTML inline). Probes anteriores com
+        // 20k batiam em stop_reason=max_tokens perdendo o </html> — landing
+        // pages premium com Framer Motion + Google Fonts + scroll reveal
+        // passam de 50k chars. Branch 2 auto-fecha docs truncados, mas
+        // preferimos Claude terminar limpo. Abaixo do máximo do sonnet-4-6.
+        max_tokens: 32000,
+        messages: [{ role: "user", content: buildHtmlPrompt(p) }],
+      }),
+      // Sem timeout, um stall de rede prendia essa chamada indefinidamente
+      // (visto na prática: ~25min parado na mesma conexão TCP, sem
+      // progresso, até um restart manual do processo). 90s cobre folgado
+      // o tempo real observado (~1-5min p/ 32k tokens) sem deixar a rota
+      // pendurada pra sempre quando a rede trava.
+      signal: AbortSignal.timeout(90_000),
+    });
+  } catch (err) {
+    const e = err as Error & { name?: string };
+    if (e.name === "TimeoutError" || e.name === "AbortError") {
+      throw new Error(
+        "Claude não respondeu em 90s (timeout) — possível stall de rede, tente novamente",
+      );
+    }
+    throw new Error(`Claude fetch falhou → ${e.message}`);
+  }
 
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
@@ -324,6 +407,37 @@ async function generateHtml(p: ProspectRow): Promise<string> {
   // tipografia premium) — os antigos safety nets que os removiam foram
   // desativados junto com a regra "zero JS" do prompt.
 
+  // ─── Safety net: detectar estatística fabricada sobre o NEGÓCIO DO
+  // PROSPECT (não sobre a O6) que a regra 18 do prompt proíbe. Não
+  // removemos automaticamente por regex — um strip cego quebra layout
+  // (label "Anos de Experiência" sobrando sem número) e pode apagar dado
+  // real legítimo vindo do audit/scraping. Em vez disso, logamos um aviso
+  // alto para bloquear o deploy manual até revisão — ver rota /demo,
+  // "não deployar sem revisão" é decisão explícita do usuário nesta task.
+  const warnings: string[] = [];
+
+  const fabricatedStats = detectFabricatedStats(html);
+  if (fabricatedStats.length > 0) {
+    console.warn(
+      "[prospects/demo] POSSÍVEL ESTATÍSTICA FABRICADA sobre o negócio do prospect — revisar antes de deployar:",
+      JSON.stringify(fabricatedStats),
+    );
+    warnings.push(
+      `Possível estatística fabricada sobre o negócio do prospect: ${fabricatedStats.join(", ")}`,
+    );
+  }
+
+  const fabricatedTestimonials = detectFabricatedTestimonials(html);
+  if (fabricatedTestimonials.length > 0) {
+    console.warn(
+      "[prospects/demo] POSSÍVEL DEPOIMENTO FABRICADO (nome + estrelas/citação, sem dado real de review) — revisar antes de deployar:",
+      JSON.stringify(fabricatedTestimonials),
+    );
+    warnings.push(
+      `Possível depoimento fabricado (nome + estrelas/citação, sem dado real de review): ${fabricatedTestimonials.join(", ")}`,
+    );
+  }
+
   // ─── Final structural check (post-extraction).
   // We don't throw here anymore — extractHtmlFromResponse already wraps
   // as a last resort. We just log so future failures are diagnosable.
@@ -370,7 +484,7 @@ ${html}
 </html>`;
   }
 
-  return html;
+  return { html, warnings };
 }
 
 
@@ -426,8 +540,9 @@ export async function POST(req: NextRequest) {
 
   // ─── 1. Generate HTML via Claude
   let html: string;
+  let warnings: string[];
   try {
-    html = await generateHtml(prospect);
+    ({ html, warnings } = await generateHtml(prospect));
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erro ao gerar HTML";
     console.error("[prospects/demo] html generation failed", msg);
@@ -467,7 +582,7 @@ export async function POST(req: NextRequest) {
     // Fail-soft: return URL even if persist failed
   }
 
-  return NextResponse.json({ url: demoUrl, projectName });
+  return NextResponse.json({ url: demoUrl, projectName, warnings });
 }
 
 /**
