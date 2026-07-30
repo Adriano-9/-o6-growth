@@ -5,6 +5,7 @@ import {
   MessageTemplate,
   Stage,
   StageHistoryEntry,
+  STAGES,
   leadToRow,
   rowToLead,
   rowToStageHistory,
@@ -30,10 +31,99 @@ export async function listLeads(): Promise<Lead[]> {
   return (data as Record<string, unknown>[]).map(rowToLead);
 }
 
+// Same digits-only normalization already used elsewhere for phone numbers
+// (see whatsappNumber in app/api/prospects/demo/route.ts) — crm_leads has
+// no enforced whatsapp format (free text from the CRM UI), so "(71)
+// 99999-9999", "71999999999" and "+55 71 99999-9999" all need to compare
+// equal.
+function normalizePhone(v: string): string {
+  return v.replace(/\D/g, "");
+}
+
+// Only fields that were actually merge-able and correspond 1:1 to
+// `leadToRow`'s outbound mapping (see below) — deliberately does NOT touch
+// `whatsapp` itself (the two numbers already matched under normalization,
+// keep whichever format was already stored) or `sortOrder` (a merge
+// shouldn't move the card's position in its column).
+//
+// Stage only ever moves forward: a webhook re-firing "Novo Lead" after a
+// human already advanced the card to "Proposta" must not regress the
+// pipeline. "Forward" = later index in STAGES — this puts "Perdido" as
+// the highest rank (last in the array), so an explicit "Perdido" always
+// wins even over "Fechado". If that's not the intended semantics for
+// Perdido specifically, this is the one line to revisit.
+function buildMergePatch(input: LeadInput, currentStage: Stage) {
+  const partial: Partial<LeadInput> = {
+    score: input.score,
+    valor: input.valor,
+  };
+  if (input.empresa) partial.empresa = input.empresa;
+  if (input.nome) partial.nome = input.nome;
+  if (input.email) partial.email = input.email;
+  if (input.nicho) partial.nicho = input.nicho;
+  if (input.cidade) partial.cidade = input.cidade;
+  if (input.responsavel) partial.responsavel = input.responsavel;
+  if (input.proximaAcao) partial.proximaAcao = input.proximaAcao;
+  if (input.dataProximaAcao) partial.dataProximaAcao = input.dataProximaAcao;
+  if (input.notas) partial.notas = input.notas;
+  if (input.statusPagamento) partial.statusPagamento = input.statusPagamento;
+  if (input.origem) partial.origem = input.origem;
+  if (input.clienteId) partial.clienteId = input.clienteId;
+  if (STAGES.indexOf(input.stage) > STAGES.indexOf(currentStage)) {
+    partial.stage = input.stage;
+  }
+  return leadToRow(partial);
+}
+
 export async function createLead(input: LeadInput): Promise<Lead | null> {
   const sb = getSupabase();
   if (!sb) return null;
 
+  const normalizedPhone = input.whatsapp ? normalizePhone(input.whatsapp) : "";
+
+  if (normalizedPhone) {
+    // No normalized/indexed whatsapp column exists yet, so this is a
+    // full-table scan-and-compare in JS rather than a DB-side match.
+    // Fine at this app's current scale (small-business CRM); revisit with
+    // a generated normalized column + index if crm_leads ever grows large.
+    const { data: candidates, error: lookupErr } = await sb
+      .from("crm_leads")
+      .select("id, whatsapp, stage");
+    if (lookupErr) {
+      console.error("[crm] createLead dedup lookup failed", lookupErr);
+    }
+    const existing = (
+      candidates as { id: string; whatsapp: string; stage: Stage }[] | null
+    )?.find((r) => normalizePhone(r.whatsapp || "") === normalizedPhone);
+
+    if (existing) {
+      const patch = buildMergePatch(input, existing.stage);
+      const { data, error } = await sb
+        .from("crm_leads")
+        .update(patch)
+        .eq("id", existing.id)
+        .select("*")
+        .single();
+      if (error || !data) {
+        console.error("[crm] createLead merge-update failed", error);
+        return null;
+      }
+
+      const lead = rowToLead(data as Record<string, unknown>);
+
+      if (patch.stage && patch.stage !== existing.stage) {
+        await sb.from("crm_stage_history").insert({
+          lead_id: lead.id,
+          stage_from: existing.stage,
+          stage_to: lead.stage,
+        });
+      }
+
+      return lead;
+    }
+  }
+
+  // No existing lead with this whatsapp (or no whatsapp provided) — original insert path, unchanged.
   const { data: maxRows } = await sb
     .from("crm_leads")
     .select("sort_order")
