@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { animate, motion, useInView, useMotionValue } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 const readout = [
   {
@@ -54,12 +55,14 @@ const marketSignals = [
     suffix: "%",
     label: "clínicas fecham em menos de 5 anos",
     insight: "sobrevivência vira argumento de caixa, não de marketing",
+    source: "SEBRAE 2022",
   },
   {
     value: 21,
     suffix: "x",
     label: "conversão com resposta em menos de 5 min",
     insight: "velocidade é alavanca antes de mídia",
+    source: "Lead Response Survey",
   },
   {
     value: 65,
@@ -67,12 +70,14 @@ const marketSignals = [
     suffix: "%",
     label: "leads que nunca agendam",
     insight: "perda acontece antes da oportunidade virar venda",
+    source: "We Ramp / Odonto Results",
   },
   {
     value: 52,
     suffix: "%",
     label: "agendamentos fora do horário comercial",
     insight: "demanda chega quando a operação está invisível",
+    source: "Setor médico BR",
   },
 ];
 
@@ -320,6 +325,9 @@ function SignalGrid() {
               <p className="border-t border-[#222222] pt-3 text-xs leading-5 text-[#888888]">
                 {signal.insight}
               </p>
+              <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-[#555555]">
+                {signal.source}
+              </p>
             </div>
           </FadeUp>
         ))}
@@ -351,14 +359,20 @@ function StrategyMap() {
   );
 }
 
-function RevenuePath() {
+function RevenuePath({
+  onCheckout,
+  loading,
+}: {
+  onCheckout: () => void;
+  loading: boolean;
+}) {
   return (
     <Panel className="overflow-hidden rounded-lg">
       <TerminalHeader label="Revenue Path" value="offer architecture" />
       <div className="grid divide-y divide-[#222222] lg:grid-cols-3 lg:divide-x lg:divide-y-0">
         {pipeline.map((step, index) => (
           <FadeUp key={step.title} delay={index * 0.05}>
-            <div className="p-4">
+            <div className="flex h-full flex-col p-4">
               <div className="mb-5 flex items-center justify-between gap-4">
                 <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#888888]">
                   0{index + 1} · {step.label}
@@ -383,7 +397,22 @@ function RevenuePath() {
                   transition={{ duration: 0.8, delay: index * 0.08 }}
                 />
               </div>
-              <p className="text-sm leading-6 text-[#888888]">{step.text}</p>
+              <p className="mb-4 text-sm leading-6 text-[#888888]">{step.text}</p>
+              {index === 0 ? (
+                <button
+                  type="button"
+                  onClick={onCheckout}
+                  disabled={loading}
+                  className="mt-auto inline-flex min-h-[44px] items-center justify-center gap-2 bg-[#FF6B00] px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {loading ? "Abrindo checkout…" : "Quero meu diagnóstico"}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              ) : (
+                <p className="mt-auto text-[10px] uppercase tracking-[0.16em] text-[#555555]">
+                  Liberado após o diagnóstico
+                </p>
+              )}
             </div>
           </FadeUp>
         ))}
@@ -429,7 +458,13 @@ function ForecastPanel() {
   );
 }
 
-function IntelSidePanel() {
+function IntelSidePanel({
+  onCheckout,
+  loading,
+}: {
+  onCheckout: () => void;
+  loading: boolean;
+}) {
   const [openIndex, setOpenIndex] = useState(0);
 
   return (
@@ -493,10 +528,19 @@ function IntelSidePanel() {
             Entrar por diagnóstico pago. Provar vazamento. Converter para
             sprint. Reter por operação mensal.
           </p>
-          <p className="border-t border-[#222222] pt-4 text-sm leading-6 text-[#888888]">
+          <p className="mb-5 border-t border-[#222222] pt-4 text-sm leading-6 text-[#888888]">
             A venda não começa prometendo crescimento. Começa mostrando a perda
             que já existe.
           </p>
+          <button
+            type="button"
+            onClick={onCheckout}
+            disabled={loading}
+            className="inline-flex w-full items-center justify-center gap-2 bg-[#FF6B00] px-5 py-3.5 text-xs font-bold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {loading ? "Abrindo checkout…" : "Quero meu diagnóstico — R$ 800"}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
         </div>
       </Panel>
     </div>
@@ -504,6 +548,22 @@ function IntelSidePanel() {
 }
 
 export default function OfferBookDashboardPage() {
+  const [loading, setLoading] = useState(false);
+
+  async function handleCheckout() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/checkout/diagnostico", { method: "POST" });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (data.url) window.location.href = data.url;
+      else alert(data.error || "Não foi possível abrir o checkout. Tente em alguns minutos.");
+    } catch {
+      alert("Erro de conexão. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#0D0D0D] px-4 py-4 text-white sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-[1540px] gap-3">
@@ -548,18 +608,34 @@ export default function OfferBookDashboardPage() {
                   Donos de clínicas não precisam de promessa. Precisam ver onde
                   o dinheiro vaza.
                 </p>
+                <p className="mt-4 max-w-2xl text-sm leading-6 text-[#888888] sm:text-base">
+                  Pague R$ 800, receba em 5 dias um vídeo mostrando os 3
+                  principais vazamentos do seu funil — com dados do seu
+                  próprio site e atendimento.
+                </p>
               </div>
-              <div className="mt-8 grid gap-3 border-t border-[#222222] pt-4 md:grid-cols-3">
-                {readout.map((item) => (
-                  <div key={item.code}>
-                    <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6B00]">
-                      {item.code} · {item.label}
-                    </p>
-                    <p className="text-sm leading-6 text-[#888888]">
-                      {item.text}
-                    </p>
-                  </div>
-                ))}
+              <div className="mt-8 flex flex-col gap-6 border-t border-[#222222] pt-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="grid gap-3 md:grid-cols-3">
+                  {readout.map((item) => (
+                    <div key={item.code}>
+                      <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6B00]">
+                        {item.code} · {item.label}
+                      </p>
+                      <p className="text-sm leading-6 text-[#888888]">
+                        {item.text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCheckout}
+                  disabled={loading}
+                  className="inline-flex shrink-0 items-center justify-center gap-2 bg-[#FF6B00] px-6 py-3.5 text-xs font-bold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {loading ? "Abrindo checkout…" : "Quero meu diagnóstico — R$ 800"}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
               </div>
             </Panel>
           </FadeUp>
@@ -597,7 +673,7 @@ export default function OfferBookDashboardPage() {
               <StrategyMap />
             </div>
 
-            <RevenuePath />
+            <RevenuePath onCheckout={handleCheckout} loading={loading} />
             <ForecastPanel />
 
             <FadeUp>
@@ -611,7 +687,7 @@ export default function OfferBookDashboardPage() {
           </div>
 
           <aside>
-            <IntelSidePanel />
+            <IntelSidePanel onCheckout={handleCheckout} loading={loading} />
           </aside>
         </section>
       </div>
