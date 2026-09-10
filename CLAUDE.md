@@ -205,6 +205,15 @@ Plan → Magic MCP → Build → Review → Update CLAUDE.md
 
 ## Lições aprendidas (append-only)
 
+### 2026-08-25 · `/offer-book-dashboard` vira peça de conversão (via `/loop-landing`)
+- **Contexto**: Página `app/offer-book-dashboard/page.tsx` era um "Bloomberg terminal" de estratégia interna (readout, KPIs, Market Signal Grid, Revenue Path, Forecast) — zero CTA, headline só filosófica, números de mercado sem citação de fonte.
+- **Decisão**: Tratada como landing de conversão da oferta **Diagnóstico O6 (R$800)**. Reusa o endpoint real `/api/checkout/diagnostico` (Stripe, mesmo `handleCheckout` de `app/produto/diagnostico/page.tsx`) — não inventou WhatsApp link novo. CTA repetido em 3 pontos (hero, card Diagnóstico do Revenue Path, painel "Recommended Decision"), sempre a **mesma ação**; Sprint/Retainer mostram "Liberado após o diagnóstico" em vez de botão para não competir.
+- **Prova**: Os 4 números do Market Signal Grid (60% SEBRAE 2022, 21x, 65-75%, 52%) são reais e batem com `memory/market-research-clinicas-junho-2026.md` + já usados com `source:` em `app/produto/{sprint,diagnostico}/page.tsx`. Faltava só exibir a atribuição — adicionado campo `source` no array e render abaixo do insight.
+- **Anti-padrão evitado**: número real sem fonte visível lê como fabricado (ver commit `ce9640d` honesty guardrails). Padrão do projeto: todo stat de mercado carrega `source:` no data object.
+- **Trade-off / dívida**: `/offer-book-dashboard` e `/produto/diagnostico` agora vendem a MESMA oferta com estéticas diferentes. Serve como variante para A/B, mas se não for testar, uma das duas é redundante. Página nova ainda não tem `<title>`/metadata próprios (herda "Create Next App" do layout).
+- **Bug de ambiente (não do código)**: após editar, TODAS as rotas não-root (`/crm`, `/produto/*`, etc.) passaram a 404. Causa: cache corrompido do Turbopack em `.next/` — distinto do problema de lockfile órfão já documentado. **Fix: `rm -rf .next` + restart.** Sintoma idêntico (root 200, nested 404) mas causa diferente — sempre limpar `.next` antes de suspeitar do `turbopack.root`.
+- **Paths tocados**: `app/offer-book-dashboard/page.tsx` (commit `906e782`).
+
 ### 2026-06-10 · Sprint 9 — Squads AIOX + copywriters + vídeo + refactor
 - **Contexto**: Sessão grande — instalou 5 squads externos (`copy` 24 agents, `deep-research` 5, `offer-book` 1, `design-extractor` 1, `data-analysis` 1) em `squads/`, criou `squads/INDEX.json` como registry. Disco C: estava com 0.1GB livre — limpou npm-cache + .next + Temp pra liberar 4.6GB e baixar Chromium do puppeteer.
 - **Decisão arquitetural — squads como diretório irmão de skills**: `squads/` é um diretório novo para agents externos importados (formato AIOX), enquanto `skills/` mantém playbooks O6-nativos. Registry centralizado em `squads/INDEX.json`. Squads são **referência humana** + fonte para destilação em código.
