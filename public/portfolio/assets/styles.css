@@ -168,3 +168,58 @@ button,input{font:inherit}
   .page-hero{padding:150px 0 62px}.footer{padding-top:70px}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}.feature-media{transform:none!important}}
+
+/* portfolio final curation — 2026-09-18 */
+.status-live{border-color:rgba(183,255,122,.5);color:var(--lume)}
+.live-text{color:#b7ff7a!important}
+.nootro-live .feature-media{object-position:center top}
+.automotive-band{background:#070707;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.auto-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.auto-card{min-height:620px;position:relative;overflow:hidden;border:1px solid #1b1b1b;padding:28px;display:flex;flex-direction:column;justify-content:space-between;isolation:isolate}
+.auto-card:before{content:'';position:absolute;inset:0;z-index:-2}
+.auto-card:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.68));z-index:-1}
+.auto-meta{display:flex;justify-content:space-between;gap:18px;color:#aaa;position:relative;z-index:3}
+.auto-copy{position:relative;z-index:3}
+.auto-code{color:#777}
+.auto-copy h3{font-size:clamp(3.5rem,7.8vw,8rem);line-height:.78;letter-spacing:-.075em;margin:18px 0 12px}
+.auto-copy p{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.3vw,2rem);margin:0;color:#c9c4bd}
+.bmw-card:before{background:radial-gradient(circle at 72% 22%,rgba(28,105,212,.35),transparent 34%),linear-gradient(135deg,#04070c,#0a111d 52%,#040506)}
+.speed-lines{position:absolute;inset:0;opacity:.38;background:repeating-linear-gradient(168deg,transparent 0 26px,rgba(255,255,255,.035) 27px 28px);transform:scale(1.4);transform-origin:center}
+.bmw-card:hover .speed-lines{transform:scale(1.5) translateX(-2%);transition:transform 1s ease}
+.ferrari-card:before{background:radial-gradient(circle at 76% 22%,rgba(235,35,35,.25),transparent 34%),linear-gradient(135deg,#080000,#150505 56%,#050505)}
+.ferrari-mark{position:absolute;right:-.06em;bottom:-.22em;font-size:min(54vw,580px);font-weight:700;line-height:1;color:rgba(235,35,35,.09);letter-spacing:-.12em;z-index:0}
+.noctis-card{display:block;border:1px solid #202020;background:radial-gradient(circle at 78% 48%,rgba(154,162,168,.12),transparent 28%),linear-gradient(120deg,#070808,#0b0d0e);position:relative;overflow:hidden;padding:clamp(28px,4vw,60px)}
+.noctis-grid{min-height:520px;display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:center}
+.noctis-copy{position:relative;z-index:3}
+.noctis-copy h3{font-size:clamp(4rem,9vw,9rem);line-height:.78;letter-spacing:-.07em;margin:22px 0 18px}
+.noctis-copy p{font-family:var(--serif);font-style:italic;font-size:clamp(1.35rem,2.3vw,2.1rem);color:#bbb4ad;margin:0 0 30px}
+.vault-visual{min-height:420px;position:relative;display:grid;place-items:center}
+.vault-ring{position:absolute;border:1px solid rgba(255,255,255,.12);border-radius:50%;aspect-ratio:1}
+.ring-1{width:min(85%,480px);box-shadow:0 0 0 34px rgba(255,255,255,.018)}
+.ring-2{width:min(60%,330px);border-color:rgba(255,255,255,.19);box-shadow:inset 0 0 60px rgba(255,255,255,.025)}
+.ring-3{width:min(35%,190px);border-color:rgba(183,255,122,.22)}
+.vault-core{width:84px;height:84px;border:1px solid rgba(183,255,122,.34);border-radius:50%;display:grid;place-items:center;font-family:var(--mono);color:var(--lume);font-size:.8rem;box-shadow:0 0 50px rgba(183,255,122,.07)}
+.private-note{position:absolute;right:24px;bottom:20px;color:#666}
+.work-photo{background-image:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.82)),var(--work-image);background-size:cover;background-position:center}
+.work-photo .work-top,.work-photo h3,.work-photo .sub{position:relative;z-index:2}
+.work-photo .work-top{color:#d3cdc6}
+.work-photo:hover{background-image:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.74)),var(--work-image)}
+.cta-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:30px}
+.archive-note{border-top:1px solid var(--line);background:#0a0a0a}
+.archive-row[hidden]{display:none!important}
+
+@media(max-width:900px){
+  .auto-grid{grid-template-columns:1fr}
+  .auto-card{min-height:520px}
+  .noctis-grid{grid-template-columns:1fr;min-height:auto}
+  .vault-visual{min-height:360px}
+}
+@media(max-width:520px){
+  .auto-card{min-height:460px;padding:22px}
+  .auto-meta{flex-direction:column;gap:7px}
+  .auto-copy h3{font-size:clamp(3.3rem,18vw,5.4rem)}
+  .noctis-card{padding:24px}
+  .noctis-copy h3{font-size:clamp(3.5rem,20vw,5.6rem)}
+  .vault-visual{min-height:300px}
+  .private-note{position:static;margin-top:18px}
+}
