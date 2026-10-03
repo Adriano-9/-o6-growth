@@ -399,15 +399,9 @@ function RevenuePath({
               </div>
               <p className="mb-4 text-sm leading-6 text-[#888888]">{step.text}</p>
               {index === 0 ? (
-                <button
-                  type="button"
-                  onClick={onCheckout}
-                  disabled={loading}
-                  className="mt-auto inline-flex min-h-[44px] items-center justify-center gap-2 bg-[#FF6B00] px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                >
-                  {loading ? "Abrindo checkout…" : "Quero meu diagnóstico"}
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </button>
+                <p className="mt-auto text-[10px] uppercase tracking-[0.16em] text-[#888888]">
+                  Oferta pausada
+                </p>
               ) : (
                 <p className="mt-auto text-[10px] uppercase tracking-[0.16em] text-[#555555]">
                   Liberado após o diagnóstico
@@ -534,11 +528,10 @@ function IntelSidePanel({
           </p>
           <button
             type="button"
-            onClick={onCheckout}
-            disabled={loading}
-            className="inline-flex w-full items-center justify-center gap-2 bg-[#FF6B00] px-5 py-3.5 text-xs font-bold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            disabled
+            className="inline-flex w-full items-center justify-center gap-2 bg-[#555] px-5 py-3.5 text-xs font-bold uppercase tracking-[0.16em] text-white/60 cursor-not-allowed"
           >
-            {loading ? "Abrindo checkout…" : "Quero meu diagnóstico — R$ 800"}
+            Oferta pausada
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -550,19 +543,9 @@ function IntelSidePanel({
 export default function OfferBookDashboardPage() {
   const [loading, setLoading] = useState(false);
 
-  async function handleCheckout() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/checkout/diagnostico", { method: "POST" });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (data.url) window.location.href = data.url;
-      else alert(data.error || "Não foi possível abrir o checkout. Tente em alguns minutos.");
-    } catch {
-      alert("Erro de conexão. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  // Oferta de R$800 pausada desde set/2026
+  function handleCheckout() {}
+  void setLoading;
 
   return (
     <main className="min-h-screen bg-[#0D0D0D] px-4 py-4 text-white sm:px-6 lg:px-8">
@@ -609,9 +592,9 @@ export default function OfferBookDashboardPage() {
                   o dinheiro vaza.
                 </p>
                 <p className="mt-4 max-w-2xl text-sm leading-6 text-[#888888] sm:text-base">
-                  Pague R$ 800, receba em 5 dias um vídeo mostrando os 3
-                  principais vazamentos do seu funil — com dados do seu
-                  próprio site e atendimento.
+                  Diagnóstico gratuito — descubra onde sua clínica
+                  está perdendo pacientes antes de investir em qualquer
+                  ferramenta.
                 </p>
               </div>
               <div className="mt-8 flex flex-col gap-6 border-t border-[#222222] pt-4 sm:flex-row sm:items-end sm:justify-between">
@@ -629,11 +612,10 @@ export default function OfferBookDashboardPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={handleCheckout}
-                  disabled={loading}
-                  className="inline-flex shrink-0 items-center justify-center gap-2 bg-[#FF6B00] px-6 py-3.5 text-xs font-bold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  disabled
+                  className="inline-flex shrink-0 items-center justify-center gap-2 bg-[#555] px-6 py-3.5 text-xs font-bold uppercase tracking-[0.16em] text-white/60 cursor-not-allowed"
                 >
-                  {loading ? "Abrindo checkout…" : "Quero meu diagnóstico — R$ 800"}
+                  Oferta pausada
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
