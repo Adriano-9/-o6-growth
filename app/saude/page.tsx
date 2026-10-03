@@ -14,10 +14,13 @@ import {
   Calendar,
   CheckCircle2,
   Cpu,
-  Sparkles,
+  MessageCircle,
 } from "lucide-react";
 import React, { useState } from "react";
 import { AnimatePresence } from "framer-motion";
+import { createLead } from "@/app/crm/_lib/api";
+import { emptyLeadInput } from "@/app/crm/_lib/types";
+import { whatsappUrl } from "@/app/_lib/contato";
 
 const niches = [
   "Clínicas Médicas",
@@ -88,22 +91,42 @@ const results = [
   { value: "-72%", label: "de pacientes perdidos por demora no atendimento" },
 ];
 
+const WA_LINK = whatsappUrl("DIAGNÓSTICO");
+
 export default function SaudePage() {
+  const [nome, setNome] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
   const [especialidade, setEspecialidade] = useState("Clínica Médica");
-  const [formState, setFormState] = useState<"idle" | "calculating" | "success">("idle");
+  const [formState, setFormState] = useState<"idle" | "calculating" | "success" | "error">("idle");
   const [progress, setProgress] = useState(0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!whatsapp) return;
     setFormState("calculating");
     setProgress(0);
+
+    const savePromise = createLead({
+      ...emptyLeadInput("Novo Lead"),
+      nome,
+      whatsapp,
+      email,
+      nicho: especialidade,
+      cidade: "Salvador",
+      origem: "site_o6_saude",
+      notas: "Formulário Diagnóstico Gratuito da LP /saude",
+    });
+
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          setTimeout(() => setFormState("success"), 400);
+          savePromise
+            .then((lead) => {
+              setFormState(lead ? "success" : "error");
+            })
+            .catch(() => setFormState("error"));
           return 100;
         }
         return prev + 10;
@@ -421,8 +444,16 @@ export default function SaudePage() {
                       <p className="text-[10px] text-brand-graphite/50 mt-1">PARA CLÍNICAS E CONSULTÓRIOS</p>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">Seu melhor e-mail</label>
-                      <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@clinica.com" className="w-full p-3.5 bg-brand-offwhite border border-brand-graphite/10 text-xs font-semibold text-brand-graphite focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan transition-all" />
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">WhatsApp *</label>
+                      <input type="tel" required value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="(71) 9 9999-9999" className="w-full p-3.5 bg-brand-offwhite border border-brand-graphite/10 text-xs font-semibold text-brand-graphite focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">Nome</label>
+                      <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Dr. João Silva" className="w-full p-3.5 bg-brand-offwhite border border-brand-graphite/10 text-xs font-semibold text-brand-graphite focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">E-mail</label>
+                      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@clinica.com" className="w-full p-3.5 bg-brand-offwhite border border-brand-graphite/10 text-xs font-semibold text-brand-graphite focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan transition-all" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">Especialidade</label>
@@ -444,7 +475,7 @@ export default function SaudePage() {
                 {formState === "calculating" && (
                   <motion.div key="form-calc" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-12 flex flex-col items-center justify-center text-center">
                     <Cpu className="w-12 h-12 text-brand-cyan animate-spin mb-6" />
-                    <h3 className="text-xs font-black uppercase tracking-widest text-brand-graphite mb-2">ANALISANDO SUA CLÍNICA...</h3>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-brand-graphite mb-2">REGISTRANDO SEUS DADOS...</h3>
                     <div className="w-48 h-1.5 bg-brand-graphite/10 mb-4 overflow-hidden relative">
                       <motion.div className="h-full bg-brand-cyan" initial={{ width: 0 }} animate={{ width: `${progress}%` }} />
                     </div>
@@ -454,16 +485,27 @@ export default function SaudePage() {
                 {formState === "success" && (
                   <motion.div key="form-success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 flex flex-col items-center justify-center text-center">
                     <CheckCircle2 className="w-14 h-14 text-brand-cyan mb-6" />
-                    <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite mb-2">DIAGNÓSTICO AGENDADO!</h3>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite mb-2">RECEBEMOS SEUS DADOS</h3>
                     <p className="text-xs text-brand-graphite/70 max-w-sm leading-relaxed mb-6">
-                      Um consultor da O6 vai entrar em contato em até 15 minutos para agendar sua sessão gratuita.
+                      Vamos te chamar no WhatsApp em horário comercial.<br />Quer atendimento agora? Fale com a Sofia.
                     </p>
-                    <div className="w-full bg-brand-offwhite border border-brand-cyan/20 p-4 font-mono text-[9px] text-left text-brand-graphite/70 space-y-1">
-                      <p className="text-brand-orange font-bold uppercase mb-1 flex items-center gap-1"><Sparkles className="w-3 h-3" /> CONFIRMAÇÃO</p>
-                      <p>EMAIL: {email}</p>
-                      <p>ESPECIALIDADE: {especialidade}</p>
-                      <p>STATUS: RETORNO EM ATÉ 15 MINUTOS</p>
-                    </div>
+                    <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-[#25D366] px-5 py-3 text-xs font-black uppercase tracking-widest text-white transition-all hover:-translate-y-0.5">
+                      <MessageCircle className="h-4 w-4" />
+                      Falar com a Sofia no WhatsApp
+                    </a>
+                  </motion.div>
+                )}
+                {formState === "error" && (
+                  <motion.div key="form-error" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 flex flex-col items-center justify-center text-center">
+                    <AlertTriangle className="w-14 h-14 text-red-400 mb-6" />
+                    <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite mb-2">NÃO CONSEGUIMOS REGISTRAR</h3>
+                    <p className="text-xs text-brand-graphite/70 max-w-sm leading-relaxed mb-6">
+                      Fale direto com a gente no WhatsApp.
+                    </p>
+                    <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-[#25D366] px-5 py-3 text-xs font-black uppercase tracking-widest text-white transition-all hover:-translate-y-0.5">
+                      <MessageCircle className="h-4 w-4" />
+                      Falar no WhatsApp
+                    </a>
                   </motion.div>
                 )}
               </AnimatePresence>
