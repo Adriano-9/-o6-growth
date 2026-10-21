@@ -4,15 +4,7 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, CheckCircle } from "lucide-react";
 
-const proofs = [
-  "Clínicas Médicas",
-  "Odontologia",
-  "Estética",
-  "Fisioterapia",
-  "Advocacia",
-  "Food Service (restaurantes, lojas)",
-  "Imobiliárias",
-];
+const services = ["Estratégia de marca", "Campanhas", "Sites", "Dashboards", "Vídeos e filmes"];
 
 export default function O6Hero() {
   const statCardRef = useRef<HTMLDivElement>(null);
@@ -40,18 +32,17 @@ export default function O6Hero() {
         </div>
 
         <nav className="hidden md:flex items-center gap-8 text-[11px] font-bold tracking-widest text-brand-graphite/60 uppercase">
-          <a href="/produto/diagnostico" className="hover:text-brand-graphite transition-colors">Diagnóstico</a>
-          <a href="#metodo" className="hover:text-brand-graphite transition-colors">Método</a>
-          <a href="#nichos" className="hover:text-brand-graphite transition-colors">Nichos</a>
-          <a href="#processo" className="hover:text-brand-graphite transition-colors">Como Funciona</a>
-          <a href="#faq" className="hover:text-brand-graphite transition-colors">FAQ</a>
+          <a href="#fundacao" className="hover:text-brand-graphite transition-colors">Estratégia</a>
+          <a href="#metodo" className="hover:text-brand-graphite transition-colors">Serviços</a>
+          <a href="/portfolio/index.html" className="hover:text-brand-graphite transition-colors">Portfólio</a>
+          <a href="#entregas" className="hover:text-brand-graphite transition-colors">Processo</a>
         </nav>
 
         <a
-          href="#diagnostico"
+          href="#contato"
           className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-white bg-brand-orange px-5 py-2.5 shadow-[3px_3px_0px_0px_#121212] hover:shadow-[5px_5px_0px_0px_#121212] hover:-translate-y-px transition-all"
         >
-          Diagnóstico Grátis
+          Vamos conversar
         </a>
       </header>
 
@@ -69,7 +60,7 @@ export default function O6Hero() {
             >
               <span className="w-2 h-2 rounded-full bg-brand-orange animate-pulse" />
               <span className="text-[10px] font-black uppercase tracking-widest text-brand-graphite">
-                Sistema de Crescimento Previsível
+                Estratégia e produção para marcas
               </span>
             </motion.div>
 
@@ -79,9 +70,9 @@ export default function O6Hero() {
               transition={{ duration: 0.55, delay: 0.1 }}
               className="text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter text-brand-graphite leading-[0.92] mb-6"
             >
-              Interesse em<br />
-              <span className="text-brand-orange">Receita</span><br />
-              Previsível.
+              Estratégia clara.<br />
+              <span className="text-brand-orange">Marcas</span><br />
+              memoráveis.
             </motion.h1>
 
             <motion.p
@@ -90,7 +81,7 @@ export default function O6Hero() {
               transition={{ duration: 0.5, delay: 0.22 }}
               className="text-base md:text-lg text-brand-graphite/70 leading-relaxed max-w-lg mb-10"
             >
-              A O6 constrói sistemas de aquisição, conversão e inteligência para clínicas, consultórios e escritórios que querem crescer com consistência — não com sorte.
+              A O6 organiza o que sua marca tem a dizer e transforma essa direção em campanhas, sites, dashboards, vídeos e filmes.
             </motion.p>
 
             <motion.div
@@ -100,16 +91,16 @@ export default function O6Hero() {
               className="flex flex-col sm:flex-row gap-4 mb-12"
             >
               <a
-                href="#diagnostico"
+                href="#contato"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-orange text-white font-black uppercase tracking-widest text-xs shadow-[4px_4px_0px_0px_#121212] hover:shadow-[6px_6px_0px_0px_#121212] hover:-translate-y-px transition-all"
               >
-                Quero um Diagnóstico Gratuito <ArrowRight className="w-4 h-4" />
+                Conversar sobre meu projeto <ArrowRight className="w-4 h-4" />
               </a>
               <a
-                href="#metodo"
+                href="/portfolio/index.html"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white border-2 border-brand-graphite text-brand-graphite font-black uppercase tracking-widest text-xs shadow-[4px_4px_0px_0px_#121212] hover:bg-brand-graphite hover:text-white transition-all"
               >
-                Ver Como Funciona
+                Ver portfólio
               </a>
             </motion.div>
 
@@ -120,9 +111,9 @@ export default function O6Hero() {
               className="flex flex-col gap-3"
             >
               {[
-                "Sem promessas vazias — sistema estruturado do zero",
-                "Resultado mensurável em até 30 dias",
-                "Dedicado a negócios de saúde, estética e jurídico",
+                "Estratégia antes de escolher formatos e ferramentas",
+                "Produção conectada à identidade e ao objetivo da marca",
+                "Projetos pontuais ou acompanhamento mensal",
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-2.5">
                   <CheckCircle className="w-4 h-4 text-brand-orange shrink-0" />
@@ -155,20 +146,18 @@ export default function O6Hero() {
               />
               <div className="absolute inset-0 bg-gradient-to-br from-brand-graphite/90 via-brand-graphite/75 to-brand-graphite/90" />
               <div className="relative z-10">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Realidade do mercado</p>
-                <p className="text-5xl font-black tracking-tighter text-brand-orange mb-3">80%</p>
-                <p className="text-sm text-white/80 leading-relaxed">
-                  dos leads que não são atendidos em até 5 minutos <strong className="text-white">nunca fecham</strong>. Seu concorrente está aproveitando essa janela.
-                </p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-3">Da estratégia à execução</p>
+                <p className="text-3xl md:text-4xl font-black uppercase leading-tight text-white mb-3">Uma direção.<br /><span className="text-brand-orange">Múltiplas entregas.</span></p>
+                <p className="text-sm text-white/70 leading-relaxed">Posicionamento, campanhas e produção digital alinhados ao que sua marca precisa comunicar.</p>
               </div>
             </div>
 
             {/* 3 small cards */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { number: "3×", label: "mais conversões com follow-up estruturado" },
-                { number: "30d", label: "para o sistema estar funcionando" },
-                { number: "100%", label: "visibilidade sobre cada lead e cada real investido" },
+                { number: "01", label: "Estratégia e posicionamento" },
+                { number: "02", label: "Campanhas e experiências digitais" },
+                { number: "03", label: "Vídeos, filmes e acompanhamento" },
               ].map((card, i) => (
                 <div key={i} className="bg-white border-2 border-brand-graphite p-4 shadow-[3px_3px_0px_0px_#121212]">
                   <p className="text-2xl font-black text-brand-graphite tracking-tighter">{card.number}</p>
@@ -179,9 +168,9 @@ export default function O6Hero() {
 
             {/* Niche strip */}
             <div className="bg-white border-2 border-brand-graphite p-4 shadow-[3px_3px_0px_0px_#121212]">
-              <p className="text-[9px] font-black uppercase tracking-widest text-brand-graphite/40 mb-3">Desenvolvido para</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-brand-graphite/40 mb-3">O que a O6 constrói</p>
               <div className="flex flex-wrap gap-2">
-                {proofs.map((p) => (
+                {services.map((p) => (
                   <span
                     key={p}
                     className="px-3 py-1 bg-brand-offwhite border border-brand-graphite/20 text-[10px] font-bold text-brand-graphite uppercase tracking-wider"

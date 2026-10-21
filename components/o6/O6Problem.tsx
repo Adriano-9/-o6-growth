@@ -1,52 +1,49 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertTriangle, Clock, PhoneOff, BarChart2 } from "lucide-react";
+import { AlertTriangle, Copy, Layers, MessageSquareText } from "lucide-react";
 
 const problems = [
   {
-    icon: Clock,
-    title: "Demora no primeiro contato",
+    icon: MessageSquareText,
+    title: "Comunicação sem direção",
     description:
-      "O lead preencheu o formulário, mas sua equipe demorou 30 minutos para responder. Ele já fechou com o concorrente.",
-    stat: "5 min",
-    statLabel: "é o tempo máximo antes de o lead esfriar",
+      "A marca publica, anuncia e atualiza o site, mas cada peça parece falar de uma empresa diferente.",
+    signal: "Marca sem mensagem central",
   },
   {
-    icon: PhoneOff,
-    title: "Sem follow-up estruturado",
+    icon: Copy,
+    title: "Cópia sem contexto",
     description:
-      "O cliente disse 'vou pensar'. A recepcionista anotou no papel. Três dias depois ninguém lembrou de ligar. A venda morreu.",
-    stat: "68%",
-    statLabel: "das vendas exigem 5+ contatos para fechar",
+      "Repetir um formato viral sem entender o público, a oferta e a intenção por trás dele raramente constrói diferenciação.",
+    signal: "Referência não é estratégia",
   },
   {
-    icon: BarChart2,
-    title: "Decisões sem dados",
+    icon: Layers,
+    title: "Entregas desconectadas",
     description:
-      "Você investe em Google Ads, Instagram e indicações — mas não sabe qual canal traz o cliente que realmente fecha e paga.",
-    stat: "0",
-    statLabel: "clareza sobre ROI por canal",
+      "Campanha, site, vídeo e painel são produzidos separadamente, sem uma direção comum nem um objetivo claro.",
+    signal: "Estratégia e execução separadas",
   },
 ];
 
 export default function O6Problem() {
   return (
-    <section id="problema" className="w-full py-24 md:py-32 bg-white">
+    <section id="fundacao" className="w-full py-24 md:py-32 bg-white">
       <div className="max-w-7xl mx-auto px-6">
 
         {/* Header */}
         <div className="max-w-3xl mb-16">
           <span className="text-[11px] font-black uppercase tracking-widest text-brand-orange block mb-4">
-            O problema real
+            Antes de produzir
           </span>
           <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-brand-graphite leading-[0.92] mb-6">
-            Você investe em marketing.<br />
-            Os leads chegam.<br />
-            <span className="text-brand-graphite/30">E desaparecem.</span>
+            Sua marca não precisa<br />
+            de mais do mesmo.<br />
+            <span className="text-brand-graphite/30">Precisa de direção.</span>
           </h2>
           <p className="text-base md:text-lg text-brand-graphite/60 leading-relaxed max-w-2xl">
-            O problema não é a falta de leads. É a ausência de um sistema que os captura, nutre e converte de forma consistente — independente do dia da semana, do humor da equipe ou do volume de atendimentos.
+            Antes de criar campanhas, sites ou vídeos, entendemos a marca, o público, a oferta e o contexto. Assim, as referências que já funcionam viram ideias próprias, coerentes com o negócio.
           </p>
         </div>
 
@@ -73,8 +70,7 @@ export default function O6Problem() {
                 </p>
               </div>
               <div className="mt-auto pt-6 border-t-2 border-brand-graphite/10">
-                <p className="text-3xl font-black text-brand-orange tracking-tighter">{p.stat}</p>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-brand-graphite/50 mt-1">{p.statLabel}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-brand-orange">{p.signal}</p>
               </div>
             </motion.div>
           ))}
@@ -86,10 +82,10 @@ export default function O6Problem() {
             <AlertTriangle className="w-12 h-12 text-brand-orange shrink-0" />
             <div>
               <p className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white leading-tight mb-2">
-                Cada lead não atendido em até 5 minutos tem 80% menos chance de fechar.
+                Entender o que funciona é diferente de copiar o que viralizou.
               </p>
               <p className="text-sm text-white/60 max-w-2xl leading-relaxed">
-                Não é opinião. São os dados do mercado. Enquanto você não tem um sistema — está perdendo receita todos os dias.
+                A O6 identifica a lógica por trás das referências e a adapta ao posicionamento, à oferta e ao público de cada marca.
               </p>
             </div>
           </div>
