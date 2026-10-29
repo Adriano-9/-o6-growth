@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { ArrowUpRight, Building2, Scale, Stethoscope } from "lucide-react";
+import { ArrowUpRight, ClipboardCheck, PanelsTopLeft, Stethoscope } from "lucide-react";
 import { captureAttribution } from "@/app/_lib/analytics/attribution";
 import { LINKS } from "./_lib/links";
 
-const icons = { o6: Building2, saude: Stethoscope, advocacia: Scale };
+const icons = { diagnostico: ClipboardCheck, presenca: PanelsTopLeft, clinicas: Stethoscope };
 
 function recordClick(linkId: string) {
   const payload = JSON.stringify({ link_id: linkId, attribution: captureAttribution() });

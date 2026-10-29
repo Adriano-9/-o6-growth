@@ -16,7 +16,7 @@ export default function LinksPage() {
         <section className="py-12">
           <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-brand-orange">O6 Growth</p>
           <h1 className="mt-4 text-4xl font-black uppercase leading-[1.02] sm:text-5xl">Por onde começamos?</h1>
-          <p className="mt-5 max-w-lg text-base leading-relaxed text-white/70">Conheça a O6 ou veja como aplicamos estratégia, presença digital e processo comercial em cada contexto.</p>
+          <p className="mt-5 max-w-lg text-base leading-relaxed text-white/70">Escolha o caminho que faz sentido para o momento da sua empresa.</p>
         </section>
 
         <TrackedLinks />
