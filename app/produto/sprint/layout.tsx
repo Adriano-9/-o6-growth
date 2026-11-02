@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Sprint O6 — Sistema implantado em 14 dias | O6 Growth",
-  description:
-    "Sistema de captação implantado em 14 dias: resposta automática, follow-up, WhatsApp + agendamento, treinamento da equipe. R$ 4.800 à vista ou 2x R$ 2.500.",
+  title: "Sistema O6 | O6 Growth",
+  description: "Processos e automações proporcionais ao gargalo real, definidos sob escopo.",
 };
 
 export default function SprintLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  void children;
+  redirect("/servicos/sprint");
 }

@@ -6,20 +6,20 @@ import O6Metrics from "@/components/o6/O6Metrics";
 import O6Footer from "@/components/o6/O6Footer";
 
 export const metadata: Metadata = {
-  title: "O6 Growth | Mais Pacientes e Clientes com Sistema de Conversão",
+  title: "O6 Growth | Estratégia, Campanhas e Produção Digital",
   description:
-    "Sistema comercial para clínicas, consultórios e escritórios. Resposta rápida, follow-up automático e visibilidade total do ROI de cada canal.",
+    "Estratégia de marca, campanhas, sites, dashboards e produções audiovisuais para empresas que querem comunicar com clareza e crescer.",
   openGraph: {
-    title: "O6 Growth | Sistema Comercial para Serviços Profissionais",
+    title: "O6 Growth | Estratégia e Produção Digital",
     description:
-      "Pare de perder leads por demora no atendimento. Sistema de aquisição, conversão e acompanhamento com ROI visível em tempo real.",
+      "Organizamos a estratégia da marca e transformamos em campanhas, sites, dashboards, vídeos e filmes.",
     type: "website",
   },
 };
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col bg-brand-offwhite selection:bg-brand-cyan selection:text-brand-graphite">
+    <main className="min-h-screen flex flex-col bg-brand-offwhite selection:bg-brand-orange selection:text-white">
       <O6Hero />
       <O6Problem />
       <O6XSquad />

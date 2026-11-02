@@ -1,28 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Layers, Activity, Compass, Eye, ShieldCheck, Wrench, Clock, ArrowUpRight } from "lucide-react";
-import type { ReactNode } from "react";
-
-type SquadStatus = "ativo" | "construcao" | "aguardando";
-
-const STATUS_META: Record<SquadStatus, { label: string; icon: ReactNode; textClass: string }> = {
-  ativo: {
-    label: "Ativo",
-    icon: <ShieldCheck className="w-3 h-3 text-brand-cyan animate-pulse" />,
-    textClass: "text-brand-graphite/40",
-  },
-  construcao: {
-    label: "Em Construção",
-    icon: <Wrench className="w-3 h-3 text-brand-orange" />,
-    textClass: "text-brand-graphite/40",
-  },
-  aguardando: {
-    label: "Aguardando Dados Reais",
-    icon: <Clock className="w-3 h-3 text-brand-graphite/40" />,
-    textClass: "text-brand-graphite/40",
-  },
-};
+import { Layers, Eye, ArrowUpRight, Megaphone, PanelsTopLeft, FileText, Workflow } from "lucide-react";
 
 export default function O6XSquad() {
   const containerVariants = {
@@ -48,40 +27,56 @@ export default function O6XSquad() {
   const squads = [
     {
       unit: "01",
-      title: "Captação e Atração de Leads",
+      title: "Fundação estratégica e de marca",
+      href: "/servicos/fundacao",
       icon: <Layers className="w-5 h-5 text-brand-orange" />,
-      description: "Organizamos seus canais de atração (Google, Instagram, indicações) para que cada lead chegue qualificado e pronto para ser atendido — sem desperdício de verba.",
-      highlight: "Menos Desperdício",
-      status: "construcao" as SquadStatus,
+      description: "Organizamos posicionamento, público, oferta, identidade visual e voz da marca para orientar decisões de comunicação e criação.",
+      highlight: "Offer Book · Brand Book · Voz",
     },
     {
       unit: "02",
-      title: "Qualificação Automática",
-      icon: <Activity className="w-5 h-5 text-brand-cyan" />,
-      description: "O sistema avalia cada lead em segundos: perfil, interesse e potencial de fechamento. Sua equipe só recebe quem realmente tem chance de virar cliente.",
-      highlight: "Resposta em Segundos",
-      status: "construcao" as SquadStatus,
+      title: "Campanhas",
+      href: "/servicos/campanhas",
+      icon: <Megaphone className="w-5 h-5 text-brand-orange" />,
+      description: "Conectamos oferta, mensagem, landing page e peças de campanha em um plano com escopo e aprovações definidos.",
+      highlight: "Campanha integrada",
     },
     {
       unit: "03",
-      title: "Atendimento Rápido e Organizado",
-      icon: <Compass className="w-5 h-5 text-brand-orange" />,
-      description: "Cada lead qualificado é direcionado automaticamente para a pessoa certa da equipe, no canal certo. O tempo de resposta cai de horas para segundos.",
-      highlight: "Zero Atraso",
-      status: "construcao" as SquadStatus,
+      title: "Sites e landing pages",
+      href: "/servicos/sites",
+      icon: <PanelsTopLeft className="w-5 h-5 text-brand-orange" />,
+      description: "Criamos ou atualizamos páginas responsivas que explicam a oferta, respondem dúvidas e orientam o próximo passo.",
+      highlight: "Presença digital",
     },
     {
       unit: "04",
-      title: "Painel de Resultados e ROI",
-      icon: <Eye className="w-5 h-5 text-brand-cyan" />,
-      description: "Acompanhe em tempo real quanto cada canal de marketing traz de retorno. Saiba exatamente onde investir mais e onde cortar — com números, não com achismo.",
-      highlight: "ROI Visível",
-      status: "aguardando" as SquadStatus,
+      title: "Conteúdo e audiovisual",
+      href: "/servicos/conteudo",
+      icon: <FileText className="w-5 h-5 text-brand-orange" />,
+      description: "Transformamos pautas e referências em roteiros, peças, vídeos e adaptações que falam a mesma língua da marca.",
+      highlight: "Conteúdo que ganha forma",
+    },
+    {
+      unit: "05",
+      title: "Sistema O6",
+      href: "/servicos/sistema-o6",
+      icon: <Workflow className="w-5 h-5 text-brand-orange" />,
+      description: "Organizamos o processo de entrada, resposta e retomada. A automação só entra quando ela resolve um gargalo real e a equipe consegue sustentar.",
+      highlight: "Processo simples",
+    },
+    {
+      unit: "06",
+      title: "O6 Otimização",
+      href: "/servicos/otimizacao",
+      icon: <Eye className="w-5 h-5 text-brand-orange" />,
+      description: "Para quem já tem uma base digital e precisa priorizar ajustes em páginas, mensagens, jornadas e presença sem recomeçar do zero.",
+      highlight: "Melhoria contínua",
     },
   ];
 
   return (
-    <section id="xsquad" className="w-full py-24 md:py-32 bg-brand-offwhite relative overflow-hidden border-t border-b border-brand-graphite/10">
+    <section id="metodo" className="w-full py-24 md:py-32 bg-brand-offwhite relative overflow-hidden border-t border-b border-brand-graphite/10">
       {/* Decorative Layer Grids */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#12121205_1px,transparent_1px),linear-gradient(to_bottom,#12121205_1px,transparent_1px)] bg-[size:4rem_4rem]" />
       
@@ -93,13 +88,13 @@ export default function O6XSquad() {
         {/* Header */}
         <div className="max-w-3xl mb-20">
           <span className="text-xs font-black tracking-widest text-brand-orange uppercase block mb-3">
-            COMO FUNCIONA
+            O QUE A O6 ENTREGA
           </span>
           <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-brand-graphite leading-none">
-            4 ETAPAS QUE TRANSFORMAM LEADS EM CLIENTES.
+            DA ESTRATÉGIA À PRODUÇÃO.
           </h2>
           <p className="mt-6 text-base md:text-lg text-brand-graphite/70 max-w-2xl font-normal leading-relaxed">
-            Um sistema comercial completo que cuida de cada etapa: da captação ao fechamento. Sem depender da memória da recepcionista ou de planilha no WhatsApp.
+            Podemos começar pela fundação da marca ou entrar direto em uma entrega. Projetos pontuais e retainers são definidos conforme objetivo, volume e ritmo de produção.
           </p>
         </div>
 
@@ -128,9 +123,7 @@ export default function O6XSquad() {
                       {squad.icon}
                     </div>
                   </div>
-                  <span className={`text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 ${STATUS_META[squad.status].textClass}`}>
-                    {STATUS_META[squad.status].label} {STATUS_META[squad.status].icon}
-                  </span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-brand-graphite/40">{squad.unit}</span>
                 </div>
 
                 {/* Title */}
@@ -149,9 +142,9 @@ export default function O6XSquad() {
                 <span className="text-brand-orange font-bold uppercase tracking-widest">
                   {squad.highlight}
                 </span>
-                <span className="text-brand-graphite/40 group-hover:text-brand-graphite flex items-center gap-1 transition-colors">
-                  VER MÉTRICAS <ArrowUpRight className="w-3.5 h-3.5" />
-                </span>
+                <a href={squad.href} className="flex items-center gap-1 text-brand-graphite/60 hover:text-brand-orange transition-colors">
+                  CONHECER <ArrowUpRight className="w-3.5 h-3.5" />
+                </a>
               </div>
             </motion.div>
           ))}
@@ -160,7 +153,7 @@ export default function O6XSquad() {
         {/* Layer Separator Graphic */}
         <div className="mt-20 flex items-center gap-4 text-[10px] font-mono text-brand-graphite/30 uppercase tracking-widest justify-center">
           <div className="h-[1px] w-20 bg-brand-graphite/10" />
-          <span>SISTEMA COMERCIAL O6 GROWTH</span>
+          <span>PROJETOS PONTUAIS · RETAINER MENSAL</span>
           <div className="h-[1px] w-20 bg-brand-graphite/10" />
         </div>
 
