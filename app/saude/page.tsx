@@ -1,530 +1,170 @@
 "use client";
 
-import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  CheckCircle,
-  Clock,
-  PhoneOff,
-  BarChart2,
-  AlertTriangle,
-  Stethoscope,
-  Users,
-  TrendingUp,
-  Calendar,
-  CheckCircle2,
-  Cpu,
-  MessageCircle,
-} from "lucide-react";
-import React, { useState } from "react";
-import { AnimatePresence } from "framer-motion";
+import { FormEvent, useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+import { ArrowDown, ArrowRight, CalendarCheck, Clock3, MessageCircle, PhoneCall, Stethoscope } from "lucide-react";
 import { createLead } from "@/app/crm/_lib/api";
 import { emptyLeadInput } from "@/app/crm/_lib/types";
 import { whatsappUrl } from "@/app/_lib/contato";
+import { getAttribution } from "@/app/briefing/_lib/attribution";
 
-const niches = [
-  "Clínicas Médicas",
-  "Odontologia",
-  "Estética Avançada",
-  "Fisioterapia",
-  "Dermatologia",
-  "Harmonização Facial",
+const stages = [
+  { icon: MessageCircle, title: "Primeiro contato", detail: "Quem procura sua clínica encontra uma resposta clara e um caminho para agendar." },
+  { icon: PhoneCall, title: "Atendimento", detail: "A equipe sabe quem retornou, o que foi perguntado e quem precisa de atenção." },
+  { icon: CalendarCheck, title: "Agendamento", detail: "Confirmações e retornos ganham uma rotina que cabe na operação." },
 ];
 
-const problems = [
-  {
-    icon: Clock,
-    title: "Paciente ligou e ninguém atendeu",
-    description:
-      "O paciente viu seu anúncio, ligou para agendar, mas a recepção estava ocupada. Ele já marcou no concorrente.",
-    stat: "5 min",
-    statLabel: "é o máximo que um paciente espera",
-  },
-  {
-    icon: PhoneOff,
-    title: "Orçamento enviado e esquecido",
-    description:
-      "O paciente pediu orçamento de um procedimento de R$ 3.000. Sua equipe mandou por WhatsApp. Ninguém fez follow-up. Ele nunca mais respondeu.",
-    stat: "68%",
-    statLabel: "dos orçamentos precisam de 3+ contatos para fechar",
-  },
-  {
-    icon: BarChart2,
-    title: "Investe em marketing sem saber o retorno",
-    description:
-      "Você paga Google Ads, Instagram e indicações — mas não sabe qual canal traz o paciente que realmente fecha o procedimento e paga.",
-    stat: "R$ 0",
-    statLabel: "de clareza sobre ROI por canal",
-  },
-];
+const concerns = {
+  resposta: { title: "Tempo de resposta", text: "Vale medir quanto tempo passa entre o primeiro contato e a resposta da recepção, inclusive fora do horário comercial.", action: "Registrar horários de chegada e resposta por uma semana." },
+  agenda: { title: "Agendamento e confirmação", text: "A etapa entre a conversa e a consulta pode estar criando atrito. Verifique como o paciente escolhe horário e recebe confirmação.", action: "Mapear quantos contatos avançam para horário marcado." },
+  retorno: { title: "Retorno após orçamento", text: "Uma conversa que termina com um orçamento precisa ter próximo passo definido, com acompanhamento respeitoso e consentido.", action: "Revisar orçamentos pendentes e a rotina de retorno." },
+} as const;
 
-const steps = [
-  {
-    number: "01",
-    title: "Captação Inteligente",
-    description:
-      "Organizamos seus canais (Google, Instagram, indicações, site) para que cada paciente chegue qualificado e pronto para agendar.",
-  },
-  {
-    number: "02",
-    title: "Qualificação Automática",
-    description:
-      "O sistema avalia cada contato em segundos: interesse, perfil de ticket e procedimento desejado. A recepção só recebe quem tem perfil.",
-  },
-  {
-    number: "03",
-    title: "Atendimento Rápido",
-    description:
-      "Cada paciente é direcionado automaticamente para a pessoa certa. O tempo de resposta cai de horas para minutos.",
-  },
-  {
-    number: "04",
-    title: "Follow-up que Fecha",
-    description:
-      "Orçamentos pendentes recebem follow-up automático no timing certo. Nenhum paciente é esquecido — sua taxa de conversão sobe sem esforço.",
-  },
-];
+type Concern = keyof typeof concerns;
 
-const results = [
-  { value: "3×", label: "mais agendamentos com follow-up estruturado" },
-  { value: "30d", label: "para o sistema estar rodando" },
-  { value: "-72%", label: "de pacientes perdidos por demora no atendimento" },
-];
-
-const WA_LINK = whatsappUrl("DIAGNÓSTICO");
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export default function SaudePage() {
-  const [nome, setNome] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
-  const [email, setEmail] = useState("");
-  const [especialidade, setEspecialidade] = useState("Clínica Médica");
-  const [formState, setFormState] = useState<"idle" | "calculating" | "success" | "error">("idle");
-  const [progress, setProgress] = useState(0);
+  const pageRef = useRef<HTMLElement>(null);
+  const journeyRef = useRef<HTMLElement>(null);
+  const journeyLineRef = useRef<HTMLDivElement>(null);
+  const consultImageRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
+  const { scrollYProgress } = useScroll();
+  const imageY = useTransform(scrollYProgress, [0, 0.35], [0, 90]);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [specialty, setSpecialty] = useState("Odontologia");
+  const [concern, setConcern] = useState<Concern>("resposta");
+  const [status, setStatus] = useState<"idle" | "saving" | "done" | "error">("idle");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!whatsapp) return;
-    setFormState("calculating");
-    setProgress(0);
+  useGSAP(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const savePromise = createLead({
-      ...emptyLeadInput("Novo Lead"),
-      nome,
-      whatsapp,
-      email,
-      nicho: especialidade,
-      cidade: "Salvador",
-      origem: "site_o6_saude",
-      notas: "Formulário Diagnóstico Gratuito da LP /saude",
+    gsap.fromTo("[data-health-word]", { autoAlpha: 0, yPercent: 55 }, {
+      autoAlpha: 1,
+      yPercent: 0,
+      duration: 0.85,
+      stagger: 0.075,
+      ease: "power3.out",
+      delay: 0.15,
     });
 
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          savePromise
-            .then((lead) => {
-              setFormState(lead ? "success" : "error");
-            })
-            .catch(() => setFormState("error"));
-          return 100;
-        }
-        return prev + 10;
+    if (journeyLineRef.current && journeyRef.current) {
+      gsap.fromTo(journeyLineRef.current, { scaleY: 0 }, {
+        scaleY: 1,
+        ease: "none",
+        scrollTrigger: { trigger: journeyRef.current, start: "top 72%", end: "bottom 38%", scrub: 0.6 },
       });
-    }, 120);
-  };
+    }
+
+    if (consultImageRef.current) {
+      gsap.fromTo(consultImageRef.current, { yPercent: -7 }, {
+        yPercent: 7,
+        ease: "none",
+        scrollTrigger: { trigger: consultImageRef.current.parentElement, start: "top bottom", end: "bottom top", scrub: 0.8 },
+      });
+    }
+
+    gsap.utils.toArray<HTMLElement>("[data-health-reveal]").forEach((element) => {
+      gsap.fromTo(element, { autoAlpha: 0, y: 28 }, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.8,
+        ease: "power2.out",
+        scrollTrigger: { trigger: element, start: "top 88%", once: true },
+      });
+    });
+  }, { scope: pageRef });
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStatus("saving");
+    const attribution = getAttribution();
+    try {
+      const lead = await createLead({
+        ...emptyLeadInput("Novo Lead"),
+        nome: name.trim(),
+        whatsapp: phone.trim(),
+        nicho: specialty,
+        cidade: "Salvador",
+        origem: "site_o6_saude",
+        notas: `Diagnóstico inicial LP saúde. Especialidade: ${specialty}. Gargalo declarado: ${concerns[concern].title}. Origem: ${attribution.utm_source || "direto"}; mídia: ${attribution.utm_medium || "não informada"}; campanha: ${attribution.utm_campaign || "não informada"}; página: ${attribution.page}.`,
+      });
+      setStatus(lead ? "done" : "error");
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  const insight = concerns[concern];
 
   return (
-    <main className="min-h-screen flex flex-col bg-brand-offwhite selection:bg-brand-cyan selection:text-brand-graphite">
-
-      {/* ── HERO ── */}
-      <section className="relative w-full min-h-screen bg-brand-offwhite flex flex-col overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#12121206_1px,transparent_1px),linear-gradient(to_bottom,#12121206_1px,transparent_1px)] bg-[size:5rem_5rem] pointer-events-none" />
-
-        <header className="relative z-20 w-full max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-brand-graphite flex items-center justify-center">
-              <span className="text-white font-black text-sm">O6</span>
-            </div>
-            <span className="font-black text-lg tracking-tighter text-brand-graphite uppercase">
-              O6 Growth
-            </span>
-          </div>
-          <a
-            href="#diagnostico"
-            className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-white bg-brand-orange px-5 py-2.5 shadow-[3px_3px_0px_0px_#121212] hover:shadow-[5px_5px_0px_0px_#121212] hover:-translate-y-px transition-all"
-          >
-            Diagnóstico Grátis
-          </a>
+    <main ref={pageRef} className="bg-[#f5f8f5] text-[#17382f]">
+      <section className="relative flex min-h-[650px] flex-col overflow-hidden bg-[#17382f] text-white md:min-h-[min(740px,88svh)]">
+        <motion.div style={reduced ? undefined : { y: imageY }} className="absolute -top-12 inset-x-0 -bottom-12">
+          <Image src="/landing/saude-recepcao.png" alt="Paciente conversando com a recepção de uma clínica" fill priority sizes="100vw" className="object-cover object-[64%_center]" />
+        </motion.div>
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(12,41,33,.94)_0%,rgba(12,41,33,.77)_36%,rgba(12,41,33,.14)_100%)] md:bg-[linear-gradient(90deg,rgba(12,41,33,.96)_0%,rgba(12,41,33,.80)_32%,rgba(12,41,33,.03)_75%)]" />
+        <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6 md:px-10">
+          <Link href="/" className="text-sm font-black uppercase">O6 <span className="font-normal">Growth</span></Link>
+          <a href="#diagnostico" className="border border-white/60 px-4 py-2 text-xs font-bold uppercase transition hover:bg-white hover:text-[#17382f]">Diagnóstico gratuito</a>
         </header>
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-6 pb-12 pt-8 md:px-10">
+          <div className="max-w-[760px]">
+            <div className="mb-5 flex items-center gap-2 text-xs font-bold uppercase text-[#a9dfb7]"><Stethoscope size={17} /> Para clínicas e consultórios</div>
+            <h1 aria-label="Sua agenda cheia de pacientes particulares." className="max-w-[760px] text-[clamp(3rem,4.7vw,4.8rem)] font-semibold leading-[1.02]">
+              {"Sua agenda cheia de pacientes particulares.".split(" ").map((word, index) => (
+                <span key={`${word}-${index}`} aria-hidden="true" data-health-word className={`mr-[.24em] inline-block will-change-transform ${index >= 4 ? "text-[#c8edcc]" : ""}`}>{word}</span>
+              ))}
+            </h1>
+            <motion.p initial={reduced ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .75, delay: .55 }} className="mt-5 max-w-[490px] text-lg leading-relaxed text-white/85">Organize o caminho entre o primeiro contato, o atendimento da recepção e o agendamento. Cada paciente merece uma resposta clara.</motion.p>
+            <motion.div initial={reduced ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .75, delay: .7 }} className="mt-7 flex flex-wrap gap-3"><a href="#diagnostico" className="group inline-flex min-h-14 items-center gap-4 border border-[#d9f5d2] bg-[linear-gradient(110deg,#e2f7ad_0%,#a9ead2_100%)] px-5 py-3 text-sm font-bold text-[#15392e] shadow-[0_14px_36px_rgba(174,241,182,.28)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(174,241,182,.4)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">Receber diagnóstico gratuito <span className="grid h-8 w-8 shrink-0 place-items-center bg-[#17382f] text-white transition-transform duration-300 group-hover:translate-x-1"><ArrowRight size={17} /></span></a><a href="#jornada" className="inline-flex items-center gap-2 border border-white/50 px-6 py-4 text-sm font-semibold transition hover:bg-white/15">Ver a jornada <ArrowDown size={17} /></a></motion.div>
+          </div>
+        </div>
+        <div className="relative z-10 border-t border-white/20 bg-[#12362c]/70 backdrop-blur-md"><div className="mx-auto flex max-w-7xl flex-wrap gap-x-10 gap-y-2 px-6 py-4 text-xs font-semibold text-white/75 md:px-10"><span>01 / Receber</span><span>02 / Responder</span><span>03 / Confirmar</span></div></div>
+      </section>
 
-        <div className="relative z-10 flex-1 flex items-center w-full max-w-7xl mx-auto px-6 py-16 md:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full">
-
-            <div className="flex flex-col">
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45 }}
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-brand-graphite shadow-[3px_3px_0px_0px_#121212] mb-8 self-start"
-              >
-                <Stethoscope className="w-4 h-4 text-brand-orange" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-brand-graphite">
-                  Para Clínicas e Consultórios
-                </span>
-              </motion.div>
-
-              <motion.h1
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.55, delay: 0.1 }}
-                className="text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter text-brand-graphite leading-[0.92] mb-6"
-              >
-                Sua agenda<br />
-                <span className="text-brand-orange">cheia</span> de<br />
-                pacientes<br />
-                particulares.
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.22 }}
-                className="text-base md:text-lg text-brand-graphite/70 leading-relaxed max-w-lg mb-10"
-              >
-                Sistema comercial que capta, qualifica e acompanha cada paciente até o agendamento — sem depender da memória da recepcionista ou de planilha no WhatsApp.
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.32 }}
-                className="flex flex-col sm:flex-row gap-4 mb-12"
-              >
-                <a
-                  href="#diagnostico"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-orange text-white font-black uppercase tracking-widest text-xs shadow-[4px_4px_0px_0px_#121212] hover:shadow-[6px_6px_0px_0px_#121212] hover:-translate-y-px transition-all"
-                >
-                  Quero Mais Pacientes <ArrowRight className="w-4 h-4" />
-                </a>
-                <a
-                  href="#como-funciona"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white border-2 border-brand-graphite text-brand-graphite font-black uppercase tracking-widest text-xs shadow-[4px_4px_0px_0px_#121212] hover:bg-brand-graphite hover:text-white transition-all"
-                >
-                  Ver Como Funciona
-                </a>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-                className="flex flex-col gap-3"
-              >
-                {[
-                  "Funciona para qualquer especialidade de saúde",
-                  "Resultado mensurável em até 30 dias",
-                  "Sem planilha, sem depender de memória",
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2.5">
-                    <CheckCircle className="w-4 h-4 text-brand-orange shrink-0" />
-                    <span className="text-sm font-semibold text-brand-graphite/70">{item}</span>
-                  </div>
-                ))}
-              </motion.div>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="flex flex-col gap-4"
-            >
-              <div className="bg-brand-graphite text-white p-8 border-4 border-brand-graphite shadow-[8px_8px_0px_0px_#FF5722]">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Realidade das clínicas</p>
-                <p className="text-5xl font-black tracking-tighter text-brand-orange mb-3">80%</p>
-                <p className="text-sm text-white/80 leading-relaxed">
-                  dos pacientes que não são atendidos em até 5 minutos <strong className="text-white">agendam no concorrente</strong>. Cada ligação perdida é um procedimento de R$ 2.500 que você não vai fazer.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                {results.map((card, i) => (
-                  <div key={i} className="bg-white border-2 border-brand-graphite p-4 shadow-[3px_3px_0px_0px_#121212]">
-                    <p className="text-2xl font-black text-brand-graphite tracking-tighter">{card.value}</p>
-                    <p className="text-[10px] text-brand-graphite/60 leading-snug mt-1">{card.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="bg-white border-2 border-brand-graphite p-4 shadow-[3px_3px_0px_0px_#121212]">
-                <p className="text-[9px] font-black uppercase tracking-widest text-brand-graphite/40 mb-3">Especialidades atendidas</p>
-                <div className="flex flex-wrap gap-2">
-                  {niches.map((p) => (
-                    <span
-                      key={p}
-                      className="px-3 py-1 bg-brand-offwhite border border-brand-graphite/20 text-[10px] font-bold text-brand-graphite uppercase tracking-wider"
-                    >
-                      {p}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
+      <section id="jornada" ref={journeyRef} className="mx-auto max-w-7xl px-6 pb-20 pt-10 md:px-10 md:py-28">
+        <div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:gap-20">
+          <motion.div initial={reduced ? false : { opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}><p className="text-xs font-bold uppercase text-[#176b59]">A jornada do paciente</p><h2 className="mt-5 text-4xl font-semibold leading-tight md:text-6xl">Onde a conversa pode parar?</h2><p className="mt-6 max-w-md text-base leading-relaxed text-[#46675b]">O contato pode vir do Google, de uma indicação ou de uma campanha. O que acontece depois precisa ser visível para sua equipe.</p></motion.div>
+          <div className="relative border-l border-[#8ebbad] pl-6 md:pl-10">
+            <div ref={journeyLineRef} aria-hidden="true" className="absolute -left-px top-0 h-full w-[2px] origin-top bg-[#176b59]" />
+            {stages.map((step, i) => <motion.div key={step.title} initial={reduced ? false : { opacity: 0, x: 22 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: .4 }} transition={{ delay: i * .12 }} className="relative border-b border-[#cbdcd2] py-7 first:pt-0 last:border-b-0"><span className="absolute -left-[30px] top-8 h-2 w-2 rounded-full bg-[#176b59] md:-left-[46px]" /><div className="flex items-start gap-5"><step.icon className="mt-1 shrink-0 text-[#176b59]" size={26} /><div><span className="text-xs font-bold text-[#78978c]">0{i + 1}</span><h3 className="mt-1 text-2xl font-semibold">{step.title}</h3><p className="mt-2 max-w-lg leading-relaxed text-[#46675b]">{step.detail}</p></div></div></motion.div>)}
           </div>
         </div>
       </section>
 
-      {/* ── PROBLEMS ── */}
-      <section className="w-full py-24 md:py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="max-w-3xl mb-16">
-            <span className="text-[11px] font-black uppercase tracking-widest text-brand-orange block mb-4">
-              O problema real
-            </span>
-            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-brand-graphite leading-[0.92] mb-6">
-              Pacientes ligam.<br />
-              A recepção não atende.<br />
-              <span className="text-brand-graphite/30">E marcam no concorrente.</span>
-            </h2>
-            <p className="text-base md:text-lg text-brand-graphite/60 leading-relaxed max-w-2xl">
-              O problema não é falta de pacientes. É falta de um sistema que garante que cada um deles seja atendido, acompanhado e convertido — sem depender de sorte.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-            {problems.map((p, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.45, delay: i * 0.1 }}
-                className="bg-brand-offwhite border-2 border-brand-graphite p-8 shadow-[4px_4px_0px_0px_#121212] flex flex-col gap-6"
-              >
-                <div className="w-10 h-10 bg-brand-graphite flex items-center justify-center shrink-0">
-                  <p.icon className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black uppercase tracking-tight text-brand-graphite mb-3">{p.title}</h3>
-                  <p className="text-sm text-brand-graphite/60 leading-relaxed">{p.description}</p>
-                </div>
-                <div className="mt-auto pt-6 border-t-2 border-brand-graphite/10">
-                  <p className="text-3xl font-black text-brand-orange tracking-tighter">{p.stat}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-brand-graphite/50 mt-1">{p.statLabel}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="bg-brand-graphite p-10 md:p-14 border-4 border-brand-graphite shadow-[8px_8px_0px_0px_#FF5722]">
-            <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-12">
-              <AlertTriangle className="w-12 h-12 text-brand-orange shrink-0" />
-              <div>
-                <p className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white leading-tight mb-2">
-                  Cada paciente não atendido em até 5 minutos é um procedimento de R$ 2.500 que vai para o concorrente.
-                </p>
-                <p className="text-sm text-white/60 max-w-2xl leading-relaxed">
-                  Se sua clínica atende 100 ligações por mês e perde 30% por demora, são R$ 75.000 em receita perdida. Todo mês.
-                </p>
-              </div>
+      <section className="overflow-hidden bg-[linear-gradient(135deg,#e9f4e9_0%,#f6f7ee_52%,#e2efe9_100%)]">
+        <div className="mx-auto grid max-w-7xl lg:grid-cols-2 lg:items-center">
+          <div className="relative min-h-[360px] overflow-hidden lg:min-h-[580px]">
+            <div ref={consultImageRef} className="absolute -inset-y-12 inset-x-0 will-change-transform">
+              <Image src="/landing/saude-consulta.png" alt="Médica ouvindo uma paciente durante consulta" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover object-center" />
             </div>
+            <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(14,55,43,.44),transparent_44%)]" />
+            <div className="absolute bottom-6 left-6 border-l-2 border-[#c5e9ce] pl-4 text-xs font-bold uppercase text-white md:bottom-9 md:left-10">A experiência começa no primeiro contato</div>
+          </div>
+          <div data-health-reveal className="px-6 py-16 md:px-10 lg:px-16 lg:py-20">
+            <p className="text-xs font-bold uppercase text-[#b45f47]">Da mensagem à consulta</p>
+            <h2 className="mt-5 max-w-xl text-4xl font-semibold leading-tight md:text-5xl">O cuidado também aparece na forma de atender.</h2>
+            <p className="mt-6 max-w-lg leading-relaxed text-[#46675b]">Para quem procura uma clínica particular, clareza e continuidade importam: saber o que fazer, receber resposta e não precisar repetir a própria história a cada etapa.</p>
+            <div className="mt-10 grid gap-4 border-t border-[#9fbba8] pt-6 text-sm font-semibold text-[#245747] sm:grid-cols-2"><span>Resposta com contexto</span><span>Próximo passo definido</span></div>
           </div>
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
-      <section id="como-funciona" className="w-full py-24 md:py-32 bg-brand-offwhite border-t border-b border-brand-graphite/10 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#12121205_1px,transparent_1px),linear-gradient(to_bottom,#12121205_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="max-w-3xl mb-20">
-            <span className="text-xs font-black tracking-widest text-brand-orange uppercase block mb-3">
-              COMO FUNCIONA
-            </span>
-            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-brand-graphite leading-none">
-              4 ETAPAS PARA LOTAR SUA AGENDA.
-            </h2>
-            <p className="mt-6 text-base md:text-lg text-brand-graphite/70 max-w-2xl font-normal leading-relaxed">
-              Um sistema completo que cuida de cada etapa: da primeira ligação ao agendamento confirmado. Sem depender da memória da recepcionista.
-            </p>
-          </div>
+      <section className="bg-[linear-gradient(120deg,#dcebe0_0%,#eef7ef_52%,#d9eee9_100%)] py-20 md:py-28"><div className="mx-auto grid max-w-7xl gap-12 px-6 md:px-10 lg:grid-cols-2 lg:items-center"><div data-health-reveal><p className="text-xs font-bold uppercase text-[#176b59]">Visibilidade para decidir</p><h2 className="mt-4 text-4xl font-semibold leading-tight md:text-5xl">Acompanhe o percurso, não só a agenda.</h2><p className="mt-6 max-w-lg leading-relaxed text-[#46675b]">Um painel útil começa com perguntas simples: de onde vieram os contatos, quem recebeu resposta e quantos chegaram a um horário confirmado.</p></div><motion.div initial={reduced ? false : { opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="border border-[#89b69d] bg-white/55 p-6 shadow-[0_24px_50px_rgba(19,76,54,.09)] backdrop-blur-md md:p-9"><div className="flex items-center justify-between border-b border-[#a9c7b2] pb-4 text-xs font-bold uppercase"><span>Mapa do atendimento</span><span>Exemplo ilustrativo</span></div>{[{label:"Contatos recebidos",width:"100%"},{label:"Contatos respondidos",width:"74%"},{label:"Consultas confirmadas",width:"46%"}].map(row=><div key={row.label} className="mt-7"><div className="mb-2 flex justify-between text-sm"><span>{row.label}</span><span className="font-mono text-[#46675b]">{row.width}</span></div><div className="h-2 bg-[#cadfd0]"><motion.div initial={{ width: 0 }} whileInView={{ width: row.width }} viewport={{ once: true }} transition={{ duration: .8 }} className="h-full bg-[linear-gradient(90deg,#176b59,#42b39b)]" /></div></div>)}<p className="mt-7 text-xs text-[#46675b]">Os valores acima demonstram a leitura visual. Seu diagnóstico usa seus próprios dados.</p></motion.div></div></section>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12"
-          >
-            {steps.map((step, i) => (
-              <motion.div
-                key={i}
-                variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } }}
-                className="group bg-white border-2 border-brand-graphite p-8 md:p-10 relative flex flex-col min-h-[240px] shadow-[6px_6px_0px_0px_#121212] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[10px_10px_0px_0px_#121212] transition-all duration-300"
-              >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-brand-graphite flex items-center justify-center text-white font-mono text-xs font-bold">
-                    {step.number}
-                  </div>
-                </div>
-                <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight text-brand-graphite mb-4 group-hover:text-brand-orange transition-colors">
-                  {step.title}
-                </h3>
-                <p className="text-xs md:text-sm text-brand-graphite/70 leading-relaxed font-normal">
-                  {step.description}
-                </p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── SOCIAL PROOF ── */}
-      <section className="w-full py-24 md:py-32 bg-brand-graphite text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff04_1px,transparent_1px),linear-gradient(to_bottom,#ffffff04_1px,transparent_1px)] bg-[size:3rem_3rem]" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="max-w-3xl mb-16">
-            <span className="text-xs font-black tracking-widest text-brand-cyan uppercase block mb-3">
-              RESULTADOS TÍPICOS
-            </span>
-            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white leading-none">
-              O QUE MUDA NOS PRIMEIROS 30 DIAS.
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { icon: Calendar, value: "+40%", label: "agendamentos por mês", desc: "Com atendimento rápido e follow-up automático, a taxa de agendamento sobe já no primeiro mês." },
-              { icon: Users, value: "3×", label: "mais pacientes particulares", desc: "Pacientes de alto ticket fecham quando são atendidos rápido e acompanhados até a consulta." },
-              { icon: TrendingUp, value: "R$ 75k", label: "receita recuperada por trimestre", desc: "Em uma clínica com 100 leads/mês e ticket de R$ 2.500, a conversão extra representa R$ 75k/trimestre." },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.45, delay: i * 0.12 }}
-                className="bg-white/5 border border-white/10 p-8 flex flex-col gap-4"
-              >
-                <item.icon className="w-8 h-8 text-brand-cyan" />
-                <p className="text-4xl font-black text-brand-orange tracking-tighter">{item.value}</p>
-                <p className="text-xs font-black uppercase tracking-wider text-white/80">{item.label}</p>
-                <p className="text-sm text-white/60 leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section id="diagnostico" className="w-full bg-brand-offwhite border-t border-brand-graphite/10 pt-24 pb-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#12121203_1px,transparent_1px),linear-gradient(to_bottom,#12121203_1px,transparent_1px)] bg-[size:6rem_6rem] pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-24">
-
-            <div className="lg:col-span-6 flex flex-col gap-6">
-              <span className="text-xs font-black tracking-widest text-brand-orange uppercase">
-                DIAGNÓSTICO GRATUITO
-              </span>
-              <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-brand-graphite leading-none">
-                DESCUBRA QUANTOS PACIENTES SUA CLÍNICA ESTÁ PERDENDO.
-              </h2>
-              <p className="text-sm md:text-base text-brand-graphite/70 leading-relaxed font-normal">
-                Em 30 minutos, vamos mapear seu processo comercial, identificar onde os pacientes estão se perdendo e calcular quanto de receita você pode recuperar.
-              </p>
-            </div>
-
-            <div className="lg:col-span-6 bg-white border border-brand-graphite/10 p-8 shadow-sm">
-              <AnimatePresence mode="wait">
-                {formState === "idle" && (
-                  <motion.form key="form-idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={handleSubmit} className="space-y-6">
-                    <div className="pb-4 border-b border-brand-graphite/5">
-                      <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite">AGENDAR DIAGNÓSTICO GRATUITO</h3>
-                      <p className="text-[10px] text-brand-graphite/50 mt-1">PARA CLÍNICAS E CONSULTÓRIOS</p>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">WhatsApp *</label>
-                      <input type="tel" required value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="(71) 9 9999-9999" className="w-full p-3.5 bg-brand-offwhite border border-brand-graphite/10 text-xs font-semibold text-brand-graphite focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">Nome</label>
-                      <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Dr. João Silva" className="w-full p-3.5 bg-brand-offwhite border border-brand-graphite/10 text-xs font-semibold text-brand-graphite focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">E-mail</label>
-                      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@clinica.com" className="w-full p-3.5 bg-brand-offwhite border border-brand-graphite/10 text-xs font-semibold text-brand-graphite focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">Especialidade</label>
-                      <select value={especialidade} onChange={(e) => setEspecialidade(e.target.value)} className="w-full p-3.5 bg-brand-offwhite border border-brand-graphite/10 text-xs font-semibold text-brand-graphite focus:outline-none focus:border-brand-cyan transition-all">
-                        <option>Clínica Médica</option>
-                        <option>Odontologia</option>
-                        <option>Estética / Harmonização</option>
-                        <option>Fisioterapia</option>
-                        <option>Dermatologia</option>
-                        <option>Outra especialidade</option>
-                      </select>
-                    </div>
-                    <button type="submit" className="w-full py-4 bg-brand-orange text-white font-black uppercase tracking-widest text-xs transition-all hover:bg-brand-orange/95 shadow-[4px_4px_0px_0px_#00E5FF] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#00E5FF]">
-                      QUERO LOTAR MINHA AGENDA
-                    </button>
-                    <p className="text-[9px] text-brand-graphite/40 leading-snug text-center">Sem compromisso. Sem spam. Seus dados ficam seguros.</p>
-                  </motion.form>
-                )}
-                {formState === "calculating" && (
-                  <motion.div key="form-calc" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-12 flex flex-col items-center justify-center text-center">
-                    <Cpu className="w-12 h-12 text-brand-cyan animate-spin mb-6" />
-                    <h3 className="text-xs font-black uppercase tracking-widest text-brand-graphite mb-2">REGISTRANDO SEUS DADOS...</h3>
-                    <div className="w-48 h-1.5 bg-brand-graphite/10 mb-4 overflow-hidden relative">
-                      <motion.div className="h-full bg-brand-cyan" initial={{ width: 0 }} animate={{ width: `${progress}%` }} />
-                    </div>
-                    <span className="text-[10px] text-brand-graphite/50">{progress}%</span>
-                  </motion.div>
-                )}
-                {formState === "success" && (
-                  <motion.div key="form-success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 flex flex-col items-center justify-center text-center">
-                    <CheckCircle2 className="w-14 h-14 text-brand-cyan mb-6" />
-                    <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite mb-2">RECEBEMOS SEUS DADOS</h3>
-                    <p className="text-xs text-brand-graphite/70 max-w-sm leading-relaxed mb-6">
-                      Vamos te chamar no WhatsApp em horário comercial.<br />Quer atendimento agora? Fale com a Sofia.
-                    </p>
-                    <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-[#25D366] px-5 py-3 text-xs font-black uppercase tracking-widest text-white transition-all hover:-translate-y-0.5">
-                      <MessageCircle className="h-4 w-4" />
-                      Falar com a Sofia no WhatsApp
-                    </a>
-                  </motion.div>
-                )}
-                {formState === "error" && (
-                  <motion.div key="form-error" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 flex flex-col items-center justify-center text-center">
-                    <AlertTriangle className="w-14 h-14 text-red-400 mb-6" />
-                    <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite mb-2">NÃO CONSEGUIMOS REGISTRAR</h3>
-                    <p className="text-xs text-brand-graphite/70 max-w-sm leading-relaxed mb-6">
-                      Fale direto com a gente no WhatsApp.
-                    </p>
-                    <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-[#25D366] px-5 py-3 text-xs font-black uppercase tracking-widest text-white transition-all hover:-translate-y-0.5">
-                      <MessageCircle className="h-4 w-4" />
-                      Falar no WhatsApp
-                    </a>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-          </div>
-
-          <footer className="border-t border-brand-graphite/10 pt-12 flex flex-col md:flex-row items-center justify-between gap-6 text-[10px] font-semibold text-brand-graphite/50 tracking-wider">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-brand-graphite flex items-center justify-center">
-                <span className="text-white font-black text-xs">O6</span>
-              </div>
-              <span className="font-black text-xs text-brand-graphite uppercase tracking-tighter">O6 Growth</span>
-            </div>
-            <span>&copy; 2026 O6 Growth. Todos os direitos reservados.</span>
-          </footer>
-        </div>
-      </section>
-
+      <section id="diagnostico" className="bg-[linear-gradient(135deg,#102e29_0%,#176b59_60%,#2d8172_100%)] py-20 text-white md:py-28"><div className="mx-auto grid max-w-7xl gap-12 px-6 md:px-10 lg:grid-cols-[.9fr_1.1fr] lg:gap-20"><div><p className="text-xs font-bold uppercase text-[#b5e0b7]">Diagnóstico inicial gratuito</p><h2 className="mt-5 text-4xl font-semibold leading-tight md:text-6xl">Onde sua clínica precisa olhar primeiro?</h2><p className="mt-6 max-w-md leading-relaxed text-white/75">Selecione o ponto que mais preocupa a equipe. Você recebe uma primeira leitura na hora e pode seguir para uma análise mais completa.</p><div className="mt-10 flex items-center gap-3 border-t border-white/20 pt-6 text-sm text-white/65"><Clock3 size={20} /> Preenchimento em cerca de 1 minuto</div></div>
+        <div className="bg-[#f6faf7] p-6 text-[#17382f] md:p-9">
+          {status === "done" ? <div aria-live="polite"><p className="text-xs font-bold uppercase text-[#176b59]">Leitura inicial</p><h3 className="mt-4 text-3xl font-semibold">{insight.title}</h3><p className="mt-5 leading-relaxed">{insight.text}</p><div className="mt-7 border-l-2 border-[#176b59] pl-5"><p className="text-xs font-bold uppercase">Primeiro passo</p><p className="mt-2 text-sm leading-relaxed">{insight.action}</p></div><p className="mt-6 text-xs leading-relaxed text-[#597467]">Leitura baseada no problema que você declarou. Não mede resultados nem substitui a análise da operação.</p><div className="mt-8 grid gap-3 sm:grid-cols-2"><a href="/produto/diagnostico" className="flex items-center justify-center gap-2 bg-[#176b59] px-4 py-3 text-center text-sm font-bold text-white">Diagnóstico Express <ArrowRight size={16} /></a><a href={whatsappUrl("Quero conversar sobre o atendimento da minha clínica")} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 border border-[#176b59] px-4 py-3 text-center text-sm font-bold">Agendar conversa <ArrowRight size={16} /></a></div><Link href="/servicos" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold underline underline-offset-4">Explorar serviços <ArrowRight size={15} /></Link></div> : <form onSubmit={submit} className="space-y-5"><div><p className="text-xs font-bold uppercase text-[#176b59]">Comece por aqui</p><h3 className="mt-2 text-2xl font-semibold">Conte sobre sua operação</h3></div><label className="block text-sm font-semibold">Seu nome<input required value={name} onChange={e=>setName(e.target.value)} className="mt-2 w-full border border-[#b9d1c1] bg-white p-3 outline-none focus:border-[#176b59]" /></label><label className="block text-sm font-semibold">WhatsApp<input required type="tel" value={phone} onChange={e=>setPhone(e.target.value)} className="mt-2 w-full border border-[#b9d1c1] bg-white p-3 outline-none focus:border-[#176b59]" placeholder="(71) 99999-9999" /></label><label className="block text-sm font-semibold">Especialidade<select value={specialty} onChange={e=>setSpecialty(e.target.value)} className="mt-2 w-full border border-[#b9d1c1] bg-white p-3"><option>Odontologia</option><option>Clínica médica</option><option>Estética</option><option>Fisioterapia</option><option>Outra especialidade</option></select></label><label className="block text-sm font-semibold">Qual etapa mais precisa de atenção?<select value={concern} onChange={e=>setConcern(e.target.value as Concern)} className="mt-2 w-full border border-[#b9d1c1] bg-white p-3"><option value="resposta">Resposta aos novos contatos</option><option value="agenda">Agendamento e confirmação</option><option value="retorno">Retorno após orçamento</option></select></label>{status === "error" && <p role="alert" className="text-sm text-red-700">Não conseguimos registrar seus dados. Tente novamente ou fale conosco pelo WhatsApp.</p>}<button disabled={status === "saving"} className="flex w-full items-center justify-center gap-2 bg-[#176b59] px-5 py-4 text-sm font-bold text-white transition hover:bg-[#0e5142] disabled:opacity-60">{status === "saving" ? "Preparando leitura..." : "Receber diagnóstico gratuito"}<ArrowRight size={17} /></button><p className="text-xs leading-relaxed text-[#597467]">Usaremos seus dados para entrar em contato sobre a análise. Não envie dados de pacientes.</p></form>}
+        </div></div></section>
+      <footer className="bg-[#102d25] px-6 py-8 text-xs text-white/60"><div className="mx-auto flex max-w-7xl flex-wrap justify-between gap-4"><span>O6 Growth · Saúde</span><a href="/portfolio/index.html">Ver portfólio</a></div></footer>
     </main>
   );
 }

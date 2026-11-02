@@ -8,17 +8,17 @@ const readout = [
   {
     code: "01",
     label: "Market Friction",
-    text: "Clínicas em Salvador compram com baixa confiança porque já foram queimadas por agências.",
+    text: "O diagnóstico evita que uma ferramenta seja indicada antes de entender a prioridade comercial.",
   },
   {
     code: "02",
     label: "Strategic Wedge",
-    text: "Diagnóstico pago transforma desconfiança em prova antes da venda de implementação.",
+    text: "A intervenção parte de posicionamento, oferta, presença, aquisição e conversão — não de uma ferramenta pré-definida.",
   },
   {
     code: "03",
     label: "Revenue Path",
-    text: "Auditoria de R$800 abre sprint de R$4.800 e cria caminho para R$15k MRR em 12 meses.",
+    text: "O Diagnóstico Consultivo Express organiza a prioridade e direciona para um dos sete serviços vigentes.",
   },
 ];
 
@@ -37,14 +37,14 @@ const kpis = [
   },
   {
     label: "Entrada",
-    value: "R$800 · 5 dias",
-    sub: "prova de vazamento",
+    value: "Diagnóstico",
+    sub: "Diagnóstico Consultivo",
     tone: "Wedge",
   },
   {
     label: "Forecast",
-    value: "10 clientes · R$15k",
-    sub: "MRR em 12 meses",
+    value: "7 serviços",
+    sub: "intervenção conforme gargalo",
     tone: "Target",
   },
 ];
@@ -94,34 +94,34 @@ const thesisMatrix = [
   },
   {
     label: "Move",
-    title: "Auditoria paga",
-    text: "R$800 valida dor, cria urgência e conduz para sprint com risco percebido menor.",
+    title: "Diagnóstico consultivo",
+    text: "O diagnóstico orienta a prioridade antes de definir o serviço e o escopo mais coerentes.",
   },
 ];
 
 const pipeline = [
   {
-    title: "Diagnóstico",
-    label: "Prova",
-    price: "R$800",
-    period: "5 dias",
-    text: "Mapear vazamento, quantificar perda e gerar confiança.",
-    progress: 24,
+    title: "Diagnóstico Consultivo",
+    label: "Prioridade",
+    price: "sob agenda",
+    period: "sob agenda",
+    text: "Ler as cinco frentes, apontar gargalos e indicar o próximo passo.",
+    progress: 14,
   },
   {
-    title: "Sprint",
-    label: "Correção",
-    price: "R$4.800",
-    period: "14 dias",
-    text: "Implementar sistema comercial que remove perdas visíveis.",
-    progress: 64,
+    title: "Serviço indicado",
+    label: "Intervenção",
+    price: "sob escopo",
+    period: "conforme projeto",
+    text: "Fundação, presença, campanhas ou Sistema O6 de acordo com o gargalo.",
+    progress: 58,
   },
   {
-    title: "Retainer",
-    label: "Recorrência",
-    price: "R$1.500/mês",
-    period: "mín. 3 meses",
-    text: "Operar melhoria contínua e manter previsibilidade.",
+    title: "Continuidade",
+    label: "Evolução",
+    price: "sob contrato",
+    period: "conforme modalidade",
+    text: "O6 Otimização para ajustes priorizados ou Retainer para capacidade recorrente contratada.",
     progress: 100,
   },
 ];

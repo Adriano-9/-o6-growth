@@ -1,422 +1,144 @@
 "use client";
 
-import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  CheckCircle,
-  Clock,
-  PhoneOff,
-  BarChart2,
-  AlertTriangle,
-  Scale,
-  Users,
-  TrendingUp,
-  Calendar,
-  CheckCircle2,
-  Cpu,
-  Sparkles,
-} from "lucide-react";
-import React, { useState } from "react";
-import { AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { motion, useReducedMotion } from "framer-motion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+import { ArrowDown, ArrowRight, BookOpen, Check, FileText, MessageSquareText, Scale } from "lucide-react";
+import { createLead } from "@/app/crm/_lib/api";
+import { emptyLeadInput } from "@/app/crm/_lib/types";
+import { whatsappUrl } from "@/app/_lib/contato";
+import { getAttribution } from "@/app/briefing/_lib/attribution";
 
-const niches = [
-  "Direito Civil",
-  "Direito Trabalhista",
-  "Direito Tributário",
-  "Direito Empresarial",
-  "Direito de Família",
-  "Direito Imobiliário",
-];
+const findings = {
+  presenca: { title: "Presença e posicionamento", text: "A primeira revisão deve observar se a área de atuação, a localização e os canais de contato estão fáceis de identificar, com comunicação informativa e precisa.", action: "Revisar as páginas públicas pela ótica de quem procura orientação pela primeira vez." },
+  triagem: { title: "Triagem do primeiro contato", text: "Seu ponto de atenção é a passagem entre a dúvida inicial e a avaliação por um profissional. Um processo claro ajuda a registrar o pedido sem antecipar aconselhamento jurídico.", action: "Definir quais informações administrativas podem ser solicitadas no primeiro contato." },
+  propostas: { title: "Acompanhamento de propostas", text: "Quando a proposta é enviada, o próximo passo e o canal de retorno devem estar claros. O acompanhamento pode ser organizado com discrição e respeito à decisão do cliente.", action: "Verificar propostas sem retorno e os prazos de acompanhamento usados hoje." },
+} as const;
+type Finding = keyof typeof findings;
 
-const problems = [
-  {
-    icon: Clock,
-    title: "Cliente ligou e ninguém retornou",
-    description:
-      "A pessoa pesquisou 'advogado trabalhista', encontrou seu escritório e mandou mensagem. Sua secretária só viu 2 horas depois. Ele já fechou com outro.",
-    stat: "5 min",
-    statLabel: "é o máximo que um potencial cliente espera",
-  },
-  {
-    icon: PhoneOff,
-    title: "Consulta feita, proposta esquecida",
-    description:
-      "O cliente veio na consulta inicial, gostou, pediu proposta de honorários. Ninguém fez follow-up. Ele contratou quem ligou primeiro.",
-    stat: "72%",
-    statLabel: "dos clientes fecham com quem responde primeiro",
-  },
-  {
-    icon: BarChart2,
-    title: "Depende 100% de indicação",
-    description:
-      "Seu escritório cresce quando alguém indica. Quando não indica, a agenda esvazia. Não existe um canal previsível de novos clientes.",
-    stat: "0",
-    statLabel: "canais de captação estruturados",
-  },
-];
+const heroImages = [
+  { src: "/landing/advocacia-reuniao.png", alt: "Reunião de atendimento em escritório de advocacia" },
+  { src: "/landing/advocacia-atendimento.png", alt: "Advogada ouvindo uma cliente em seu escritório" },
+  { src: "/landing/advocacia-equipe.png", alt: "Equipe jurídica revisando documentos em conjunto" },
+] as const;
 
-const steps = [
-  {
-    number: "01",
-    title: "Captação Estruturada",
-    description:
-      "Criamos canais de entrada que atraem clientes com perfil ideal para sua área de atuação — Google, site, conteúdo — além de indicações.",
-  },
-  {
-    number: "02",
-    title: "Qualificação Automática",
-    description:
-      "Cada contato é avaliado automaticamente: tipo de caso, perfil de honorários, urgência. Sua equipe só recebe quem vale uma conversa.",
-  },
-  {
-    number: "03",
-    title: "Atendimento Rápido",
-    description:
-      "O potencial cliente é respondido em minutos, não horas. A primeira impressão do seu escritório é de agilidade e profissionalismo.",
-  },
-  {
-    number: "04",
-    title: "Follow-up até o Fechamento",
-    description:
-      "Propostas enviadas recebem acompanhamento automático. Nenhum cliente 'esfria' por falta de retorno — sua taxa de conversão sobe sem esforço extra.",
-  },
-];
-
-const results = [
-  { value: "3×", label: "mais clientes sem depender de indicação" },
-  { value: "30d", label: "para o sistema estar funcionando" },
-  { value: "-65%", label: "de propostas perdidas por falta de follow-up" },
-];
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export default function AdvocaciaPage() {
+  const pageRef = useRef<HTMLElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const heroImageRef = useRef<HTMLDivElement>(null);
+  const methodRef = useRef<HTMLElement>(null);
+  const methodProgressRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
+  const [activeImage, setActiveImage] = useState(0);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [area, setArea] = useState("Direito Civil");
-  const [formState, setFormState] = useState<"idle" | "calculating" | "success">("idle");
-  const [progress, setProgress] = useState(0);
+  const [phone, setPhone] = useState("");
+  const [practice, setPractice] = useState("Direito de família");
+  const [finding, setFinding] = useState<Finding>("presenca");
+  const [status, setStatus] = useState<"idle" | "saving" | "done" | "error">("idle");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setFormState("calculating");
-    setProgress(0);
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(() => setFormState("success"), 400);
-          return 100;
-        }
-        return prev + 10;
+  useEffect(() => {
+    if (reduced) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") setActiveImage((current) => (current + 1) % heroImages.length);
+    }, 2500);
+    return () => window.clearInterval(timer);
+  }, [reduced]);
+
+  useGSAP(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    if (heroImageRef.current && heroRef.current) {
+      gsap.fromTo(heroImageRef.current, { yPercent: -5 }, {
+        yPercent: 10,
+        ease: "none",
+        scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 0.7 },
       });
-    }, 120);
-  };
+    }
 
+    if (methodProgressRef.current && methodRef.current) {
+      gsap.fromTo(methodProgressRef.current, { scaleX: 0 }, {
+        scaleX: 1,
+        ease: "none",
+        scrollTrigger: { trigger: methodRef.current, start: "top 78%", end: "bottom 32%", scrub: 0.5 },
+      });
+    }
+
+    gsap.utils.toArray<HTMLElement>("section h2").forEach((element) => {
+      gsap.fromTo(element, { autoAlpha: 0, y: 34 }, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.85,
+        ease: "power2.out",
+        scrollTrigger: { trigger: element, start: "top 88%", once: true },
+      });
+    });
+  }, { scope: pageRef });
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStatus("saving");
+    const attribution = getAttribution();
+    try {
+      const lead = await createLead({
+        ...emptyLeadInput("Novo Lead"),
+        nome: name.trim(), email: email.trim(), whatsapp: phone.trim(),
+        nicho: `Advocacia · ${practice}`,
+        origem: "site_o6_advocacia",
+        notas: `Diagnóstico inicial LP advocacia. Área: ${practice}. Ponto declarado: ${findings[finding].title}. Origem: ${attribution.utm_source || "direto"}; mídia: ${attribution.utm_medium || "não informada"}; campanha: ${attribution.utm_campaign || "não informada"}; página: ${attribution.page}.`,
+      });
+      setStatus(lead ? "done" : "error");
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  const insight = findings[finding];
   return (
-    <main className="min-h-screen flex flex-col bg-brand-offwhite selection:bg-brand-cyan selection:text-brand-graphite">
-
-      {/* ── HERO ── */}
-      <section className="relative w-full min-h-screen bg-brand-offwhite flex flex-col overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#12121206_1px,transparent_1px),linear-gradient(to_bottom,#12121206_1px,transparent_1px)] bg-[size:5rem_5rem] pointer-events-none" />
-
-        <header className="relative z-20 w-full max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-brand-graphite flex items-center justify-center">
-              <span className="text-white font-black text-sm">O6</span>
-            </div>
-            <span className="font-black text-lg tracking-tighter text-brand-graphite uppercase">O6 Growth</span>
-          </div>
-          <a href="#diagnostico" className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-white bg-brand-orange px-5 py-2.5 shadow-[3px_3px_0px_0px_#121212] hover:shadow-[5px_5px_0px_0px_#121212] hover:-translate-y-px transition-all">
-            Diagnóstico Grátis
-          </a>
-        </header>
-
-        <div className="relative z-10 flex-1 flex items-center w-full max-w-7xl mx-auto px-6 py-16 md:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full">
-
-            <div className="flex flex-col">
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45 }}
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-brand-graphite shadow-[3px_3px_0px_0px_#121212] mb-8 self-start"
-              >
-                <Scale className="w-4 h-4 text-brand-orange" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-brand-graphite">
-                  Para Escritórios de Advocacia
-                </span>
-              </motion.div>
-
-              <motion.h1
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.55, delay: 0.1 }}
-                className="text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter text-brand-graphite leading-[0.92] mb-6"
-              >
-                Novos clientes<br />
-                <span className="text-brand-orange">sem depender</span><br />
-                de indicação.
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.22 }}
-                className="text-base md:text-lg text-brand-graphite/70 leading-relaxed max-w-lg mb-10"
-              >
-                Sistema comercial que atrai, qualifica e acompanha potenciais clientes do primeiro contato ao fechamento de honorários — de forma previsível e profissional.
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.32 }}
-                className="flex flex-col sm:flex-row gap-4 mb-12"
-              >
-                <a href="#diagnostico" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand-orange text-white font-black uppercase tracking-widest text-xs shadow-[4px_4px_0px_0px_#121212] hover:shadow-[6px_6px_0px_0px_#121212] hover:-translate-y-px transition-all">
-                  Quero Mais Clientes <ArrowRight className="w-4 h-4" />
-                </a>
-                <a href="#como-funciona" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white border-2 border-brand-graphite text-brand-graphite font-black uppercase tracking-widest text-xs shadow-[4px_4px_0px_0px_#121212] hover:bg-brand-graphite hover:text-white transition-all">
-                  Ver Como Funciona
-                </a>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.5 }} className="flex flex-col gap-3">
-                {[
-                  "Funciona para qualquer área do Direito",
-                  "Resultado mensurável em até 30 dias",
-                  "Compatível com as regras da OAB",
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2.5">
-                    <CheckCircle className="w-4 h-4 text-brand-orange shrink-0" />
-                    <span className="text-sm font-semibold text-brand-graphite/70">{item}</span>
-                  </div>
-                ))}
-              </motion.div>
-            </div>
-
-            <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="flex flex-col gap-4">
-              <div className="bg-brand-graphite text-white p-8 border-4 border-brand-graphite shadow-[8px_8px_0px_0px_#FF5722]">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Realidade dos escritórios</p>
-                <p className="text-5xl font-black tracking-tighter text-brand-orange mb-3">72%</p>
-                <p className="text-sm text-white/80 leading-relaxed">
-                  dos potenciais clientes fecham com o <strong className="text-white">primeiro advogado que responde</strong>. Se você demora, o cliente vai para quem foi mais rápido.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                {results.map((card, i) => (
-                  <div key={i} className="bg-white border-2 border-brand-graphite p-4 shadow-[3px_3px_0px_0px_#121212]">
-                    <p className="text-2xl font-black text-brand-graphite tracking-tighter">{card.value}</p>
-                    <p className="text-[10px] text-brand-graphite/60 leading-snug mt-1">{card.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="bg-white border-2 border-brand-graphite p-4 shadow-[3px_3px_0px_0px_#121212]">
-                <p className="text-[9px] font-black uppercase tracking-widest text-brand-graphite/40 mb-3">Áreas atendidas</p>
-                <div className="flex flex-wrap gap-2">
-                  {niches.map((p) => (
-                    <span key={p} className="px-3 py-1 bg-brand-offwhite border border-brand-graphite/20 text-[10px] font-bold text-brand-graphite uppercase tracking-wider">{p}</span>
-                  ))}
-                </div>
-              </div>
+    <main ref={pageRef} className="bg-[#e8e8e4] text-[#152132]">
+      <section ref={heroRef} className="relative flex min-h-[650px] flex-col overflow-hidden bg-[#101b2b] text-white md:min-h-[min(770px,90svh)]">
+        <div ref={heroImageRef} className="absolute -top-12 inset-x-0 -bottom-12 will-change-transform">
+          {heroImages.map((item, index) => (
+            <motion.div key={item.src} aria-hidden={index !== activeImage} initial={false} animate={{ opacity: index === activeImage ? 1 : 0, scale: index === activeImage ? 1 : 1.045 }} transition={{ opacity: { duration: reduced ? 0 : 0.9 }, scale: { duration: reduced ? 0 : 2.5 } }} className="absolute inset-0">
+              <Image src={item.src} alt={index === activeImage ? item.alt : ""} fill priority={index === 0} sizes="100vw" className="object-cover object-[62%_center]" />
             </motion.div>
-
-          </div>
+          ))}
         </div>
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,17,30,.95)_0%,rgba(8,17,30,.78)_36%,rgba(8,17,30,.08)_100%)] md:bg-[linear-gradient(90deg,rgba(8,17,30,.95)_0%,rgba(8,17,30,.70)_32%,rgba(8,17,30,.02)_80%)]" />
+        <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between border-b border-white/20 px-6 py-5 md:px-10"><Link href="/" className="text-sm font-black uppercase">O6 <span className="font-normal">Growth</span></Link><a href="#diagnostico" className="border-b border-[#cfb886] pb-1 text-xs font-bold uppercase text-[#eadbb9] transition hover:text-white">Solicitar análise <ArrowRight size={14} className="ml-1 inline" /></a></header>
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-6 pb-14 pt-16 md:px-10"><motion.div initial={reduced ? false : { opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .85 }} className="max-w-[850px]"><p className="mb-8 flex items-center gap-3 text-xs font-bold uppercase text-[#d3bd91]"><Scale size={19} /> Comunicação para escritórios de advocacia</p><h1 className="font-serif text-[clamp(3.15rem,6vw,6.2rem)] leading-[.98]">Novos clientes além da <em className="text-[#dcc69a]">indicação.</em></h1><p className="mt-8 max-w-[510px] text-lg leading-relaxed text-white/78">Torne sua atuação mais clara para quem procura um escritório. Organize a informação, o primeiro contato e o acompanhamento com critério.</p><a href="#diagnostico" className="mt-9 inline-flex items-center gap-3 border border-[#cbb381] bg-[#cbb381] px-6 py-4 text-sm font-bold text-[#101b2b] transition hover:bg-white hover:border-white">Analisar meu escritório <ArrowRight size={18} /></a></motion.div></div>
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 border-t border-white/20 px-6 py-5 text-xs uppercase text-white/60 md:px-10"><div className="flex items-center gap-3"><span className="font-mono text-[#e2d1ad]">0{activeImage + 1} / 03</span><div className="flex gap-1.5" aria-label="Cenas do escritório">{heroImages.map((item, index) => <button key={item.src} type="button" aria-label={`Ver cena ${index + 1}`} aria-pressed={index === activeImage} onClick={() => setActiveImage(index)} className={`h-1 w-7 transition-colors ${index === activeImage ? "bg-[#d3bd91]" : "bg-white/35 hover:bg-white/70"}`} />)}</div></div><span className="hidden sm:inline">Respeito ao contexto profissional</span><a href="#metodo" className="inline-flex items-center gap-2 text-white">Conheça o método <ArrowDown size={15} /></a></div>
       </section>
 
-      {/* ── PROBLEMS ── */}
-      <section className="w-full py-24 md:py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="max-w-3xl mb-16">
-            <span className="text-[11px] font-black uppercase tracking-widest text-brand-orange block mb-4">O problema real</span>
-            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-brand-graphite leading-[0.92] mb-6">
-              Você depende de indicação.<br />
-              Quando não vem,<br />
-              <span className="text-brand-graphite/30">a agenda esvazia.</span>
-            </h2>
-            <p className="text-base md:text-lg text-brand-graphite/60 leading-relaxed max-w-2xl">
-              O problema não é falta de demanda jurídica. É falta de um sistema que gera clientes de forma previsível — sem depender de quem conhece quem.
-            </p>
+      <section className="bg-[#e8e8e4] pb-20 pt-10 md:py-28"><div className="mx-auto grid max-w-7xl gap-12 px-6 md:px-10 lg:grid-cols-[.9fr_1.1fr] lg:gap-20"><div><p className="text-xs font-bold uppercase text-[#8d6a36]">O primeiro contato importa</p><h2 className="mt-6 font-serif text-5xl leading-[1.05] md:text-7xl">Quando alguém precisa de orientação, o caminho deve ser claro.</h2></div><div className="border-t border-[#8e9699] pt-8 lg:mt-20"><p className="max-w-xl text-lg leading-relaxed text-[#4c5862]">Uma presença digital séria informa áreas de atuação, permite contato fácil e evita promessas. Ela ajuda a pessoa a entender se deve procurar seu escritório e como iniciar uma conversa.</p><div className="mt-10 grid gap-0 border-t border-[#aab0ae]"><div className="flex items-start gap-5 border-b border-[#aab0ae] py-5"><BookOpen className="shrink-0 text-[#8d6a36]" /><p>Conteúdo claro sobre áreas e formas de atuação</p></div><div className="flex items-start gap-5 border-b border-[#aab0ae] py-5"><MessageSquareText className="shrink-0 text-[#8d6a36]" /><p>Contato organizado e linguagem respeitosa</p></div><div className="flex items-start gap-5 border-b border-[#aab0ae] py-5"><FileText className="shrink-0 text-[#8d6a36]" /><p>Próximo passo definido após cada conversa</p></div></div></div></div></section>
+
+      <section id="metodo" ref={methodRef} className="bg-[linear-gradient(125deg,#101b2b_0%,#172536_58%,#344358_100%)] py-20 text-white md:py-28">
+        <div className="mx-auto max-w-7xl px-6 md:px-10">
+          <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
+            <div><p className="text-xs font-bold uppercase text-[#d3bd91]">Arquitetura de confiança</p><h2 className="mt-5 max-w-2xl font-serif text-5xl md:text-7xl">Da busca à conversa.</h2></div>
+            <p className="max-w-sm leading-relaxed text-white/65">Três pontos para observar na presença do escritório. O trabalho é definido depois da análise do contexto.</p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-            {problems.map((p, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.45, delay: i * 0.1 }} className="bg-brand-offwhite border-2 border-brand-graphite p-8 shadow-[4px_4px_0px_0px_#121212] flex flex-col gap-6">
-                <div className="w-10 h-10 bg-brand-graphite flex items-center justify-center shrink-0">
-                  <p.icon className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black uppercase tracking-tight text-brand-graphite mb-3">{p.title}</h3>
-                  <p className="text-sm text-brand-graphite/60 leading-relaxed">{p.description}</p>
-                </div>
-                <div className="mt-auto pt-6 border-t-2 border-brand-graphite/10">
-                  <p className="text-3xl font-black text-brand-orange tracking-tighter">{p.stat}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-brand-graphite/50 mt-1">{p.statLabel}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="bg-brand-graphite p-10 md:p-14 border-4 border-brand-graphite shadow-[8px_8px_0px_0px_#FF5722]">
-            <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-12">
-              <AlertTriangle className="w-12 h-12 text-brand-orange shrink-0" />
-              <div>
-                <p className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white leading-tight mb-2">
-                  Se seu escritório atende 30 consultas por mês e perde 40% por falta de follow-up, são R$ 36.000 em honorários perdidos.
-                </p>
-                <p className="text-sm text-white/60 max-w-2xl leading-relaxed">
-                  Com honorário médio de R$ 3.000, cada cliente perdido dói no caixa. E a maioria se perde simplesmente porque ninguém fez o segundo contato.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section id="como-funciona" className="w-full py-24 md:py-32 bg-brand-offwhite border-t border-b border-brand-graphite/10 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#12121205_1px,transparent_1px),linear-gradient(to_bottom,#12121205_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="max-w-3xl mb-20">
-            <span className="text-xs font-black tracking-widest text-brand-orange uppercase block mb-3">COMO FUNCIONA</span>
-            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-brand-graphite leading-none">
-              4 ETAPAS PARA CLIENTES PREVISÍVEIS.
-            </h2>
-            <p className="mt-6 text-base md:text-lg text-brand-graphite/70 max-w-2xl font-normal leading-relaxed">
-              Um sistema que cuida de cada etapa: do primeiro contato ao fechamento de honorários. Respeitando as regras da OAB e a imagem do seu escritório.
-            </p>
-          </div>
-
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } }} className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-            {steps.map((step, i) => (
-              <motion.div key={i} variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } }} className="group bg-white border-2 border-brand-graphite p-8 md:p-10 relative flex flex-col min-h-[240px] shadow-[6px_6px_0px_0px_#121212] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[10px_10px_0px_0px_#121212] transition-all duration-300">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-brand-graphite flex items-center justify-center text-white font-mono text-xs font-bold">{step.number}</div>
-                </div>
-                <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight text-brand-graphite mb-4 group-hover:text-brand-orange transition-colors">{step.title}</h3>
-                <p className="text-xs md:text-sm text-brand-graphite/70 leading-relaxed font-normal">{step.description}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── SOCIAL PROOF ── */}
-      <section className="w-full py-24 md:py-32 bg-brand-graphite text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff04_1px,transparent_1px),linear-gradient(to_bottom,#ffffff04_1px,transparent_1px)] bg-[size:3rem_3rem]" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="max-w-3xl mb-16">
-            <span className="text-xs font-black tracking-widest text-brand-cyan uppercase block mb-3">RESULTADOS TÍPICOS</span>
-            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white leading-none">O QUE MUDA NOS PRIMEIROS 30 DIAS.</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="mt-14 h-px bg-white/25"><div ref={methodProgressRef} className="h-px origin-left bg-[#d3bd91]" /></div>
+          <div className="grid md:grid-cols-3">
             {[
-              { icon: Calendar, value: "+50%", label: "mais consultas agendadas", desc: "Com atendimento rápido e follow-up automático, a taxa de agendamento de consultas iniciais sobe no primeiro mês." },
-              { icon: Users, value: "3×", label: "mais clientes fechados", desc: "Potenciais clientes que recebem follow-up no timing certo fecham 3 vezes mais do que os que ficam sem retorno." },
-              { icon: TrendingUp, value: "R$ 36k", label: "receita recuperada por trimestre", desc: "Em um escritório com 30 consultas/mês e honorário de R$ 3.000, a conversão extra representa R$ 36k/trimestre." },
-            ].map((item, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.45, delay: i * 0.12 }} className="bg-white/5 border border-white/10 p-8 flex flex-col gap-4">
-                <item.icon className="w-8 h-8 text-brand-cyan" />
-                <p className="text-4xl font-black text-brand-orange tracking-tighter">{item.value}</p>
-                <p className="text-xs font-black uppercase tracking-wider text-white/80">{item.label}</p>
-                <p className="text-sm text-white/60 leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
+              {n:"01",title:"Ser encontrado",text:"Informações consistentes sobre o escritório, as áreas e os canais oficiais."},
+              {n:"02",title:"Ser compreendido",text:"Conteúdo que explica a atuação em linguagem acessível, sem prometer desfechos."},
+              {n:"03",title:"Ser procurado",text:"Formas simples de iniciar o contato e uma rotina de resposta bem definida."},
+            ].map((step,i)=><motion.div key={step.n} initial={reduced ? false : { opacity: 0, y: 35 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .3 }} transition={{ delay: i * .12 }} className="border-b border-white/25 py-8 md:min-h-72 md:border-r md:px-7 md:first:pl-0 md:last:border-r-0"><span className="font-mono text-xs text-[#d3bd91]">{step.n} / 03</span><h3 className="mt-10 font-serif text-3xl">{step.title}</h3><p className="mt-4 max-w-xs leading-relaxed text-white/60">{step.text}</p></motion.div>)}
           </div>
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      <section id="diagnostico" className="w-full bg-brand-offwhite border-t border-brand-graphite/10 pt-24 pb-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#12121203_1px,transparent_1px),linear-gradient(to_bottom,#12121203_1px,transparent_1px)] bg-[size:6rem_6rem] pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-24">
+      <section className="bg-[#d3d9da] py-20 md:py-28"><div className="mx-auto grid max-w-7xl gap-12 px-6 md:px-10 lg:grid-cols-[.8fr_1.2fr] lg:items-center"><div><p className="text-xs font-bold uppercase text-[#8d6a36]">Uma leitura objetiva</p><h2 className="mt-5 font-serif text-5xl md:text-6xl">O que avaliar primeiro?</h2><p className="mt-6 leading-relaxed text-[#4c5862]">Um diagnóstico começa pelo que o visitante consegue entender e pelo que acontece quando decide entrar em contato.</p></div><motion.div initial={reduced ? false : { opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="border border-[#a8b2b3] bg-white/60 p-7 shadow-[0_22px_50px_rgba(17,33,49,.09)] backdrop-blur-md md:p-10"><div className="flex justify-between border-b border-[#b8c1c0] pb-5 text-xs font-bold uppercase"><span>Roteiro de revisão</span><span className="text-[#8d6a36]">01—03</span></div>{["A área de atuação está evidente?","O contato é fácil e discreto?","Existe uma rotina após a primeira conversa?"].map((question,i)=><div key={question} className="flex items-start gap-5 border-b border-[#c7cecc] py-5 last:border-b-0"><span className="font-mono text-xs text-[#8d6a36]">0{i+1}</span><p className="text-lg">{question}</p><Check size={18} className="ml-auto shrink-0 text-[#8d6a36]" /></div>)}<p className="pt-4 text-xs text-[#647178]">Perguntas orientadoras; nenhuma pontuação é presumida sem dados.</p></motion.div></div></section>
 
-            <div className="lg:col-span-6 flex flex-col gap-6">
-              <span className="text-xs font-black tracking-widest text-brand-orange uppercase">DIAGNÓSTICO GRATUITO</span>
-              <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-brand-graphite leading-none">
-                DESCUBRA QUANTOS CLIENTES SEU ESCRITÓRIO ESTÁ PERDENDO.
-              </h2>
-              <p className="text-sm md:text-base text-brand-graphite/70 leading-relaxed font-normal">
-                Em 30 minutos, mapeamos seu processo comercial, identificamos onde os clientes estão se perdendo e calculamos quanto de honorários você pode recuperar.
-              </p>
-            </div>
-
-            <div className="lg:col-span-6 bg-white border border-brand-graphite/10 p-8 shadow-sm">
-              <AnimatePresence mode="wait">
-                {formState === "idle" && (
-                  <motion.form key="form-idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={handleSubmit} className="space-y-6">
-                    <div className="pb-4 border-b border-brand-graphite/5">
-                      <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite">AGENDAR DIAGNÓSTICO GRATUITO</h3>
-                      <p className="text-[10px] text-brand-graphite/50 mt-1">PARA ESCRITÓRIOS DE ADVOCACIA</p>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">Seu melhor e-mail</label>
-                      <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@escritorio.com" className="w-full p-3.5 bg-brand-offwhite border border-brand-graphite/10 text-xs font-semibold text-brand-graphite focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">Área de atuação principal</label>
-                      <select value={area} onChange={(e) => setArea(e.target.value)} className="w-full p-3.5 bg-brand-offwhite border border-brand-graphite/10 text-xs font-semibold text-brand-graphite focus:outline-none focus:border-brand-cyan transition-all">
-                        <option>Direito Civil</option>
-                        <option>Direito Trabalhista</option>
-                        <option>Direito Tributário</option>
-                        <option>Direito Empresarial</option>
-                        <option>Direito de Família</option>
-                        <option>Direito Imobiliário</option>
-                        <option>Outra área</option>
-                      </select>
-                    </div>
-                    <button type="submit" className="w-full py-4 bg-brand-orange text-white font-black uppercase tracking-widest text-xs transition-all hover:bg-brand-orange/95 shadow-[4px_4px_0px_0px_#00E5FF] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#00E5FF]">
-                      QUERO MAIS CLIENTES NO MEU ESCRITÓRIO
-                    </button>
-                    <p className="text-[9px] text-brand-graphite/40 leading-snug text-center">Sem compromisso. Sem spam. Seus dados ficam seguros.</p>
-                  </motion.form>
-                )}
-                {formState === "calculating" && (
-                  <motion.div key="form-calc" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-12 flex flex-col items-center justify-center text-center">
-                    <Cpu className="w-12 h-12 text-brand-cyan animate-spin mb-6" />
-                    <h3 className="text-xs font-black uppercase tracking-widest text-brand-graphite mb-2">ANALISANDO SEU ESCRITÓRIO...</h3>
-                    <div className="w-48 h-1.5 bg-brand-graphite/10 mb-4 overflow-hidden relative">
-                      <motion.div className="h-full bg-brand-cyan" initial={{ width: 0 }} animate={{ width: `${progress}%` }} />
-                    </div>
-                    <span className="text-[10px] text-brand-graphite/50">{progress}%</span>
-                  </motion.div>
-                )}
-                {formState === "success" && (
-                  <motion.div key="form-success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 flex flex-col items-center justify-center text-center">
-                    <CheckCircle2 className="w-14 h-14 text-brand-cyan mb-6" />
-                    <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite mb-2">DIAGNÓSTICO AGENDADO!</h3>
-                    <p className="text-xs text-brand-graphite/70 max-w-sm leading-relaxed mb-6">
-                      Um consultor da O6 vai entrar em contato em até 15 minutos para agendar sua sessão gratuita.
-                    </p>
-                    <div className="w-full bg-brand-offwhite border border-brand-cyan/20 p-4 font-mono text-[9px] text-left text-brand-graphite/70 space-y-1">
-                      <p className="text-brand-orange font-bold uppercase mb-1 flex items-center gap-1"><Sparkles className="w-3 h-3" /> CONFIRMAÇÃO</p>
-                      <p>EMAIL: {email}</p>
-                      <p>ÁREA: {area}</p>
-                      <p>STATUS: RETORNO EM ATÉ 15 MINUTOS</p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-          </div>
-
-          <footer className="border-t border-brand-graphite/10 pt-12 flex flex-col md:flex-row items-center justify-between gap-6 text-[10px] font-semibold text-brand-graphite/50 tracking-wider">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-brand-graphite flex items-center justify-center">
-                <span className="text-white font-black text-xs">O6</span>
-              </div>
-              <span className="font-black text-xs text-brand-graphite uppercase tracking-tighter">O6 Growth</span>
-            </div>
-            <span>&copy; 2026 O6 Growth. Todos os direitos reservados.</span>
-          </footer>
-        </div>
-      </section>
-
+      <section id="diagnostico" className="bg-[#f2f2ef] py-20 md:py-28"><div className="mx-auto grid max-w-7xl gap-12 px-6 md:px-10 lg:grid-cols-[.85fr_1.15fr] lg:gap-24"><div><p className="text-xs font-bold uppercase text-[#8d6a36]">Diagnóstico inicial gratuito</p><h2 className="mt-6 font-serif text-5xl leading-tight md:text-6xl">Uma leitura para o seu escritório.</h2><p className="mt-6 max-w-md leading-relaxed text-[#4c5862]">Conte qual parte da presença ou do atendimento precisa de atenção. Você recebe uma orientação inicial e escolhe o próximo passo.</p><div className="mt-10 h-px w-20 bg-[#8d6a36]" /><p className="mt-5 max-w-sm text-sm leading-relaxed text-[#647178]">Não inclua informações sigilosas de clientes, detalhes de casos ou documentos neste formulário.</p></div><div className="border-t-2 border-[#8d6a36] bg-white p-6 shadow-[0_20px_45px_rgba(16,27,43,.07)] md:p-9">{status === "done" ? <div aria-live="polite"><p className="text-xs font-bold uppercase text-[#8d6a36]">Sua leitura inicial</p><h3 className="mt-4 font-serif text-4xl">{insight.title}</h3><p className="mt-6 leading-relaxed text-[#4c5862]">{insight.text}</p><div className="mt-8 border-l-2 border-[#8d6a36] pl-5"><p className="text-xs font-bold uppercase">Primeiro passo</p><p className="mt-2 text-sm leading-relaxed text-[#4c5862]">{insight.action}</p></div><p className="mt-7 text-xs leading-relaxed text-[#647178]">Leitura baseada na prioridade declarada, sem análise de casos ou garantia de resultado. A avaliação completa depende de conversa e dados adicionais.</p><div className="mt-8 grid gap-3 sm:grid-cols-2"><a href="/produto/diagnostico" className="inline-flex items-center justify-center gap-2 bg-[#172536] px-4 py-3 text-center text-sm font-semibold text-white">Diagnóstico Express <ArrowRight size={16} /></a><a href={whatsappUrl("Quero conversar sobre a presença digital do meu escritório")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 border border-[#172536] px-4 py-3 text-center text-sm font-semibold">Agendar conversa <ArrowRight size={16} /></a></div><Link href="/servicos" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold underline underline-offset-4">Ver serviços <ArrowRight size={15} /></Link></div> : <form onSubmit={submit} className="space-y-5"><p className="text-xs font-bold uppercase text-[#8d6a36]">Solicitar leitura inicial</p><label className="block text-sm font-semibold">Seu nome<input required value={name} onChange={e=>setName(e.target.value)} className="mt-2 w-full border border-[#b8c1c0] bg-[#fafaf9] p-3 outline-none focus:border-[#8d6a36]" /></label><div className="grid gap-5 sm:grid-cols-2"><label className="block text-sm font-semibold">E-mail<input required type="email" value={email} onChange={e=>setEmail(e.target.value)} className="mt-2 w-full border border-[#b8c1c0] bg-[#fafaf9] p-3 outline-none focus:border-[#8d6a36]" /></label><label className="block text-sm font-semibold">WhatsApp<input required type="tel" value={phone} onChange={e=>setPhone(e.target.value)} className="mt-2 w-full border border-[#b8c1c0] bg-[#fafaf9] p-3 outline-none focus:border-[#8d6a36]" /></label></div><label className="block text-sm font-semibold">Área principal<select value={practice} onChange={e=>setPractice(e.target.value)} className="mt-2 w-full border border-[#b8c1c0] bg-[#fafaf9] p-3"><option>Direito de família</option><option>Direito trabalhista</option><option>Direito empresarial</option><option>Direito civil</option><option>Outra área</option></select></label><label className="block text-sm font-semibold">O que precisa de atenção?<select value={finding} onChange={e=>setFinding(e.target.value as Finding)} className="mt-2 w-full border border-[#b8c1c0] bg-[#fafaf9] p-3"><option value="presenca">Presença e posicionamento</option><option value="triagem">Triagem do primeiro contato</option><option value="propostas">Acompanhamento de propostas</option></select></label>{status === "error" && <p role="alert" className="text-sm text-red-700">Não conseguimos registrar seus dados. Tente novamente ou entre em contato pelo WhatsApp.</p>}<button disabled={status === "saving"} className="flex w-full items-center justify-center gap-2 bg-[#172536] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#2a4058] disabled:opacity-60">{status === "saving" ? "Preparando leitura..." : "Receber leitura gratuita"}<ArrowRight size={17} /></button><p className="text-xs leading-relaxed text-[#647178]">Usaremos seus dados para retornar sobre a análise. Não envie dados de clientes.</p></form>}</div></div></section>
+      <footer className="bg-[#101b2b] px-6 py-8 text-xs text-white/60"><div className="mx-auto flex max-w-7xl flex-wrap justify-between gap-4"><span>O6 Growth · Advocacia</span><a href="/portfolio/index.html">Ver portfólio</a></div></footer>
     </main>
   );
 }

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Retainer O6 — Sistema melhorando todo mês | O6 Growth",
-  description:
-    "Acompanhamento mensal: monitoramento, otimizações com base em dados reais, suporte direto com Adriano, relatório mensal. R$ 1.500/mês (mín. 3 meses).",
+  title: "Retainer | O6 Growth",
+  description: "Acompanhamento recorrente com capacidade, cadência e escopo definidos em contrato.",
 };
 
 export default function RetainerLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  void children;
+  redirect("/servicos/retainer");
 }

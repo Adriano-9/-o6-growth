@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Layers, Activity, Compass, Eye, ArrowUpRight } from "lucide-react";
+import { Layers, Eye, ArrowUpRight, Megaphone, PanelsTopLeft, FileText, Workflow } from "lucide-react";
 
 export default function O6XSquad() {
   const containerVariants = {
@@ -35,27 +35,43 @@ export default function O6XSquad() {
     },
     {
       unit: "02",
-      title: "Campanhas, sites e landing pages",
+      title: "Campanhas",
       href: "/servicos/campanhas",
-      icon: <Activity className="w-5 h-5 text-brand-orange" />,
-      description: "Transformamos a direção estratégica em campanhas e experiências digitais com mensagem, design e ação conectados.",
-      highlight: "Estratégia aplicada",
+      icon: <Megaphone className="w-5 h-5 text-brand-orange" />,
+      description: "Conectamos oferta, mensagem, landing page e peças de campanha em um plano com escopo e aprovações definidos.",
+      highlight: "Campanha integrada",
     },
     {
       unit: "03",
-      title: "Vídeos, filmes e motion design",
-      href: "/servicos/videos",
-      icon: <Compass className="w-5 h-5 text-brand-orange" />,
-      description: "Criamos peças audiovisuais da ideia à edição, com roteiro, storyboard, gravação ou assets, legendas e versões para cada canal.",
-      highlight: "Da ideia ao vídeo final",
+      title: "Sites e landing pages",
+      href: "/servicos/sites",
+      icon: <PanelsTopLeft className="w-5 h-5 text-brand-orange" />,
+      description: "Criamos ou atualizamos páginas responsivas que explicam a oferta, respondem dúvidas e orientam o próximo passo.",
+      highlight: "Presença digital",
     },
     {
       unit: "04",
-      title: "Dashboards e acompanhamento",
-      href: "/servicos/dashboards",
+      title: "Conteúdo e audiovisual",
+      href: "/servicos/conteudo",
+      icon: <FileText className="w-5 h-5 text-brand-orange" />,
+      description: "Transformamos pautas e referências em roteiros, peças, vídeos e adaptações que falam a mesma língua da marca.",
+      highlight: "Conteúdo que ganha forma",
+    },
+    {
+      unit: "05",
+      title: "Sistema O6",
+      href: "/servicos/sistema-o6",
+      icon: <Workflow className="w-5 h-5 text-brand-orange" />,
+      description: "Organizamos o processo de entrada, resposta e retomada. A automação só entra quando ela resolve um gargalo real e a equipe consegue sustentar.",
+      highlight: "Processo simples",
+    },
+    {
+      unit: "06",
+      title: "O6 Otimização",
+      href: "/servicos/otimizacao",
       icon: <Eye className="w-5 h-5 text-brand-orange" />,
-      description: "Organizamos indicadores e andamento do projeto em painéis claros. As métricas dependem das fontes de dados disponíveis e conectadas.",
-      highlight: "Visibilidade do projeto",
+      description: "Para quem já tem uma base digital e precisa priorizar ajustes em páginas, mensagens, jornadas e presença sem recomeçar do zero.",
+      highlight: "Melhoria contínua",
     },
   ];
 

@@ -1,50 +1,39 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, CheckCircle2, ShieldAlert, Cpu, Sparkles } from "lucide-react";
-import React, { useState } from "react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
+import React, { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { createLead } from "@/app/crm/_lib/api";
-import { emptyLeadInput } from "@/app/crm/_lib/types";
+import { getAttribution } from "@/app/briefing/_lib/attribution";
+
+const subscribeNoop = () => () => {};
 
 export default function O6Footer() {
   const [email, setEmail] = useState("");
   const [projectType, setProjectType] = useState("Fundação estratégica e de marca");
-  const [formState, setFormState] = useState<"idle" | "calculating" | "success" | "error">("idle");
-  const [progress, setProgress] = useState(0);
+  const [formState, setFormState] = useState<"idle" | "saving" | "success" | "error">("idle");
+  const search = useSyncExternalStore(subscribeNoop, () => window.location.search, () => "");
+  const briefingHref = `/briefing${search}`;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
-
-    setFormState("calculating");
-    setProgress(0);
-
-    // Persistência real roda em paralelo com a animação de progresso —
-    // a animação é só percepção de responsividade (pedido explícito do
-    // usuário), o resultado exibido depende do insert de verdade, nunca
-    // de um timer fixo.
-    const savePromise = createLead({
-      ...emptyLeadInput("Novo Lead"),
-      email,
-      notas: `Solicitação de conversa pelo site O6 — interesse: ${projectType}`,
-      origem: "site_o6",
-    });
-
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          savePromise
-            .then((lead) => {
-              setFormState(lead ? "success" : "error");
-            })
-            .catch(() => setFormState("error"));
-          return 100;
-        }
-        return prev + 10;
+    if (!email || formState === "saving") return;
+    setFormState("saving");
+    try {
+      const response = await fetch("/api/briefing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "contact",
+          email,
+          service: projectType,
+          attribution: getAttribution(),
+        }),
       });
-    }, 120);
+      setFormState(response.ok ? "success" : "error");
+    } catch {
+      setFormState("error");
+    }
   };
 
   return (
@@ -63,7 +52,7 @@ export default function O6Footer() {
               O QUE SUA MARCA PRECISA CONSTRUIR AGORA?
             </h2>
             <p className="text-sm md:text-base text-brand-graphite/70 leading-relaxed font-normal">
-              Conte um pouco sobre o projeto. Vamos entender sua marca, objetivo e entregas necessárias para definir o próximo passo e o formato de trabalho.
+              Deixe seu contato para uma conversa inicial. Se já tem um projeto em mente, envie o briefing completo.
             </p>
 
             <div className="flex flex-col gap-4 mt-4">
@@ -90,7 +79,7 @@ export default function O6Footer() {
                     Escopo e próximo passo
                   </h4>
                   <p className="text-[11px] text-brand-graphite/60 mt-0.5">
-                    Avaliamos se faz sentido um projeto pontual ou um retainer mensal.
+                    Avaliamos se faz sentido um projeto pontual, O6 Otimização ou um Retainer sob contrato.
                   </p>
                 </div>
               </div>
@@ -100,9 +89,9 @@ export default function O6Footer() {
           <div className="lg:col-span-6 bg-white border border-brand-graphite/10 p-8 shadow-sm">
 
             <AnimatePresence mode="wait">
-              {formState === "idle" && (
+              {(formState === "idle" || formState === "saving" || formState === "error") && (
                 <motion.form
-                  key="form-idle"
+                  key="form"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -111,20 +100,22 @@ export default function O6Footer() {
                 >
                   <div className="pb-4 border-b border-brand-graphite/5">
                     <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite">
-                      FALAR SOBRE MEU PROJETO
+                      SOLICITAR CONVERSA
                     </h3>
                     <p className="text-[10px] text-brand-graphite/50 mt-1">
-                      DEIXE SEU E-MAIL E ESCOLHA UMA FRENTE
+                      CONTATO INICIAL, NÃO É O BRIEFING
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">
+                    <label htmlFor="o6-contact-email" className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">
                       Seu melhor e-mail
                     </label>
                     <input
+                      id="o6-contact-email"
                       type="email"
                       required
+                      autoComplete="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="seu@email.com"
@@ -133,60 +124,40 @@ export default function O6Footer() {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">
+                    <label htmlFor="o6-contact-service" className="block text-[10px] font-black uppercase tracking-widest text-brand-graphite/60 mb-2">
                       O que você precisa desenvolver?
                     </label>
                     <select
+                      id="o6-contact-service"
                       value={projectType}
                       onChange={(e) => setProjectType(e.target.value)}
                       className="w-full p-3.5 bg-brand-offwhite border border-brand-graphite/10 text-xs font-semibold text-brand-graphite focus:outline-none focus:border-brand-orange transition-all"
                     >
+                      <option>Diagnóstico Consultivo Express</option>
                       <option>Fundação estratégica e de marca</option>
-                      <option>Campanha</option>
-                      <option>Site ou landing page</option>
-                      <option>Dashboard</option>
-                      <option>Vídeo ou filme</option>
-                      <option>Retainer mensal</option>
+                      <option>Presença digital</option>
+                      <option>Campanhas, conteúdo e audiovisual</option>
+                      <option>Sistema O6</option>
+                      <option>O6 Otimização</option>
+                      <option>Retainer</option>
                       <option>Ainda não sei</option>
                     </select>
                   </div>
 
                   <button
                     type="submit"
+                    disabled={formState === "saving"}
                     className="w-full py-4 bg-brand-orange text-white font-black uppercase tracking-widest text-xs transition-all hover:bg-brand-orange/95 shadow-[4px_4px_0px_0px_#121212] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#121212]"
                   >
-                    SOLICITAR CONVERSA
+                    {formState === "saving" ? "REGISTRANDO..." : "SOLICITAR CONVERSA"}
                   </button>
 
+                  {formState === "error" && <p role="alert" className="text-xs font-semibold text-red-700">Não conseguimos registrar seu contato. Tente novamente; seus dados continuam preenchidos.</p>}
+                  <Link href={briefingHref} className="inline-flex items-center gap-2 text-xs font-bold text-brand-graphite underline underline-offset-4 hover:text-brand-orange">Preencher briefing completo <ArrowRight className="h-4 w-4" /></Link>
                   <p className="text-[9px] text-brand-graphite/40 leading-snug text-center">
-                    Sem compromisso. Sem spam. Seus dados ficam seguros.
+                    Usaremos seu e-mail apenas para retornar sobre a solicitação.
                   </p>
                 </motion.form>
-              )}
-
-              {formState === "calculating" && (
-                <motion.div
-                  key="form-calc"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="py-12 flex flex-col items-center justify-center text-center font-mono"
-                >
-                  <Cpu className="w-12 h-12 text-brand-orange animate-spin mb-6" />
-                  <h3 className="text-xs font-black uppercase tracking-widest text-brand-graphite mb-2">
-                    REGISTRANDO SUA SOLICITAÇÃO...
-                  </h3>
-                  <div className="w-48 h-1.5 bg-brand-graphite/10 mb-4 overflow-hidden relative">
-                    <motion.div
-                      className="h-full bg-brand-orange"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-brand-graphite/50">
-                    {progress}% — ENVIANDO SEU PEDIDO
-                  </span>
-                </motion.div>
               )}
 
               {formState === "success" && (
@@ -198,44 +169,19 @@ export default function O6Footer() {
                 >
                   <CheckCircle2 className="w-14 h-14 text-brand-orange mb-6" />
                   <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite mb-2">
-                    DADOS RECEBIDOS!
+                    CONTATO REGISTRADO
                   </h3>
                   <p className="text-xs text-brand-graphite/70 max-w-sm leading-relaxed mb-6">
-                    Recebemos seu pedido. Vamos entrar em contato para entender o projeto e combinar o próximo passo.
+                    Sua solicitação foi registrada. A O6 retornará pelo e-mail informado para entender o projeto.
                   </p>
 
                   <div className="w-full bg-brand-offwhite border border-brand-orange/20 p-4 font-mono text-[9px] text-left text-brand-graphite/70 space-y-1">
-                    <p className="text-brand-orange font-bold uppercase mb-1 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" /> CONFIRMAÇÃO
-                    </p>
+                    <p className="text-brand-orange font-bold uppercase mb-1">CONFIRMAÇÃO</p>
                     <p>EMAIL: {email}</p>
                     <p>INTERESSE: {projectType}</p>
                     <p>STATUS: RECEBIDO</p>
                   </div>
-                </motion.div>
-              )}
-
-              {formState === "error" && (
-                <motion.div
-                  key="form-error"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="py-8 flex flex-col items-center justify-center text-center"
-                >
-                  <ShieldAlert className="w-14 h-14 text-red-400 mb-6" />
-                  <h3 className="text-sm font-black uppercase tracking-widest text-brand-graphite mb-2">
-                    ALGO DEU ERRADO
-                  </h3>
-                  <p className="text-xs text-brand-graphite/70 max-w-sm leading-relaxed mb-6">
-                    Não conseguimos salvar seus dados agora. Tente novamente em instantes.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setFormState("idle")}
-                    className="px-6 py-3 bg-brand-graphite text-white font-black uppercase tracking-widest text-xs hover:bg-brand-graphite/90 transition-all"
-                  >
-                    TENTAR NOVAMENTE
-                  </button>
+                  <Link href={briefingHref} className="mt-6 inline-flex items-center gap-2 text-xs font-bold underline underline-offset-4">Enviar briefing completo <ArrowRight className="h-4 w-4" /></Link>
                 </motion.div>
               )}
             </AnimatePresence>
