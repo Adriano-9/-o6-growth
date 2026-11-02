@@ -18,13 +18,21 @@ export type TelegramResult =
   | { ok: true; messageId: number }
   | { ok: false; error: string };
 
+export type TelegramInlineButton = {
+  text: string;
+  callbackData: string;
+};
+
 /**
  * Send a plain-text message via Telegram Bot API.
  * Returns result object — never throws.
  */
 export async function notifyTelegram(
   text: string,
-  options?: { parseMode?: "HTML" | "MarkdownV2" },
+  options?: {
+    parseMode?: "HTML" | "MarkdownV2";
+    inlineKeyboard?: TelegramInlineButton[][];
+  },
 ): Promise<TelegramResult> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -49,6 +57,18 @@ export async function notifyTelegram(
         text,
         parse_mode: options?.parseMode ?? "HTML",
         disable_web_page_preview: true,
+        ...(options?.inlineKeyboard
+          ? {
+              reply_markup: {
+                inline_keyboard: options.inlineKeyboard.map((row) =>
+                  row.map((button) => ({
+                    text: button.text,
+                    callback_data: button.callbackData,
+                  })),
+                ),
+              },
+            }
+          : {}),
       }),
     });
 
@@ -58,12 +78,74 @@ export async function notifyTelegram(
       return { ok: false, error: `API ${res.status}: ${body}` };
     }
 
-    const data = await res.json();
-    return { ok: true, messageId: data.result?.message_id };
+    const data: unknown = await res.json();
+    if (
+      typeof data !== "object" ||
+      data === null ||
+      !("result" in data) ||
+      typeof data.result !== "object" ||
+      data.result === null ||
+      !("message_id" in data.result) ||
+      typeof data.result.message_id !== "number"
+    ) {
+      return { ok: false, error: "Telegram retornou resposta inválida." };
+    }
+    return { ok: true, messageId: data.result.message_id };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error(`[telegram] fetch failed: ${msg}`);
     return { ok: false, error: msg };
+  }
+}
+
+export async function answerTelegramCallback(
+  callbackQueryId: string,
+  text: string,
+): Promise<boolean> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return false;
+  try {
+    const response = await fetch(
+      `${TELEGRAM_API}/bot${token}/answerCallbackQuery`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callback_query_id: callbackQueryId, text }),
+      },
+    );
+    return response.ok;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro desconhecido";
+    console.error("[telegram] callback answer failed", message);
+    return false;
+  }
+}
+
+export async function editTelegramMessage(
+  chatId: string,
+  messageId: number,
+  text: string,
+): Promise<boolean> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return false;
+  try {
+    const response = await fetch(`${TELEGRAM_API}/bot${token}/editMessageText`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        message_id: messageId,
+        text,
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+        reply_markup: { inline_keyboard: [] },
+      }),
+    });
+    return response.ok;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro desconhecido";
+    console.error("[telegram] edit message failed", message);
+    return false;
   }
 }
 
@@ -134,6 +216,32 @@ export function formatPipelineComplete(
     `Abordagem WhatsApp gerada.`,
     ``,
     `Pronto para contato.`,
+  ].join("\n");
+}
+
+export function formatDiagnosisPending(input: {
+  businessName: string;
+  contactName: string;
+  segment: string;
+  score: number;
+  recommendedOffer: string;
+  amountPaid: number;
+}): string {
+  const amount = (input.amountPaid / 100).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+  return [
+    `<b>Diagnóstico Express aguardando aprovação</b>`,
+    ``,
+    `Negócio: <b>${escapeHtml(input.businessName)}</b>`,
+    `Contato: ${escapeHtml(input.contactName)}`,
+    `Segmento: ${escapeHtml(input.segment)}`,
+    `Pagamento: <b>${escapeHtml(amount)}</b>`,
+    `Score interno: <b>${input.score}/100</b>`,
+    `Caminho sugerido: ${escapeHtml(input.recommendedOffer)}`,
+    ``,
+    `Aprovar promove o comprador ao CRM. Nenhuma mensagem será enviada automaticamente.`,
   ].join("\n");
 }
 

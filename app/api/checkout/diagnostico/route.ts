@@ -1,13 +1,33 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  createDiagnosisCheckout,
+  StripeConfigurationError,
+  StripeRequestError,
+} from "@/app/_lib/diagnostico-express/stripe";
 
-// Oferta de R$800 pausada desde set/2026 — não criar sessão no Stripe.
-// Reativar quando decidido pelo Adriano.
+export const maxDuration = 30;
 
-export async function POST() {
-  return NextResponse.json(
-    { error: "Oferta indisponível" },
-    { status: 410 },
-  );
+export async function POST(req: NextRequest) {
+  try {
+    const session = await createDiagnosisCheckout(req.nextUrl.origin);
+    if (!session.url) {
+      return NextResponse.json(
+        { error: "Stripe não retornou a URL de pagamento." },
+        { status: 502 },
+      );
+    }
+    return NextResponse.json({ url: session.url, sessionId: session.id });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro desconhecido";
+    if (error instanceof StripeConfigurationError) {
+      return NextResponse.json({ error: message }, { status: 503 });
+    }
+    console.error("[checkout/diagnostico]", message);
+    return NextResponse.json(
+      { error: message },
+      { status: error instanceof StripeRequestError ? 502 : 500 },
+    );
+  }
 }
 
 export async function GET() {
