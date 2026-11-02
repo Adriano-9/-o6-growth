@@ -1,0 +1,72 @@
+import { EXPRESS_FRONTS, type ExpressDiagnosisInput, type FrontId } from "./fronts";
+
+export type ExpressFrontResult = {
+  id: FrontId;
+  label: string;
+  score: number | null;
+  basis: string;
+  gaps: string[];
+  recommendation: string;
+};
+
+export type ExpressReport = {
+  version: "five-fronts-v1";
+  businessName: string;
+  generatedAt: string;
+  summary: string;
+  fronts: ExpressFrontResult[];
+  priorities: Array<{ front: string; action: string; reason: string }>;
+  nextStep: string;
+  method: string;
+};
+
+const VALUE = { sim: 5, parcial: 3, nao: 1 } as const;
+
+export function buildExpressReport(input: ExpressDiagnosisInput): ExpressReport {
+  const fronts: ExpressFrontResult[] = EXPRESS_FRONTS.map((front) => {
+    const answer = input.fronts[front.id];
+    const known = front.checks.filter((check) => answer.checks[check.id] !== "nao_sei");
+    const score = known.length === 0 ? null : Math.round(
+      known.reduce((sum, check) => sum + VALUE[answer.checks[check.id] as keyof typeof VALUE], 0) / known.length * 10,
+    ) / 10;
+    const gaps = front.checks.filter((check) => answer.checks[check.id] === "nao" || answer.checks[check.id] === "parcial");
+    const firstGap = gaps.find((check) => answer.checks[check.id] === "nao") ?? gaps[0];
+    return {
+      id: front.id,
+      label: front.label,
+      score,
+      basis: `${known.length} de ${front.checks.length} verificações respondidas; dados declarados pelo comprador, ainda não auditados pela O6.`,
+      gaps: gaps.map((check) => check.label),
+      recommendation: firstGap?.action ?? "Confirmar as respostas com evidências e manter o que já funciona.",
+    };
+  });
+  const ranked = [...fronts].sort((a, b) => (a.score ?? -1) - (b.score ?? -1));
+  const priorities = ranked.slice(0, 3).map((front) => ({
+    front: front.label,
+    action: front.score === null ? "Coletar evidências antes de definir uma correção." : front.recommendation,
+    reason: front.score === null ? "Informação insuficiente para atribuir nota." : `Leitura declarada: ${front.score}/5.`,
+  }));
+  return {
+    version: "five-fronts-v1",
+    businessName: input.business.name.trim(),
+    generatedAt: new Date().toISOString(),
+    summary: `Leitura inicial das cinco frentes comerciais de ${input.business.name.trim()}: como a empresa é encontrada, percebida e escolhida. As notas abaixo refletem somente as respostas fornecidas e aguardam revisão da O6.`,
+    fronts,
+    priorities,
+    nextStep: "A O6 revisa as respostas e os links, valida a prioridade e só então indica uma solução específica ou uma call estratégica. Um site é apenas uma possibilidade.",
+    method: "Autodeclaração estruturada em 15 verificações e cinco relatos de contexto. Sem auditoria automática dos links, cálculo de impacto financeiro ou promessa de resultado.",
+  };
+}
+
+export function formatExpressReport(report: ExpressReport): string {
+  const lines = [`# Diagnóstico Express O6 — ${report.businessName}`, "", report.summary, "", `*Método: ${report.method}*`, "", "## Cinco frentes"];
+  for (const front of report.fronts) {
+    lines.push("", `### ${front.label} — ${front.score === null ? "sem nota" : `${front.score}/5`}`, front.basis);
+    if (front.gaps.length) lines.push(`Pontos a verificar: ${front.gaps.join("; ")}.`);
+    lines.push(`Ação prática: ${front.recommendation}`);
+  }
+  lines.push("", "## Três prioridades");
+  report.priorities.forEach((item, index) => lines.push(`${index + 1}. **${item.front}:** ${item.action} ${item.reason}`));
+  lines.push("", "## Próximo passo", report.nextStep, "", "*Rascunho para revisão humana. Não enviar como diagnóstico final antes da aprovação da O6.*");
+  return lines.join("\n");
+}
