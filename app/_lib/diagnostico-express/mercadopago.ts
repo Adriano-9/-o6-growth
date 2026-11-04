@@ -5,9 +5,15 @@ import {
   DIAGNOSTICO_EXPRESS_PRODUCT,
   DIAGNOSTICO_EXPRESS_VERSION,
 } from "./config";
+import {
+  isExpressPayment,
+  newExternalReference,
+  verifyMercadoPagoSignature,
+} from "./mercadopago-core";
 
 export type MercadoPagoPreference = {
   id: string;
+  externalReference: string;
   initPoint: string;
   sandboxInitPoint: string;
 };
@@ -44,6 +50,7 @@ function mpAccessToken(): string {
 export async function createDiagnosisPreference(
   origin: string,
 ): Promise<MercadoPagoPreference> {
+  const externalReference = newExternalReference(DIAGNOSTICO_EXPRESS_PRODUCT);
   const body = {
     items: [
       {
@@ -61,7 +68,7 @@ export async function createDiagnosisPreference(
       pending: `${origin}/produto/diagnostico?mp_status=pending`,
     },
     auto_return: "approved",
-    external_reference: `${DIAGNOSTICO_EXPRESS_PRODUCT}:${Date.now()}`,
+    external_reference: externalReference,
     metadata: {
       produto: DIAGNOSTICO_EXPRESS_PRODUCT,
       versao: DIAGNOSTICO_EXPRESS_VERSION,
@@ -112,6 +119,7 @@ export async function createDiagnosisPreference(
 
   return {
     id: data.id,
+    externalReference,
     initPoint: data.init_point,
     sandboxInitPoint:
       typeof data.sandbox_init_point === "string"
@@ -193,10 +201,10 @@ export async function retrieveMercadoPagoPayment(
 export function isPaidMercadoPagoPayment(
   payment: MercadoPagoPayment,
 ): boolean {
-  return (
-    payment.status === "approved" &&
-    payment.transactionAmount === DIAGNOSTICO_EXPRESS_PRICE_CENTS / 100 &&
-    payment.currencyId === "BRL"
+  return isExpressPayment(
+    payment,
+    DIAGNOSTICO_EXPRESS_PRODUCT,
+    DIAGNOSTICO_EXPRESS_PRICE_CENTS,
   );
 }
 
@@ -205,32 +213,10 @@ export function verifyWebhookSignature(
   xRequestId: string | null,
   dataId: string,
 ): boolean {
-  const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
-  if (!secret) return false;
-  if (!xSignature || !xRequestId) return false;
-
-  // Mercado Pago sends: ts=<timestamp>,v1=<hash>
-  const parts: Record<string, string> = {};
-  for (const part of xSignature.split(",")) {
-    const [key, ...rest] = part.split("=");
-    if (key && rest.length > 0) parts[key.trim()] = rest.join("=").trim();
-  }
-
-  const ts = parts.ts;
-  const v1 = parts.v1;
-  if (!ts || !v1) return false;
-
-  // Build the manifest: id:<data.id>;request-id:<x-request-id>;ts:<ts>;
-  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
-
-  // HMAC-SHA256 verification
-  const crypto = require("node:crypto") as typeof import("node:crypto");
-  const hmac = crypto.createHmac("sha256", secret);
-  hmac.update(manifest);
-  const expected = hmac.digest("hex");
-
-  return crypto.timingSafeEqual(
-    Buffer.from(v1, "hex"),
-    Buffer.from(expected, "hex"),
-  );
+  return verifyMercadoPagoSignature({
+    secret: process.env.MERCADOPAGO_WEBHOOK_SECRET,
+    xSignature,
+    xRequestId,
+    dataId,
+  });
 }

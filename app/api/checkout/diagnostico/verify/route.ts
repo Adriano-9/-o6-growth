@@ -5,6 +5,7 @@ import {
   MercadoPagoRequestError,
   retrieveMercadoPagoPayment,
 } from "@/app/_lib/diagnostico-express/mercadopago";
+import { paymentMatchesReference } from "@/app/_lib/diagnostico-express/mercadopago-core";
 
 // Stripe imports kept for future reactivation:
 // import {
@@ -39,6 +40,17 @@ export async function GET(req: NextRequest) {
 
   try {
     const payment = await retrieveMercadoPagoPayment(paymentId);
+    if (
+      !paymentMatchesReference(
+        payment,
+        req.nextUrl.searchParams.get("external_reference"),
+      )
+    ) {
+      return NextResponse.json(
+        { error: "Este pagamento não corresponde à compra informada." },
+        { status: 403 },
+      );
+    }
     const paid = isPaidMercadoPagoPayment(payment);
 
     return NextResponse.json({

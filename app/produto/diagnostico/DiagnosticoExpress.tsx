@@ -54,6 +54,7 @@ export default function DiagnosticoExpress() {
   // Mercado Pago returns: ?payment_id=XXX&status=approved&preference_id=YYY
   const mpPaymentId = searchParams.get("payment_id") ?? "";
   const mpStatus = searchParams.get("status") ?? "";
+  const mpExternalReference = searchParams.get("external_reference") ?? "";
 
   // Token-based result access (after submit)
   const resultToken = searchParams.get("token") ?? "";
@@ -107,7 +108,7 @@ export default function DiagnosticoExpress() {
         }
 
         // Mercado Pago payment verification
-        const verifyUrl = `/api/checkout/diagnostico/verify?payment_id=${encodeURIComponent(mpPaymentId)}&status=${encodeURIComponent(mpStatus)}`;
+        const verifyUrl = `/api/checkout/diagnostico/verify?payment_id=${encodeURIComponent(mpPaymentId)}&status=${encodeURIComponent(mpStatus)}&external_reference=${encodeURIComponent(mpExternalReference)}`;
         const response = await fetch(verifyUrl, { cache: "no-store" });
         const data: unknown = await response.json();
         if (!response.ok || !isVerifyResponse(data) || !data.paid) {
@@ -125,7 +126,7 @@ export default function DiagnosticoExpress() {
 
     void verify();
     return () => { active = false; };
-  }, [mpPaymentId, mpStatus, resultToken, sessionId]);
+  }, [mpPaymentId, mpStatus, mpExternalReference, resultToken, sessionId]);
 
   // Poll for approval status when waiting
   useEffect(() => {
@@ -175,6 +176,7 @@ export default function DiagnosticoExpress() {
       <Intake
         buyer={buyer}
         paymentId={mpPaymentId}
+        externalReference={mpExternalReference}
         loading={stage === "submitting"}
         error={error}
         onSubmitStart={() => {
@@ -344,6 +346,7 @@ function StatusScreen({ text }: { text: string }) {
 function Intake({
   buyer,
   paymentId,
+  externalReference,
   loading,
   error,
   onSubmitStart,
@@ -352,6 +355,7 @@ function Intake({
 }: {
   buyer: Buyer;
   paymentId: string;
+  externalReference: string;
   loading: boolean;
   error: string;
   onSubmitStart: () => void;
@@ -372,6 +376,7 @@ function Intake({
     };
     const payload = {
       paymentId,
+      externalReference,
       contact: {
         name: String(form.get("name") ?? ""),
         email: String(form.get("email") ?? ""),

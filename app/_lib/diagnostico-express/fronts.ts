@@ -55,7 +55,8 @@ export type FrontId = (typeof EXPRESS_FRONTS)[number]["id"];
 export type CheckAnswer = "sim" | "parcial" | "nao" | "nao_sei";
 export type FrontInput = { context: string; checks: Record<string, CheckAnswer> };
 export type ExpressDiagnosisInput = {
-  checkoutSessionId: string;
+  paymentId: string;
+  externalReference: string;
   contact: { name: string; email: string; phone?: string };
   consent: true;
   business: {
@@ -81,7 +82,8 @@ export function isExpressDiagnosisInput(value: unknown): value is ExpressDiagnos
   const business = input.business;
   const fronts = input.fronts;
   if (input.consent !== true ||
-      typeof input.checkoutSessionId !== "string" || !input.checkoutSessionId.startsWith("cs_") ||
+      typeof input.paymentId !== "string" || !/^\d{1,20}$/.test(input.paymentId) ||
+      typeof input.externalReference !== "string" || input.externalReference.length > 80 ||
       typeof contact.name !== "string" || contact.name.trim().length < 2 ||
       typeof contact.email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email) ||
       typeof business.name !== "string" || business.name.trim().length < 2 ||
