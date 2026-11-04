@@ -12,6 +12,7 @@ import {
   CreditCard,
   Loader2,
   LockKeyhole,
+  MessageCircle,
   RotateCcw,
   ShieldCheck,
 } from "lucide-react";
@@ -23,6 +24,7 @@ type DiagnosisResponse = {
   id: string;
   status: "submitted";
   reviewStatus: "pending" | "approved" | "rejected";
+  accessToken?: string;
   report?: ExpressReport;
 };
 
@@ -36,6 +38,9 @@ type Stage = "offer" | "checkout" | "verifying" | "intake" | "submitting" | "res
 const inputClass =
   "mt-2 w-full border border-white/15 bg-[#161616] px-4 py-3 text-sm text-white outline-none focus:border-[#FF5722]";
 
+const WHATSAPP_CTA_URL =
+  "https://wa.me/5571994054891?text=Recebi%20meu%20Diagn%C3%B3stico%20Express%20e%20quero%20agendar%20uma%20conversa";
+
 const deliverables = [
   "Nota fundamentada para cada uma das cinco frentes",
   "Principais gargalos e três prioridades",
@@ -45,73 +50,99 @@ const deliverables = [
 
 export default function DiagnosticoExpress() {
   const searchParams = useSearchParams();
+
+  // Mercado Pago returns: ?payment_id=XXX&status=approved&preference_id=YYY
+  const mpPaymentId = searchParams.get("payment_id") ?? "";
+  const mpStatus = searchParams.get("status") ?? "";
+
+  // Token-based result access (after submit)
+  const resultToken = searchParams.get("token") ?? "";
+
+  // Legacy Stripe (kept for backwards compat error message)
   const sessionId = searchParams.get("session_id") ?? "";
-  const checkoutCancelled = searchParams.get("checkout") === "cancelado";
-  const [stage, setStage] = useState<Stage>(sessionId ? "verifying" : "offer");
+
+  const checkoutCancelled =
+    searchParams.get("checkout") === "cancelado" ||
+    searchParams.get("mp_status") === "failure";
+
+  const hasPayment = Boolean(mpPaymentId) || Boolean(sessionId);
+  const [stage, setStage] = useState<Stage>(
+    resultToken ? "verifying" : hasPayment ? "verifying" : "offer",
+  );
   const [buyer, setBuyer] = useState<Buyer>({ email: "", phone: "" });
   const [result, setResult] = useState<DiagnosisResponse | null>(null);
+  const [accessToken, setAccessToken] = useState(resultToken);
   const [error, setError] = useState("");
 
+  // Verify payment on return from Mercado Pago, or load result by token
   useEffect(() => {
-    if (!sessionId) return;
+    if (!mpPaymentId && !resultToken && !sessionId) return;
     let active = true;
 
     async function verify() {
       try {
-        const response = await fetch(
-          `/api/checkout/diagnostico/verify?session_id=${encodeURIComponent(sessionId)}`,
-          { cache: "no-store" },
-        );
+        // Direct result access via token
+        if (resultToken) {
+          const res = await fetch(
+            `/api/diagnostico/result?token=${encodeURIComponent(resultToken)}`,
+            { cache: "no-store" },
+          );
+          const data: unknown = await res.json();
+          if (!res.ok) {
+            throw new Error(isErrorResponse(data) ? data.error : "Não foi possível consultar seu diagnóstico.");
+          }
+          if (!active) return;
+          if (isResultStatus(data) && data.submitted) {
+            setResult({ id: data.id, status: "submitted", reviewStatus: data.reviewStatus, report: isExpressReport(data.report) ? data.report : undefined });
+            setStage("result");
+          } else {
+            setStage("offer");
+          }
+          return;
+        }
+
+        // Legacy Stripe session_id → error
+        if (sessionId && !mpPaymentId) {
+          throw new Error("Link de pagamento Stripe expirado. Faça um novo diagnóstico.");
+        }
+
+        // Mercado Pago payment verification
+        const verifyUrl = `/api/checkout/diagnostico/verify?payment_id=${encodeURIComponent(mpPaymentId)}&status=${encodeURIComponent(mpStatus)}`;
+        const response = await fetch(verifyUrl, { cache: "no-store" });
         const data: unknown = await response.json();
         if (!response.ok || !isVerifyResponse(data) || !data.paid) {
-          throw new Error(
-            isErrorResponse(data)
-              ? data.error
-              : "Pagamento ainda não foi confirmado.",
-          );
+          throw new Error(isErrorResponse(data) ? data.error : "Pagamento ainda não foi confirmado.");
         }
         if (!active) return;
         setBuyer({ email: data.email ?? "", phone: data.phone ?? "" });
-        const resultResponse = await fetch(`/api/diagnostico/result?session_id=${encodeURIComponent(sessionId)}`, { cache: "no-store" });
-        const resultData: unknown = await resultResponse.json();
-        if (!resultResponse.ok) throw new Error(isErrorResponse(resultData) ? resultData.error : "Não foi possível consultar seu diagnóstico.");
-        if (!active) return;
-        if (isResultStatus(resultData) && resultData.submitted) {
-          setResult({ id: resultData.id, status: "submitted", reviewStatus: resultData.reviewStatus, report: isExpressReport(resultData.report) ? resultData.report : undefined });
-          setStage("result");
-        } else setStage("intake");
+        setStage("intake");
       } catch (verifyError) {
         if (!active) return;
-        setError(
-          verifyError instanceof Error
-            ? verifyError.message
-            : "Não foi possível validar o pagamento.",
-        );
+        setError(verifyError instanceof Error ? verifyError.message : "Não foi possível validar o pagamento.");
         setStage("offer");
       }
     }
 
     void verify();
-    return () => {
-      active = false;
-    };
-  }, [sessionId]);
+    return () => { active = false; };
+  }, [mpPaymentId, mpStatus, resultToken, sessionId]);
 
+  // Poll for approval status when waiting
   useEffect(() => {
-    if (stage !== "result" || !result || result.reviewStatus !== "pending" || !sessionId) return;
+    if (stage !== "result" || !result || result.reviewStatus !== "pending" || !accessToken) return;
     let active = true;
     const refresh = async () => {
       try {
-        const response = await fetch(`/api/diagnostico/result?session_id=${encodeURIComponent(sessionId)}`, { cache: "no-store" });
+        const response = await fetch(`/api/diagnostico/result?token=${encodeURIComponent(accessToken)}`, { cache: "no-store" });
         const data: unknown = await response.json();
         if (active && response.ok && isResultStatus(data) && data.submitted) {
           setResult({ id: data.id, status: "submitted", reviewStatus: data.reviewStatus, report: isExpressReport(data.report) ? data.report : undefined });
         }
-      } catch { /* A próxima consulta pode recuperar uma falha de rede transitória. */ }
+      } catch { /* next poll will retry */ }
     };
     const timer = window.setInterval(() => { void refresh(); }, 30000);
     return () => { active = false; window.clearInterval(timer); };
-  }, [stage, result, sessionId]);
+  }, [stage, result, accessToken]);
 
   async function startCheckout() {
     setStage("checkout");
@@ -143,7 +174,7 @@ export default function DiagnosticoExpress() {
     return (
       <Intake
         buyer={buyer}
-        checkoutSessionId={sessionId}
+        paymentId={mpPaymentId}
         loading={stage === "submitting"}
         error={error}
         onSubmitStart={() => {
@@ -152,6 +183,7 @@ export default function DiagnosticoExpress() {
         }}
         onSuccess={(response) => {
           setResult(response);
+          if (response.accessToken) setAccessToken(response.accessToken);
           setStage("result");
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
@@ -164,7 +196,7 @@ export default function DiagnosticoExpress() {
   }
 
   if (stage === "result" && result) {
-    return <DiagnosisResult result={result} />;
+    return <DiagnosisResult result={result} accessToken={accessToken} />;
   }
 
   return (
@@ -208,7 +240,7 @@ export default function DiagnosticoExpress() {
               <div>
                 <p className="text-xs uppercase tracking-widest text-zinc-500">Investimento</p>
                 <p className="mt-2 text-4xl font-black">{DIAGNOSTICO_EXPRESS_PRICE_LABEL}</p>
-                <p className="mt-1 text-xs text-zinc-500">Pagamento único</p>
+                <p className="mt-1 text-xs text-zinc-500">Pix ou cartão · Pagamento único</p>
               </div>
               <button
                 type="button"
@@ -311,7 +343,7 @@ function StatusScreen({ text }: { text: string }) {
 
 function Intake({
   buyer,
-  checkoutSessionId,
+  paymentId,
   loading,
   error,
   onSubmitStart,
@@ -319,7 +351,7 @@ function Intake({
   onError,
 }: {
   buyer: Buyer;
-  checkoutSessionId: string;
+  paymentId: string;
   loading: boolean;
   error: string;
   onSubmitStart: () => void;
@@ -339,7 +371,7 @@ function Intake({
       return value ? Number(value) : undefined;
     };
     const payload = {
-      checkoutSessionId,
+      paymentId,
       contact: {
         name: String(form.get("name") ?? ""),
         email: String(form.get("email") ?? ""),
@@ -373,7 +405,10 @@ function Intake({
             : "Não foi possível registrar o diagnóstico.",
         );
       }
-      onSuccess(data);
+      onSuccess({
+        ...data,
+        accessToken: isAccessTokenResponse(data) ? data.accessToken : undefined,
+      });
     } catch (submitError) {
       onError(
         submitError instanceof Error ? submitError.message : "Erro inesperado.",
@@ -503,13 +538,14 @@ function Field({
   );
 }
 
-function DiagnosisResult({ result }: { result: DiagnosisResponse }) {
+function DiagnosisResult({ result, accessToken }: { result: DiagnosisResponse; accessToken: string }) {
   if (!result.report) return (
     <main className="min-h-screen bg-[#0D0D0D] px-6 py-14 text-[#F8F9FA]">
       <div className="mx-auto max-w-3xl">
         <ShieldCheck className="h-8 w-8 text-[#FF5722]" />
         <h1 className="mt-6 text-4xl font-black uppercase">{result.reviewStatus === "rejected" ? "Sua análise precisa de revisão adicional." : result.reviewStatus === "approved" ? "Seu relatório anterior precisa de atualização." : "Análise recebida para revisão."}</h1>
-        <p className="mt-5 text-lg leading-relaxed text-zinc-300">{result.reviewStatus === "rejected" ? "A O6 vai entrar em contato para esclarecer os dados antes da entrega." : result.reviewStatus === "approved" ? "Este diagnóstico foi criado antes da avaliação das cinco frentes. Entre em contato com a O6 para receber o relatório no formato original." : "Seus dados foram registrados. O relatório ficará disponível nesta página após a aprovação da O6. Você pode voltar usando o link do pagamento."}</p>
+        <p className="mt-5 text-lg leading-relaxed text-zinc-300">{result.reviewStatus === "rejected" ? "A O6 vai entrar em contato para esclarecer os dados antes da entrega." : result.reviewStatus === "approved" ? "Este diagnóstico foi criado antes da avaliação das cinco frentes. Entre em contato com a O6 para receber o relatório no formato original." : "Seus dados foram registrados. O relatório ficará disponível nesta página após a aprovação da O6."}</p>
+        {accessToken && <p className="mt-4 text-sm text-zinc-500">Guarde este link para acessar seu resultado: <code className="break-all text-xs text-zinc-400">/produto/diagnostico?token={accessToken}</code></p>}
         <a href="/links" className="mt-8 inline-flex bg-[#FF5722] px-5 py-3 text-sm font-bold text-white">Voltar aos links</a>
       </div>
     </main>
@@ -549,6 +585,24 @@ function DiagnosisResult({ result }: { result: DiagnosisResponse }) {
           <p className="mt-7 text-sm text-zinc-300"><strong className="text-white">Próximo passo:</strong> {result.report.nextStep}</p>
           <p className="mt-3 text-xs leading-relaxed text-zinc-500">{result.report.method}</p>
         </section>
+        {/* WhatsApp CTA — Agendar conversa */}
+        <div className="mt-10 border border-[#FF5722]/30 bg-[#FF5722]/[0.06] p-6 md:p-8">
+          <h2 className="text-xl font-black uppercase">Próximo passo</h2>
+          <p className="mt-3 text-sm leading-relaxed text-zinc-300">
+            Quer entender o que cada prioridade significa para o seu negócio e como resolver? Agende uma conversa com a O6.
+          </p>
+          <a
+            href={WHATSAPP_CTA_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex items-center gap-2 bg-[#FF5722] px-6 py-4 text-sm font-black uppercase tracking-widest text-white"
+          >
+            <MessageCircle className="h-5 w-5" />
+            Agendar conversa pelo WhatsApp
+            <ArrowRight className="h-5 w-5" />
+          </a>
+        </div>
+
         <div className="mt-10 border-t border-white/15 pt-8">
           <p className="max-w-2xl text-sm leading-relaxed text-zinc-400">
             A indicação de serviço depende da revisão do contexto. Nenhuma proposta ou mensagem comercial é enviada automaticamente.
@@ -581,6 +635,10 @@ function isDiagnosisResponse(value: unknown): value is DiagnosisResponse {
 
 function isResultStatus(value: unknown): value is { submitted: true; id: string; reviewStatus: "pending" | "approved" | "rejected"; report?: unknown } {
   return typeof value === "object" && value !== null && "submitted" in value && value.submitted === true && "id" in value && typeof value.id === "string" && "reviewStatus" in value && (value.reviewStatus === "pending" || value.reviewStatus === "approved" || value.reviewStatus === "rejected");
+}
+
+function isAccessTokenResponse(value: unknown): value is { accessToken: string } {
+  return typeof value === "object" && value !== null && "accessToken" in value && typeof value.accessToken === "string";
 }
 
 function isExpressReport(value: unknown): value is ExpressReport {

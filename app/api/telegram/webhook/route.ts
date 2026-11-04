@@ -31,6 +31,7 @@ type DiagnosisRunRow = {
   recommended_offer: string | null;
   report_json: unknown;
   amount_paid: number | null;
+  crm_lead_id: string | null;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -131,7 +132,7 @@ export async function POST(req: NextRequest) {
     const { data, error } = await supabase
       .from("diagnostico_express_runs")
       .select(
-        "id, approval_status, contact_name, contact_email, contact_phone, business_name, segment, qualification_score, recommended_offer, report_json, amount_paid",
+        "id, approval_status, contact_name, contact_email, contact_phone, business_name, segment, qualification_score, recommended_offer, report_json, amount_paid, crm_lead_id",
       )
       .eq("id", parsed.id)
       .single();
@@ -174,6 +175,30 @@ export async function POST(req: NextRequest) {
         ),
       ]);
       return NextResponse.json({ received: true, decision: "rejected" });
+    }
+
+    // Dedup: skip lead creation if already promoted
+    if (row.crm_lead_id) {
+      const { error: approveOnlyError } = await supabase
+        .from("diagnostico_express_runs")
+        .update({
+          approval_status: "approved",
+          approved_at: new Date().toISOString(),
+          approved_by: approvedBy,
+        })
+        .eq("id", row.id)
+        .eq("approval_status", "pending");
+      if (approveOnlyError) throw approveOnlyError;
+
+      await Promise.all([
+        answerTelegramCallback(callback.id, "Aprovado (lead já existe no CRM)."),
+        editTelegramMessage(
+          String(callback.message.chat.id),
+          callback.message.message_id,
+          decisionMessage(row, `Aprovado por ${approvedBy}. Lead já existente no CRM.`),
+        ),
+      ]);
+      return NextResponse.json({ received: true, decision: "approved" });
     }
 
     const lead = await createLead({

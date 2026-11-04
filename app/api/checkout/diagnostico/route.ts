@@ -1,31 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  createDiagnosisCheckout,
-  StripeConfigurationError,
-  StripeRequestError,
-} from "@/app/_lib/diagnostico-express/stripe";
+  createDiagnosisPreference,
+  MercadoPagoConfigurationError,
+  MercadoPagoRequestError,
+} from "@/app/_lib/diagnostico-express/mercadopago";
+
+// Stripe imports kept for future reactivation:
+// import {
+//   createDiagnosisCheckout,
+//   StripeConfigurationError,
+//   StripeRequestError,
+// } from "@/app/_lib/diagnostico-express/stripe";
 
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await createDiagnosisCheckout(req.nextUrl.origin);
-    if (!session.url) {
-      return NextResponse.json(
-        { error: "Stripe não retornou a URL de pagamento." },
-        { status: 502 },
-      );
-    }
-    return NextResponse.json({ url: session.url, sessionId: session.id });
+    const preference = await createDiagnosisPreference(req.nextUrl.origin);
+
+    // Use sandbox URL in test mode, production URL otherwise
+    const isSandbox = (process.env.MERCADOPAGO_ACCESS_TOKEN ?? "").startsWith(
+      "TEST-",
+    );
+    const url = isSandbox ? preference.sandboxInitPoint : preference.initPoint;
+
+    return NextResponse.json({
+      url,
+      sessionId: `mp_${preference.id}`,
+      provider: "mercadopago",
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro desconhecido";
-    if (error instanceof StripeConfigurationError) {
+    if (error instanceof MercadoPagoConfigurationError) {
       return NextResponse.json({ error: message }, { status: 503 });
     }
     console.error("[checkout/diagnostico]", message);
     return NextResponse.json(
       { error: message },
-      { status: error instanceof StripeRequestError ? 502 : 500 },
+      { status: error instanceof MercadoPagoRequestError ? 502 : 500 },
     );
   }
 }
