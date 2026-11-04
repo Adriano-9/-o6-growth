@@ -43,3 +43,22 @@ next-env.d.ts
 .vercel
 .supabase/
 supabase/.temp/
+
+# brand shim - artefato gerado por scripts/brand-use.ps1.
+# A fonte e sempre brands/<slug>/. Editar a raiz e erro: a proxima troca sobrescreve.
+/voice.md
+/about-me.md
+/brand-kit.md
+/proofs.md
+
+# Kit de terceiros (MTH Lab). Repositorio e publico: nenhum arquivo do kit pode ser versionado.
+/references/kit-mthlab/
+
+# Briefings do fundador — conteudo privado, repo publico.
+/docs/briefs/
+
+# Diretorio de marcas — brand kits, voices, proofs. Nao versionar.
+/brands/
+
+# Chrome render profiles (temporarios do puppeteer/playwright)
+.render-profile-*/
