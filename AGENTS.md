@@ -8,6 +8,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # AGENTS.md — O6 Growth
 
+## Direção criativa
+
+Trabalho criativo → Studio OS: `C:\Users\Didico\Documents\studio-os` (ler `AGENTS.md` e seguir `studio-os`). Oferta e preços oficiais → `studio-os\marcas\o6-growth\`. Diagnóstico Express pago está **SEGURADO** até aprovação comercial.
+
 Guia compacto para qualquer agente (Codex, swarm worker, contributor humano) que abrir este repositório pela primeira vez. Para detalhes profundos consulte [`CLAUDE.md`](./CLAUDE.md) e [`memory/*`](./memory).
 
 ## Project overview

@@ -2,6 +2,10 @@
 
 # O6 Growth OS
 
+## Direção criativa
+
+Trabalho criativo → Studio OS: `C:\Users\Didico\Documents\studio-os` (ler `CLAUDE.md` e seguir `studio-os`). Oferta e preços oficiais → `studio-os\marcas\o6-growth\`. Diagnóstico Express pago está **SEGURADO** até aprovação comercial.
+
 Sistema operacional comercial para serviços profissionais. Offer Book coleta inteligência, Diagnostic mede gargalos, ROI projeta receita, CRM operacionaliza pipeline, PDF Generator entrega ao cliente.
 
 ## Verticais prioritários
