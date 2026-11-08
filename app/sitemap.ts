@@ -1,11 +1,13 @@
 import type { MetadataRoute } from "next";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://o6-growth.vercel.app";
-const serviceSlugs = ["diagnostico", "fundacao", "campanhas", "sites", "sistema-o6", "otimizacao", "retainer"];
+const serviceSlugs = ["diagnostico", "fundacao", "campanhas", "sites", "sistema-o6", "otimizacao", "retainer", "conteudo"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const publicPaths = [
     "",
+    "/produto/diagnostico",
+    "/links",
     "/saude",
     "/advocacia",
     "/servicos",

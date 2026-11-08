@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import { OG_IMAGE } from "@/app/_lib/seo/og";
 import Link from "next/link";
 import { ArrowRight, ClipboardList } from "lucide-react";
+import { Breadcrumbs } from "@/app/_lib/seo/Breadcrumbs";
 
 export const metadata: Metadata = {
-  title: "Serviços | O6 Growth",
-  description: "Conheça as soluções de estratégia, projetos e continuidade da O6 Growth.",
+  title: "Serviços de Estratégia, Sites e Conteúdo | O6 Growth",
+  description: "Estratégia, marca, sites, campanhas, conteúdo e atendimento. Contrate só o que destrava suas vendas. Veja os serviços da O6.",
+  alternates: { canonical: "/servicos" },
+  openGraph: { title: "Serviços de Estratégia, Sites e Conteúdo | O6 Growth", description: "Estratégia, marca, sites, campanhas, conteúdo e atendimento. Contrate só o que destrava suas vendas. Veja os serviços da O6.", url: "/servicos", type: "website", locale: "pt_BR", siteName: "O6 Growth", images: [OG_IMAGE] },
 };
 
 const services = [
@@ -32,6 +36,7 @@ export default function ServicesPage() {
       <section className="relative isolate overflow-hidden">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_14%_12%,rgba(255,87,34,0.12),transparent_32%),linear-gradient(120deg,#1B1E20_0%,#17191B_62%,#202224_100%)]" />
         <div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
+          <Breadcrumbs tone="dark" className="mb-10" items={[{ name: "Início", path: "/" }, { name: "Serviços", path: "/servicos" }]} />
         <p className="inline-flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#FF7950]"><span className="h-px w-8 bg-[#FF7950]" />O que a O6 faz</p>
         <h1 className="mt-5 max-w-4xl text-[clamp(2.6rem,5.5vw,4.75rem)] font-semibold leading-[1.03] tracking-[-0.035em]">Estratégia, projetos e continuidade.</h1>
         <p className="mt-6 max-w-2xl text-base leading-8 text-[#C0C0BC] md:text-[1.0625rem]">O cardápio é curto de propósito: direção estratégica, projetos que viram ativos concretos e continuidade para não deixar o que já existe perder força.</p>

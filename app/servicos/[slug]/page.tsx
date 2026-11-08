@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
+import { Breadcrumbs } from "@/app/_lib/seo/Breadcrumbs";
+import { OG_IMAGE } from "@/app/_lib/seo/og";
 import { whatsappUrl } from "@/app/_lib/contato";
 
 const servicePages = {
@@ -97,6 +99,17 @@ const servicePages = {
 
 type ServiceSlug = keyof typeof servicePages;
 
+const serviceSeo: Record<ServiceSlug, { title: string; description: string }> = {
+  diagnostico: { title: "Diagnóstico Consultivo Express | O6 Growth", description: "Descubra o que trava suas vendas antes de investir. Até 3 prioridades em ordem, com revisão humana. Peça o seu Diagnóstico Express." },
+  fundacao: { title: "Fundação Estratégica e de Marca | O6 Growth", description: "Posicionamento, oferta, identidade e voz da marca numa direção só. Converse com a O6 e organize sua marca antes de produzir mais." },
+  campanhas: { title: "Campanhas com Objetivo Claro | O6 Growth", description: "Mensagem, peças e vídeos conectados a um objetivo de negócio. Fale com a O6 e planeje sua próxima campanha com direção." },
+  sites: { title: "Sites e Landing Pages | O6 Growth", description: "Site ou landing page que explica sua oferta e leva ao próximo passo, pensado para o celular. Peça uma proposta à O6." },
+  "sistema-o6": { title: "Sistema O6: Atendimento e Automação | O6 Growth", description: "Organize entrada, resposta e retorno dos contatos, com automação só onde ajuda. Converse com a O6 sobre o seu atendimento." },
+  otimizacao: { title: "O6 Otimização: Melhoria Contínua | O6 Growth", description: "Ajustes priorizados no site, nas páginas e nos processos que você já tem. Fale com a O6 e melhore o que já está no ar." },
+  retainer: { title: "Retainer: Acompanhamento Mensal | O6 Growth", description: "Acompanhamento mensal com escopo e entregas definidos para manter marca, presença e atendimento evoluindo. Converse com a O6." },
+  conteudo: { title: "Conteúdo e Audiovisual | O6 Growth", description: "Pautas, roteiros, carrosséis e vídeos numa direção única de comunicação. Fale com a O6 e produza conteúdo com critério." },
+};
+
 export function generateStaticParams() {
   return Object.keys(servicePages).map((slug) => ({ slug }));
 }
@@ -104,7 +117,14 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const service = servicePages[slug as ServiceSlug];
-  return service ? { title: `${service.title} | O6 Growth`, description: service.intro } : {};
+  if (!service) return {};
+  const seo = serviceSeo[slug as ServiceSlug];
+  return {
+    title: seo.title,
+    description: seo.description,
+    alternates: { canonical: `/servicos/${slug}` },
+    openGraph: { title: seo.title, description: seo.description, url: `/servicos/${slug}`, type: "website", locale: "pt_BR", siteName: "O6 Growth", images: [OG_IMAGE] },
+  };
 }
 
 export default async function ServicePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -131,7 +151,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_12%_18%,rgba(255,87,34,0.12),transparent_37%),linear-gradient(115deg,#1B1E20_0%,#17191B_58%,#202224_100%)]" />
         <div className="mx-auto grid max-w-6xl gap-12 px-6 py-16 md:grid-cols-[1.06fr_0.94fr] md:items-center md:gap-16 md:py-24">
         <div>
-          <Link href="/servicos" className="inline-flex items-center gap-2 text-sm font-medium text-[#B5B5B1] transition-colors hover:text-white"><ArrowLeft className="h-4 w-4" /> Todos os serviços</Link>
+          <Breadcrumbs tone="dark" items={[{ name: "Início", path: "/" }, { name: "Serviços", path: "/servicos" }, { name: service.title, path: `/servicos/${slug}` }]} />
           <p className="mt-14 inline-flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#FF7950]"><span className="h-px w-8 bg-[#FF7950]" />{service.label}</p>
           <h1 className="mt-5 max-w-[13ch] text-[clamp(2.5rem,5vw,4.45rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-[#F5F3EF]">{service.headline}</h1>
           <p className="mt-7 max-w-xl text-base leading-8 text-[#C0C0BC] md:text-[1.0625rem]">{service.intro}</p>
