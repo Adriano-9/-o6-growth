@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowRight, Check } from "lucide-react";
 import { Breadcrumbs } from "@/app/_lib/seo/Breadcrumbs";
 import { OG_IMAGE } from "@/app/_lib/seo/og";
 import { whatsappUrl } from "@/app/_lib/contato";
+import { O6Header } from "@/app/_lib/O6Header";
 
 const servicePages = {
   diagnostico: {
     title: "Diagnóstico Consultivo Express",
-    price: "R$ 197",
     headline: "Antes de produzir mais, entenda qual é a prioridade da sua marca.",
     intro: "Uma leitura consultiva e objetiva do contexto, da comunicação e dos ativos existentes. Você recebe uma recomendação clara sobre a prioridade de investimento — estratégia, projeto pontual ou continuidade.",
     label: "Clareza para decidir",
@@ -20,7 +19,6 @@ const servicePages = {
   },
   fundacao: {
     title: "Fundação estratégica e de marca",
-    price: "R$ 3.000",
     headline: "Uma direção clara para a marca se comunicar com consistência.",
     intro: "Organizamos posicionamento, público, oferta, identidade visual e voz da marca para orientar campanhas, conteúdo, sites e produções futuras.",
     label: "Estratégia de marca",
@@ -31,7 +29,6 @@ const servicePages = {
   },
   campanhas: {
     title: "Campanhas",
-    price: "R$ 2.800",
     headline: "Da oferta a uma campanha com mensagem e ativos conectados.",
     intro: "Estruturamos a campanha a partir do objetivo e do público, articulando mensagem, landing page, criativos, vídeos e acompanhamento conforme o escopo acordado.",
     label: "Campanhas integradas",
@@ -42,7 +39,6 @@ const servicePages = {
   },
   sites: {
     title: "Sites e landing pages",
-    price: "A partir de R$ 2.200",
     headline: "Uma experiência digital que explica a oferta e orienta o próximo passo.",
     intro: "Criamos ou atualizamos sites e landing pages com conteúdo, hierarquia, design responsivo, chamadas para ação e fundamentos de SEO. Estruturamos respostas claras e dados organizados para facilitar a interpretação por mecanismos de busca e sistemas de resposta por IA; isso não garante posições ou citações.",
     label: "Experiências digitais",
@@ -53,7 +49,6 @@ const servicePages = {
   },
   "sistema-o6": {
     title: "Sistema O6",
-    price: "Sob escopo",
     headline: "Um processo comercial mais simples, com automação apenas onde ela realmente ajuda.",
     intro: "Antes de adicionar ferramenta, organizamos a entrada, a resposta e os retornos que o negócio precisa sustentar. Se automações fizerem sentido, elas entram como parte do sistema, sem vender um CRM, dashboard ou manutenção infinita como pacote padrão.",
     label: "Processo que a equipe sustenta",
@@ -64,7 +59,6 @@ const servicePages = {
   },
   otimizacao: {
     title: "O6 Otimização",
-    price: "R$ 750/mês",
     headline: "Melhore o que já funciona sem recomeçar do zero.",
     intro: "Um acompanhamento mensal mais leve para negócios que já têm presença digital, campanhas ou automações e precisam eliminar atritos, atualizar ativos e acompanhar melhorias prioritárias.",
     label: "Acompanhamento com escopo definido",
@@ -75,7 +69,6 @@ const servicePages = {
   },
   retainer: {
     title: "Retainer",
-    price: "Sob contrato",
     headline: "Acompanhamento recorrente para uma agenda de evolução que pede continuidade.",
     intro: "O Retainer organiza uma relação contínua de trabalho para prioridades estratégicas e de produção que exigem capacidade reservada, cadência e responsabilidade compartilhada.",
     label: "Continuidade contratada",
@@ -86,7 +79,6 @@ const servicePages = {
   },
   conteudo: {
     title: "Conteúdo e audiovisual",
-    price: "A partir de R$ 2.800",
     headline: "Uma direção de conteúdo que também vira vídeo, peça e presença.",
     intro: "Definimos os temas, formatos e mensagens que a marca precisa sustentar. A produção pode combinar pauta, carrossel, roteiro, vídeo e adaptações para os canais definidos, sempre em uma única direção de comunicação.",
     label: "Conteúdo que ganha forma",
@@ -127,60 +119,72 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
+const display = { fontFamily: "var(--font-o6-display)" };
+const serif = { fontFamily: "var(--font-o6-serif)" };
+const mono = { fontFamily: "var(--font-o6-mono)" };
+
 export default async function ServicePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   if (slug === "dashboards" || slug === "videos" || slug === "sprint" || slug === "automacao-atendimento") redirect("/servicos/sistema-o6");
+  if (slug === "diagnostico") redirect("/produto/diagnostico");
   const service = servicePages[slug as ServiceSlug];
   if (!service) notFound();
-  const contactUrl = slug === "diagnostico"
-    ? "/produto/diagnostico"
-    : whatsappUrl(`Quero conversar sobre ${service.title} na O6 Growth.`);
+  const contactUrl = whatsappUrl(`Quero conversar sobre ${service.title} na O6 Growth.`);
 
   return (
-    <main className="min-h-screen bg-[#17191B] text-[#F4F2EE]">
-      <header className="border-b border-white/[0.08] bg-[#1B1E20]/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <Link href="/" className="text-sm font-extrabold tracking-[0.08em]">O6 <span className="font-medium text-[#A9AAA8]">GROWTH</span></Link>
-          <nav className="flex items-center gap-4 text-xs font-semibold text-[#B5B5B1] sm:gap-6">
-            <Link href="/servicos" className="transition-colors hover:text-white">Serviços</Link>
-            <Link href="/portfolio/index.html" className="transition-colors hover:text-white">Portfólio</Link>
-          </nav>
-        </div>
-      </header>
-      <section className="relative isolate overflow-hidden border-b border-white/[0.08]">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_12%_18%,rgba(255,87,34,0.12),transparent_37%),linear-gradient(115deg,#1B1E20_0%,#17191B_58%,#202224_100%)]" />
-        <div className="mx-auto grid max-w-6xl gap-12 px-6 py-16 md:grid-cols-[1.06fr_0.94fr] md:items-center md:gap-16 md:py-24">
-        <div>
-          <Breadcrumbs tone="dark" items={[{ name: "Início", path: "/" }, { name: "Serviços", path: "/servicos" }, { name: service.title, path: `/servicos/${slug}` }]} />
-          <p className="mt-14 inline-flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#FF7950]"><span className="h-px w-8 bg-[#FF7950]" />{service.label}</p>
-          <h1 className="mt-5 max-w-[13ch] text-[clamp(2.5rem,5vw,4.45rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-[#F5F3EF]">{service.headline}</h1>
-          <p className="mt-7 max-w-xl text-base leading-8 text-[#C0C0BC] md:text-[1.0625rem]">{service.intro}</p>
-          <p className="mt-5 text-sm font-bold uppercase tracking-[0.14em] text-[#FF7950]">Investimento-base: {service.price}</p>
-          <a href={contactUrl} target={slug === "diagnostico" ? undefined : "_blank"} rel={slug === "diagnostico" ? undefined : "noopener noreferrer"} className="group mt-9 inline-flex min-h-14 items-center gap-5 bg-[#FF5722] px-6 text-sm font-bold text-white shadow-[0_10px_32px_rgba(255,87,34,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[#FF6A3D] hover:shadow-[0_14px_38px_rgba(255,87,34,0.25)]">
-            {service.cta}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </a>
-        </div>
-        <div className="relative self-center border border-white/[0.11] bg-[#202325]/85 p-7 shadow-[0_28px_80px_rgba(0,0,0,0.18)] backdrop-blur-sm md:p-9">
-          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF7950]/70 to-transparent" />
-          <p className="text-[11px] font-bold uppercase tracking-[0.17em] text-[#FF7950]">O que pode fazer parte</p>
-          <ul className="mt-7 space-y-5">
-            {service.items.map((item, index) => <li key={item} className="flex gap-4 text-[0.9375rem] leading-7 text-[#E2E0DB]"><span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#FF7950]/35 bg-[#FF7950]/10"><Check className="h-3 w-3 text-[#FF7950]" /></span><span><span className="mr-2 font-mono text-[11px] text-[#858783]">0{index + 1}</span>{item}</span></li>)}
-          </ul>
-          <div className="mt-9 border-t border-white/[0.1] pt-6">
-            <p className="text-[11px] font-bold uppercase tracking-[0.17em] text-[#A6A6A1]">Para quem</p>
-            <p className="mt-3 text-sm leading-7 text-[#C7C6C1]">{service.fit}</p>
+    <main className="min-h-screen bg-[#f4f2ec] text-[#1d2022]" style={{ fontFamily: "var(--font-o6-sans)" }}>
+      <O6Header current="/servicos" />
+
+      <section className="mx-auto max-w-[1240px] px-4 pb-14 pt-10 md:px-8 md:pb-20 md:pt-14">
+        <Breadcrumbs items={[{ name: "Início", path: "/" }, { name: "Serviços", path: "/servicos" }, { name: service.title, path: `/servicos/${slug}` }]} />
+        <div className="mt-10 grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+          <div>
+            <p className="flex items-center gap-2.5 text-xs uppercase tracking-[0.12em] text-[#585d5b]" style={mono}><span className="h-2 w-2 rounded-full bg-[#f2542d]" />{service.title}</p>
+            <h1 className="mt-4 text-[clamp(2.2rem,4.6vw,4.2rem)] uppercase leading-[0.94]" style={display}>{service.headline}</h1>
+            <p className="mt-6 max-w-[56ch] text-[clamp(1.05rem,1.35vw,1.2rem)] text-[#585d5b]">{service.intro}</p>
+            <div className="mt-7 flex flex-wrap gap-2.5">
+              <a href={contactUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-5 rounded-[2px] bg-[#f2542d] px-5 py-4 text-[15px] font-bold text-[#170904] transition-transform hover:-translate-y-0.5">{service.cta} <span aria-hidden="true">→</span></a>
+              <Link href="/produto/diagnostico" className="inline-flex items-center rounded-[2px] border border-[#1d2022] px-5 py-4 text-[15px] font-bold transition-colors hover:bg-[#1d2022] hover:text-[#f4f2ec]">Começar pelo diagnóstico</Link>
+            </div>
+            <p className="mt-4 text-xs uppercase tracking-[0.1em] text-[#585d5b]" style={mono}>Sob proposta · escopo fechado · 2 rodadas de revisão</p>
           </div>
-          <div className="mt-7 border-t border-white/[0.1] pt-6">
-            <p className="text-[11px] font-bold uppercase tracking-[0.17em] text-[#A6A6A1]">O que não está incluído</p>
-            <p className="mt-3 text-sm leading-7 text-[#C7C6C1]">{service.notIncluded}</p>
-          </div>
-        </div>
+          <aside className="flex flex-col gap-4 border-t-[3px] border-[#f2542d] bg-[#131517] p-6 text-[#eceae4]">
+            <span className="text-xs uppercase tracking-[0.12em] text-[#a3a19a]" style={mono}>{service.label}</span>
+            <h2 className="m-0 text-lg font-semibold">O que pode fazer parte</h2>
+            <ol className="m-0 list-none border-t border-white/12 p-0">
+              {service.items.map((item, i) => (
+                <li key={item} className="grid grid-cols-[28px_minmax(0,1fr)] gap-2 border-b border-white/12 py-3 text-[14.5px]">
+                  <span className="text-[#f2542d]" style={mono}>{String(i + 1).padStart(2, "0")}</span>{item}
+                </li>
+              ))}
+            </ol>
+          </aside>
         </div>
       </section>
-      <section className="bg-[#1B1E20] py-9">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 text-sm">
-          <Link href="/servicos" className="font-medium text-[#C7C6C1] transition-colors hover:text-white">Explorar outros serviços</Link>
-          <Link href="/portfolio/index.html" className="font-medium text-[#C7C6C1] transition-colors hover:text-white">Ver portfólio <ArrowRight className="ml-1 inline h-4 w-4" /></Link>
+
+      <section className="border-t border-[#1d2022]/15 bg-[#fbfaf6]">
+        <div className="mx-auto grid max-w-[1240px] gap-10 px-4 py-14 md:grid-cols-2 md:px-8 md:py-20">
+          <div>
+            <h2 className="text-[clamp(1.8rem,3vw,2.4rem)] uppercase leading-none" style={display}>Para <em className="normal-case text-[#f2542d]" style={serif}>quem</em> é</h2>
+            <p className="mt-4 max-w-[52ch] text-[#585d5b]">{service.fit}</p>
+          </div>
+          <div>
+            <h2 className="text-[clamp(1.8rem,3vw,2.4rem)] uppercase leading-none" style={display}>O que não inclui</h2>
+            <p className="mt-4 max-w-[52ch] text-[#585d5b]">{service.notIncluded}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#131517] text-[#eceae4]">
+        <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-8 px-4 py-14 md:px-8 md:py-16">
+          <h2 className="max-w-[18ch] text-[clamp(1.9rem,3.6vw,3rem)] uppercase leading-[0.95]" style={display}>
+            Valor e prazo saem na <em className="normal-case text-[#f2542d]" style={serif}>proposta</em>.
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            <a href={contactUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-5 rounded-[2px] bg-[#f2542d] px-5 py-4 text-[15px] font-bold text-[#170904]">{service.cta} <span aria-hidden="true">→</span></a>
+            <Link href="/servicos" className="inline-flex items-center rounded-[2px] border border-white/30 px-5 py-4 text-[15px] font-bold hover:border-white">Todos os serviços</Link>
+            <Link href="/portfolio/index.html" className="inline-flex items-center rounded-[2px] border border-white/30 px-5 py-4 text-[15px] font-bold hover:border-white">Ver o portfólio</Link>
+          </div>
         </div>
       </section>
     </main>
