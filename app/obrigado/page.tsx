@@ -1,82 +1,67 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense } from "react";
-import { motion } from "framer-motion";
-import { CheckCircle2, MessageCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { whatsappUrl } from "@/app/_lib/contato";
 
-const WHATSAPP_URL = "https://wa.me/5571994054891?text=Acabei%20de%20pagar%20o%20Diagn%C3%B3stico%20O6";
+const display = { fontFamily: "var(--font-o6-display)" };
+const serif = { fontFamily: "var(--font-o6-serif)" };
+const mono = { fontFamily: "var(--font-o6-mono)" };
 
-function ObrigadoInner() {
-  const sp = useSearchParams();
-  const tipo = sp.get("tipo") ?? "diagnostico";
-  const title =
-    tipo === "diagnostico"
-      ? "Diagnóstico confirmado!"
-      : "Pagamento confirmado!";
+type Variant = {
+  step: string;
+  title: React.ReactNode;
+  text: string;
+  cta: { href: string; label: string; external?: boolean };
+};
 
+// tipo=pagamento: volta do Mercado Pago (configurar como URL de sucesso do link).
+// tipo=express: formulário enviado.
+const variants: Record<string, Variant> = {
+  pagamento: {
+    step: "Passo 1 de 3 concluído",
+    title: <>Pagamento <em className="normal-case text-[#f2542d]" style={serif}>recebido</em>.</>,
+    text: "Agora falta só o formulário. São uns 5 minutos para você contar sobre o negócio e o atendimento.",
+    cta: { href: "/diagnostico/formulario", label: "Preencher o formulário" },
+  },
+  express: {
+    step: "Passo 2 de 3 concluído",
+    title: <>Recebemos suas <em className="normal-case text-[#f2542d]" style={serif}>respostas</em>.</>,
+    text: "Agora analisamos sua presença e o que você contou. Em até 48h úteis você recebe pelo WhatsApp até 3 prioridades em ordem, revisadas por uma pessoa.",
+    cta: { href: whatsappUrl("Olá, acabei de enviar o formulário do Diagnóstico Express."), label: "Falar com a O6 no WhatsApp", external: true },
+  },
+};
+
+function Inner() {
+  const tipo = useSearchParams().get("tipo") ?? "express";
+  const v = variants[tipo] ?? variants.express;
   return (
-    <main className="min-h-screen bg-[#0d0d0d] text-zinc-100">
-      <section className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center px-6 py-20 text-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <CheckCircle2
-            className="mx-auto h-16 w-16 text-emerald-400"
-            strokeWidth={1.5}
-          />
-        </motion.div>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="mt-8 text-4xl font-black uppercase leading-tight tracking-tight md:text-5xl"
-        >
-          {title}
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-5 max-w-xl text-lg text-zinc-300"
-        >
-          Em até 24h você receberá um WhatsApp de <b className="text-white">Adriano</b> para iniciar o diagnóstico. Em 5 dias úteis, vídeo + plano de ação na sua mão.
-        </motion.p>
-
-        <motion.a
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.45 }}
-          href={WHATSAPP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-10 inline-flex items-center gap-3 bg-emerald-400 px-7 py-4 text-sm font-black uppercase tracking-widest text-[#0d0d0d] shadow-[4px_4px_0px_0px_#fff] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#fff]"
-        >
-          <MessageCircle className="h-4 w-4" strokeWidth={2} />
-          Falar agora pelo WhatsApp
-        </motion.a>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="mt-12 text-[11px] uppercase tracking-widest text-zinc-500"
-        >
-          O6 Growth · Sistema Comercial · 2026
-        </motion.p>
-      </section>
-    </main>
+    <section className="mx-auto flex min-h-screen max-w-[760px] flex-col justify-center gap-6 px-4 py-16 md:px-8">
+      <span className="flex items-center gap-2.5 text-xs uppercase tracking-[0.12em] text-[#585d5b]" style={mono}>
+        <span className="h-2 w-2 rounded-full bg-[#f2542d]" />{v.step}
+      </span>
+      <h1 className="text-[clamp(2.6rem,7vw,5rem)] uppercase leading-[0.92]" style={display}>{v.title}</h1>
+      <p className="max-w-[52ch] text-lg text-[#585d5b]">{v.text}</p>
+      <div className="flex flex-wrap gap-3">
+        {v.cta.external ? (
+          <a href={v.cta.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-5 rounded-[2px] bg-[#f2542d] px-5 py-4 text-[15px] font-bold text-[#170904]">{v.cta.label} <span aria-hidden="true">→</span></a>
+        ) : (
+          <Link href={v.cta.href} className="inline-flex items-center gap-5 rounded-[2px] bg-[#f2542d] px-5 py-4 text-[15px] font-bold text-[#170904]">{v.cta.label} <span aria-hidden="true">→</span></Link>
+        )}
+        <Link href="/portfolio/index.html" className="inline-flex items-center rounded-[2px] border border-[#1d2022] px-5 py-4 text-[15px] font-bold">Ver o portfólio</Link>
+      </div>
+      <p className="text-sm text-[#585d5b]">Não envie dados de pacientes ou clientes pelo WhatsApp.</p>
+    </section>
   );
 }
 
 export default function ObrigadoPage() {
   return (
-    <Suspense>
-      <ObrigadoInner />
-    </Suspense>
+    <main className="min-h-screen bg-[#f4f2ec] text-[#1d2022]" style={{ fontFamily: "var(--font-o6-sans)" }}>
+      <Suspense>
+        <Inner />
+      </Suspense>
+    </main>
   );
 }

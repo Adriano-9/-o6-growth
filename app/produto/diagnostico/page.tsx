@@ -1,183 +1,180 @@
-"use client";
-
-import { motion } from "framer-motion";
-import {
-  CheckCircle2,
-  ArrowRight,
-  X,
-  Eye,
-  Headphones,
-  Settings,
-  Cpu,
-  TrendingUp,
-  MessageCircle,
-} from "lucide-react";
+import Link from "next/link";
 import { whatsappUrl } from "@/app/_lib/contato";
+import { EXPRESS_DEADLINE, EXPRESS_HAS_PAYMENT_LINK, EXPRESS_PAYMENT_URL, EXPRESS_PRICE } from "@/app/_lib/express";
+import { ExpressSteps } from "./_components/ExpressSteps";
 
-const dimensoes = [
-  { icon: Eye, title: "Presença", desc: "Como sua clínica aparece para quem busca no Google, Instagram e indicações." },
-  { icon: Headphones, title: "Atendimento", desc: "Velocidade e qualidade da resposta ao primeiro contato do paciente." },
-  { icon: Settings, title: "Processo", desc: "O caminho que o paciente percorre do interesse ao agendamento confirmado." },
-  { icon: Cpu, title: "Automação", desc: "Quanto do follow-up e qualificação roda sem depender de memória humana." },
-  { icon: TrendingUp, title: "Conversão", desc: "Percentual de contatos que viram consultas pagas — e onde os outros se perdem." },
+const display = { fontFamily: "var(--font-o6-display)" };
+const serif = { fontFamily: "var(--font-o6-serif)" };
+const mono = { fontFamily: "var(--font-o6-mono)" };
+
+const report = [
+  { label: "Presença no Instagram e Google", status: "Claro", tone: "ok" },
+  { label: "Oferta e mensagem", status: "Atenção", tone: "mid" },
+  { label: "Primeira resposta no WhatsApp", status: "Prioridade 1", tone: "hot" },
+  { label: "Retomada de quem disse “vou pensar”", status: "Prioridade 2", tone: "hot" },
+  { label: "Caminho até agendar", status: "Atenção", tone: "mid" },
+] as const;
+
+const how = [
+  { n: "01", title: "Pagamento", text: `${EXPRESS_PRICE} pelo Mercado Pago, no Pix ou no cartão.` },
+  { n: "02", title: "Formulário de 5 minutos", text: "Você conta sobre o negócio e o atendimento. Sem dados de pacientes ou clientes." },
+  { n: "03", title: "Análise com revisão humana", text: "Olhamos sua presença pública e o que você descreveu, e ordenamos o que mais trava." },
+  { n: "04", title: "Entrega pelo WhatsApp", text: `Até três prioridades em ordem, ${EXPRESS_DEADLINE}.` },
 ];
 
-const para = ["Dono de clínica em Salvador", "2-3 profissionais na equipe", "Faturamento R$ 30k+/mês", "Operando há 3+ anos"];
-const naoPara = ["Clínica solo abaixo de R$ 20k/mês", "Clínica grande com gestor profissional dedicado", "Quem busca \"milagre em 7 dias\""];
-
-const faq = [
-  { q: "Já contratei agência e não funcionou.", a: "Por isso começamos com diagnóstico — não vendemos sistema sem antes mapear o problema real da sua clínica." },
-  { q: "Como funciona o diagnóstico?", a: "Você fala com a Sofia no WhatsApp, agenda um horário e fazemos a análise do seu funil comercial juntos." },
-  { q: "E se eu não gostar do resultado?", a: "O diagnóstico é um dado — se não gostar do que encontramos, você não é obrigado a contratar mais nada." },
-  { q: "Preciso enviar acesso a alguma plataforma?", a: "Só os dados que você quiser compartilhar: site, Google Meu Negócio, anúncios ativos e WhatsApp Business. Sem invasão de privacidade." },
-];
-
-const WA_LINK = whatsappUrl("DIAGNÓSTICO");
-
-function WhatsAppCTA({ className = "" }: { className?: string }) {
+function BuyButton({ className = "", label = `Fazer o Diagnóstico Express · ${EXPRESS_PRICE}` }: { className?: string; label?: string }) {
   return (
     <a
-      href={WA_LINK}
+      href={EXPRESS_PAYMENT_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center gap-2 bg-[#25D366] px-6 py-4 text-sm font-black uppercase tracking-widest text-white shadow-[4px_4px_0px_0px_#fff] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#fff] ${className}`}
+      className={`group inline-flex items-center justify-between gap-5 rounded-[2px] bg-[#f2542d] px-5 py-4 text-[15px] font-bold text-[#170904] transition-transform duration-300 hover:-translate-y-0.5 ${className}`}
     >
-      <MessageCircle className="h-4 w-4" />
-      Quero meu diagnóstico gratuito
-      <ArrowRight className="h-4 w-4" />
+      {label}
+      <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">→</span>
     </a>
   );
 }
 
-export default function DiagnosticoPage() {
+export default function DiagnosticoExpressPage() {
   return (
-    <main className="min-h-screen bg-[#0d0d0d] text-zinc-100">
-      {/* Header */}
-      <header className="border-b border-white/10">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <a href="/" className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center bg-brand-orange">
-              <span className="font-black text-sm text-white">O6</span>
-            </div>
-            <span className="font-black text-lg uppercase tracking-tight text-white">O6 Growth</span>
-          </a>
-          <nav className="hidden gap-6 text-[11px] font-bold uppercase tracking-widest text-zinc-400 md:flex">
-            <a href="/produto/diagnostico" className="text-white">Diagnóstico</a>
-            <a href="/produto/sprint" className="hover:text-white">Sprint</a>
-            <a href="/produto/retainer" className="hover:text-white">Retainer</a>
+    <main className="min-h-screen bg-[#f4f2ec] text-[#1d2022]" style={{ fontFamily: "var(--font-o6-sans)" }}>
+      <header className="sticky top-0 z-30 border-b border-[#1d2022]/15 bg-[#f4f2ec]/95 backdrop-blur">
+        <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-4 px-4 py-3.5 md:px-8">
+          <Link href="/" className="flex items-center gap-2.5 text-sm font-extrabold tracking-[0.04em]">
+            <span className="grid h-7 w-7 place-items-center bg-[#f2542d] text-[11px] text-[#170904]">O6</span>O6 GROWTH
+          </Link>
+          <nav aria-label="Principal" className="hidden gap-6 text-sm text-[#585d5b] md:flex">
+            <Link href="/" className="hover:text-[#1d2022]">Início</Link>
+            <Link href="/servicos" className="hover:text-[#1d2022]">Serviços</Link>
+            <Link href="/portfolio/index.html" className="hover:text-[#1d2022]">Portfólio</Link>
           </nav>
+          <a href={EXPRESS_PAYMENT_URL} target="_blank" rel="noopener noreferrer" className="rounded-[2px] bg-[#f2542d] px-3.5 py-2.5 text-[13px] font-bold text-[#170904]">
+            Contratar →
+          </a>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="mx-auto max-w-4xl px-6 py-20 md:py-28">
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <div className="mb-5 inline-flex items-center gap-2 border border-brand-orange/40 bg-brand-orange/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-orange">
-            Diagnóstico gratuito
-          </div>
-          <h1 className="text-4xl font-black uppercase leading-[1.05] tracking-tight md:text-6xl">
-            Diagnóstico gratuito O6
-          </h1>
-          <p className="mt-4 max-w-2xl text-lg text-zinc-300 md:text-xl">
-            Descubra onde sua clínica está perdendo paciente antes de investir em qualquer ferramenta.
+      <section className="mx-auto grid max-w-[1240px] gap-10 px-4 py-12 md:px-8 md:py-20 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:gap-16">
+        <div>
+          <p className="flex items-center gap-2.5 text-xs uppercase tracking-[0.12em] text-[#585d5b]" style={mono}>
+            <span className="h-2 w-2 rounded-full bg-[#f2542d]" />Clínicas, consultórios e negócios de serviço
           </p>
-
-          <div className="mt-10 border-t border-white/10 pt-8">
-            <WhatsAppCTA />
-            <p className="mt-4 text-xs text-zinc-500">
-              A Sofia, nossa atendente, responde e agenda. Se precisar, uma pessoa assume a conversa.
-            </p>
+          <h1 className="mt-4 text-[clamp(2.9rem,7.4vw,7rem)] uppercase leading-[0.92]" style={display}>
+            Entenda o que trava suas vendas <em className="normal-case text-[#f2542d]" style={serif}>antes</em> de investir.
+          </h1>
+          <p className="mt-6 max-w-[46ch] text-[clamp(1.05rem,1.45vw,1.25rem)] text-[#585d5b]">
+            Seu negócio recebe contatos, mas nem todos viram agenda. O Diagnóstico Express descobre <strong className="font-semibold text-[#1d2022]">em que ponto o interesse perde força</strong>, do Instagram ao WhatsApp, e diz o que resolver primeiro.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-2.5">
+            <BuyButton />
+            <a href={whatsappUrl("Olá, tenho dúvidas sobre o Diagnóstico Express.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center rounded-[2px] border border-[#1d2022] px-5 py-[15px] text-[15px] font-bold transition-colors hover:bg-[#1d2022] hover:text-[#f4f2ec]">
+              Tirar dúvidas no WhatsApp
+            </a>
           </div>
-        </motion.div>
+          <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs uppercase tracking-[0.1em] text-[#585d5b]" style={mono}>
+            {["Até 3 prioridades", "Revisão humana", EXPRESS_DEADLINE].map((f) => (
+              <li key={f} className="flex items-center gap-2"><span className="h-[5px] w-[5px] bg-[#f2542d]" />{f}</li>
+            ))}
+          </ul>
+        </div>
+
+        <aside aria-label="Exemplo ilustrativo do que o diagnóstico entrega" className="flex flex-col gap-3.5 border-t-[3px] border-[#f2542d] bg-[#131517] p-5 text-[#eceae4]">
+          <div className="flex justify-between text-xs uppercase tracking-[0.12em] text-[#a3a19a]" style={mono}><span>Diagnóstico Express</span><span>Exemplo</span></div>
+          <h2 className="m-0 text-[17px] font-semibold">Onde o interesse perde força</h2>
+          <ul className="m-0 list-none border-t border-white/12 p-0">
+            {report.map((r) => (
+              <li key={r.label} className="grid grid-cols-[1fr_auto] items-center gap-3 border-b border-white/12 py-2.5 text-[14.5px]">
+                {r.label}
+                <span className={`border px-2 py-1 text-[10.5px] uppercase tracking-[0.08em] ${r.tone === "hot" ? "border-[#f2542d] text-[#ffb39f]" : "border-white/12 text-[#a3a19a]"}`} style={mono}>{r.status}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="border-l-2 border-[#f2542d] pl-3 text-sm text-[#cfccc4]">Comece pela primeira resposta. É o que mais trava agora.</p>
+          <span className="text-[10.5px] uppercase tracking-[0.08em] text-[#8f8d86]" style={mono}>Exemplo ilustrativo, não é dado de cliente</span>
+        </aside>
       </section>
 
-      {/* 5 Dimensões */}
-      <section className="border-t border-white/10 bg-white/[0.02] py-20">
-        <div className="mx-auto max-w-5xl px-6">
-          <div className="mb-12 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-orange">As 5 dimensões que analisamos</div>
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {dimensoes.map((it) => (
-              <motion.div
-                key={it.title}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-                className="border border-white/10 bg-white/[0.02] p-6"
-              >
-                <it.icon className="mb-4 h-6 w-6 text-brand-orange" strokeWidth={1.5} />
-                <h3 className="text-lg font-black text-white">{it.title}</h3>
-                <p className="mt-2 text-sm text-zinc-400">{it.desc}</p>
-              </motion.div>
-            ))}
+      {/* Cinco pontos (escuro) */}
+      <section className="bg-[#131517] text-[#eceae4]">
+        <div className="mx-auto max-w-[1240px] px-4 py-16 md:px-8 md:py-28">
+          <ExpressSteps />
+          <div className="mt-10 grid items-center gap-6 border border-white/12 bg-[#1b1e21] p-6 md:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-8">
+            <div className="text-[60px] leading-none" style={display}><small className="mr-1.5 align-top text-xs tracking-[0.1em]" style={mono}>R$</small>197</div>
+            <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[14.5px] text-[#cfccc4]">
+              <li>— Até 3 prioridades em ordem</li>
+              <li>— Revisão humana · {EXPRESS_DEADLINE}</li>
+              <li>— Sem dados de pacientes ou clientes</li>
+            </ul>
+            <BuyButton label="Quero o diagnóstico" />
           </div>
+          <p className="mt-4 text-sm text-[#a3a19a]">
+            Já sabe o que precisa? <Link href="/servicos" className="border-b border-white/20 text-[#eceae4] hover:border-[#f2542d]">Veja os serviços</Link> e peça uma proposta direta.
+          </p>
         </div>
       </section>
 
-      {/* Para quem é / não é */}
-      <section className="border-t border-white/10 bg-white/[0.02] py-20">
-        <div className="mx-auto max-w-5xl px-6">
-          <div className="grid gap-8 md:grid-cols-2">
-            <div>
-              <div className="mb-5 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">Para quem é</div>
-              <ul className="space-y-3">
-                {para.map((p) => (
-                  <li key={p} className="flex items-start gap-3 text-zinc-200">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-400" strokeWidth={1.5} />
-                    <span>{p}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <div className="mb-5 text-[10px] font-bold uppercase tracking-[0.2em] text-red-400">Para quem NÃO é</div>
-              <ul className="space-y-3">
-                {naoPara.map((p) => (
-                  <li key={p} className="flex items-start gap-3 text-zinc-400">
-                    <X className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-400" strokeWidth={1.5} />
-                    <span>{p}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
+      {/* Como funciona */}
+      <section className="mx-auto max-w-[1240px] px-4 py-16 md:px-8 md:py-24">
+        <span className="text-xs uppercase tracking-[0.12em] text-[#585d5b]" style={mono}>Como funciona</span>
+        <h2 className="mt-3 text-[clamp(2.2rem,4.4vw,3.8rem)] uppercase leading-[0.95]" style={display}>
+          Do pagamento à <em className="normal-case text-[#f2542d]" style={serif}>entrega</em>.
+        </h2>
+        <ol className="mt-10 grid list-none gap-px border border-[#1d2022]/15 bg-[#1d2022]/15 p-0 sm:grid-cols-2 lg:grid-cols-4">
+          {how.map((h) => (
+            <li key={h.n} className="flex flex-col gap-2 bg-[#fbfaf6] p-6">
+              <span className="text-[34px] leading-none text-[#f2542d]" style={display}>{h.n}</span>
+              <h3 className="m-0 text-lg font-bold">{h.title}</h3>
+              <p className="m-0 text-[15px] text-[#585d5b]">{h.text}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-6 text-sm text-[#585d5b]">
+          Já pagou? <Link href="/diagnostico/formulario" className="font-semibold text-[#1d2022] underline underline-offset-4">Preencha o formulário do diagnóstico</Link>.
+        </p>
       </section>
 
-      {/* FAQ */}
-      <section className="py-20">
-        <div className="mx-auto max-w-3xl px-6">
-          <div className="mb-10 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-orange">FAQ</div>
-          <div className="space-y-6">
-            {faq.map((it) => (
-              <div key={it.q} className="border-b border-white/10 pb-6">
-                <h3 className="text-base font-bold text-white">{it.q}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{it.a}</p>
-              </div>
-            ))}
+      {/* Para quem é */}
+      <section className="border-t border-[#1d2022]/15">
+        <div className="mx-auto grid max-w-[1240px] gap-10 px-4 py-16 md:grid-cols-2 md:px-8 md:py-20">
+          <div>
+            <h2 className="text-2xl font-bold">É para você se</h2>
+            <ul className="mt-4 flex list-none flex-col gap-2.5 p-0 text-[#585d5b]">
+              <li>— recebe contatos e sente que muitos não viram cliente;</li>
+              <li>— quer saber onde investir antes de pagar anúncio, site ou agência;</li>
+              <li>— prefere uma ordem clara de prioridades a um pacote fechado.</li>
+            </ul>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold">O que ele não é</h2>
+            <ul className="mt-4 flex list-none flex-col gap-2.5 p-0 text-[#585d5b]">
+              <li>— não é auditoria de prontuário nem de dados de pacientes;</li>
+              <li>— não é promessa de faturamento;</li>
+              <li>— não obriga a contratar nada depois.</li>
+            </ul>
           </div>
         </div>
       </section>
 
       {/* CTA final */}
-      <section className="border-t border-white/10 bg-brand-orange/[0.05] py-20">
-        <div className="mx-auto max-w-3xl px-6 text-center">
-          <h2 className="text-3xl font-black uppercase leading-tight tracking-tight text-white md:text-4xl">
-            Descubra onde sua clínica está vazando pacientes.
+      <section className="bg-[#131517] text-[#eceae4]">
+        <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-8 px-4 py-14 md:px-8 md:py-20">
+          <h2 className="max-w-[16ch] text-[clamp(2rem,4vw,3.4rem)] uppercase leading-[0.95]" style={display}>
+            Comece <em className="normal-case text-[#f2542d]" style={serif}>entendendo</em>. Depois decida.
           </h2>
-          <p className="mt-3 text-zinc-400">Gratuito. Sem compromisso. Sem surpresas.</p>
-          <div className="mt-8 flex justify-center">
-            <WhatsAppCTA />
-          </div>
-          <p className="mt-4 text-xs text-zinc-500">
-            A Sofia, nossa atendente, responde e agenda. Se precisar, uma pessoa assume a conversa.
-          </p>
+          <BuyButton />
         </div>
+        {!EXPRESS_HAS_PAYMENT_LINK && (
+          <p className="mx-auto max-w-[1240px] px-4 pb-6 text-xs text-[#8f8d86] md:px-8">Pagamento pelo WhatsApp enquanto o link do Mercado Pago não está configurado.</p>
+        )}
       </section>
 
-      <footer className="border-t border-white/10 py-8 text-center text-[11px] uppercase tracking-widest text-zinc-600">
-        O6 Growth · Sistema Comercial · 2026
-      </footer>
+      {/* Barra fixa no celular */}
+      <div aria-hidden="true" className="h-20 md:hidden" />
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#1d2022]/15 bg-[#f4f2ec]/95 px-4 pt-2.5 md:hidden" style={{ paddingBottom: "max(10px, env(safe-area-inset-bottom))" }}>
+        <BuyButton className="w-full" label={`Diagnóstico Express · ${EXPRESS_PRICE}`} />
+      </div>
     </main>
   );
 }
