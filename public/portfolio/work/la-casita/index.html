@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>La Casita — Scroll World</title>
+  <style>
+    :root{--sw-bg:#F6EEE3;--sw-ink:#5C3224;--sw-ink-soft:#7B886F;--sw-accent:#AC5238;--sw-font-display:'Comfortaa',ui-rounded,sans-serif;--sw-font-body:'Plus Jakarta Sans',sans-serif}
+  </style>
+</head>
+<body>
+  <div id="world"></div>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="scrub-engine.js"></script>
+  <script>
+    mountScrollWorld(document.getElementById('world'), {
+      brand: { name: 'La Casita', href: 'https://instagram.com/amo.lacasita' },
+      hint: 'Role para navegar', nav: true, atmosphere: false,
+      diveScroll: 2.5, connScroll: 0.8, crossfade: 0.40,
+      sections: [
+        { id:'fachada', label:'Fachada', still:'lacasita-previz-fachada.png', clip:'output-fachada.mp4', accent:'#AC5238', scroll:2.2, linger:.6, eyebrow:'amo.lacasita', title:'Vestindo a infância com amor e leveza.', body:'Peças para os dias simples que acabam virando as memórias mais bonitas.', tags:['Feito com carinho','Para brincar'] },
+        { id:'meninos', label:'Meninos', still:'lacasita-previz-meninos.png', clip:'output-meninos.mp4', accent:'#7B886F', scroll:2.0, linger:.5, eyebrow:'Meninos', title:'Para correr, imaginar e brincar sem pressa.', body:'Roupas confortáveis para acompanhar cada descoberta do dia.', tags:['Conforto','Liberdade'] },
+        { id:'meninas', label:'Meninas', still:'lacasita-previz-meninas.png', clip:'output-meninas.mp4', accent:'#AC5238', scroll:2.0, linger:.5, eyebrow:'Meninas', title:'Delicadeza para os dias que merecem ser lembrados.', body:'Vestidos e detalhes pensados para acompanhar sorrisos, festas e abraços.', tags:['Leveza','Delicadeza'] },
+        { id:'nossa-casa', label:'Nossa Casa', still:'lacasita-previz-nossa-casa.png', clip:'output-nossa-casa.mp4', accent:'#7B886F', scroll:2.2, linger:.6, eyebrow:'Nossa Casa', title:'É assim que uma roupa vira parte da história.', body:'Entre brincadeiras, colo e descobertas, cada peça acompanha momentos eternos.', tags:['Afeto','Família'] },
+        { id:'atelie', label:'Ateliê', still:'lacasita-previz-atelie.png', clip:'output-atelie.mp4', accent:'#AC5238', scroll:3.0, linger:.8, eyebrow:'Ateliê La Casita', title:'Feito para durar e criar memórias.', body:'Descubra peças leves, afetivas e feitas para acompanhar a infância de perto.', cta:{primary:{label:'Ver no Instagram',href:'https://instagram.com/amo.lacasita',target:'_blank'},secondary:{label:'Voltar ao portfólio',href:'/portfolio/index.html'}} }
+      ],
+      connectors: ['output-fachada-meninos.mp4','output-conn-meninos-meninas.mp4','output-conn-meninas-nossa.mp4','output-conn-nossa-atelie.mp4']
+    });
+  </script>
+</body>
+</html>
