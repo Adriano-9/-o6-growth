@@ -43,8 +43,7 @@ const groups = [
     note: "Atender, acompanhar e não deixar o contato esfriar.",
     items: [
       { slug: "sistema-o6", title: "Sistema O6", text: "Entrada, resposta e retomada dos contatos organizadas, com automação só onde ajuda." },
-      { slug: "otimizacao", title: "O6 Otimização", text: "Ajustes mensais priorizados no que já está no ar: páginas, mensagens e jornadas." },
-      { slug: "retainer", title: "Retainer", text: "Acompanhamento recorrente com capacidade, cadência e entregas definidas em contrato." },
+      { slug: "otimizacao", title: "O6 Otimização · mensal", text: "Depois que está no ar: a gente administra e melhora seu site, landing page ou automação com IA todo mês." },
     ],
   },
 ];

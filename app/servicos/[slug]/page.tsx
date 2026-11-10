@@ -59,12 +59,12 @@ const servicePages = {
   },
   otimizacao: {
     title: "O6 Otimização",
-    headline: "Melhore o que já funciona sem recomeçar do zero.",
-    intro: "Um acompanhamento mensal mais leve para negócios que já têm presença digital, campanhas ou automações e precisam eliminar atritos, atualizar ativos e acompanhar melhorias prioritárias.",
-    label: "Acompanhamento com escopo definido",
-    items: ["Leitura mensal dos principais pontos de atrito", "Lista priorizada de melhorias em páginas, mensagens ou jornadas", "Execução de ajustes compatíveis com o escopo contratado", "Registro do que mudou e da próxima prioridade"],
-    fit: "Para negócios com uma base existente que precisam melhorar conversão, clareza, resposta ou experiência sem contratar uma reconstrução completa.",
-    notIncluded: "Não é um pacote de produção ilimitada, uma implantação completa ou uma licença de CRM.",
+    headline: "Seu site e sua automação funcionando e melhorando todo mês.",
+    intro: "Depois que o site, a landing page ou o sistema de atendimento estão no ar, alguém precisa cuidar. Na O6 Otimização a gente administra, corrige e melhora o que já existe, com um combinado mensal e um relatório do que mudou.",
+    label: "Mensal · site, LP ou automação",
+    items: ["Site e landing page: atualizações de texto, fotos, preços e novas seções", "Formulários, botões e links conferidos para nenhum contato se perder", "Automação com IA: respostas ajustadas, falhas corrigidas e regras atualizadas", "Relatório mensal com o que foi feito e a próxima melhoria"],
+    fit: "Para quem já tem site, landing page ou sistema de atendimento no ar e não quer que ele fique parado, quebre ou desatualize. O valor mensal varia conforme o tamanho: um site simples custa menos que um sistema de automação.",
+    notIncluded: "Não inclui construir um site ou sistema novo, produção ilimitada de conteúdo, verba de anúncio nem licenças de ferramentas de terceiros.",
     cta: "Conversar sobre a O6 Otimização",
   },
   retainer: {
@@ -97,7 +97,7 @@ const serviceSeo: Record<ServiceSlug, { title: string; description: string }> = 
   campanhas: { title: "Campanhas com Objetivo Claro | O6 Growth", description: "Mensagem, peças e vídeos conectados a um objetivo de negócio. Fale com a O6 e planeje sua próxima campanha com direção." },
   sites: { title: "Sites e Landing Pages | O6 Growth", description: "Site ou landing page que explica sua oferta e leva ao próximo passo, pensado para o celular. Peça uma proposta à O6." },
   "sistema-o6": { title: "Sistema O6: Atendimento e Automação | O6 Growth", description: "Organize entrada, resposta e retorno dos contatos, com automação só onde ajuda. Converse com a O6 sobre o seu atendimento." },
-  otimizacao: { title: "O6 Otimização: Melhoria Contínua | O6 Growth", description: "Ajustes priorizados no site, nas páginas e nos processos que você já tem. Fale com a O6 e melhore o que já está no ar." },
+  otimizacao: { title: "O6 Otimização: Site e Automação Mensal | O6 Growth", description: "Administração mensal do seu site, landing page ou automação com IA: correções, atualizações e relatório. Converse com a O6." },
   retainer: { title: "Retainer: Acompanhamento Mensal | O6 Growth", description: "Acompanhamento mensal com escopo e entregas definidos para manter marca, presença e atendimento evoluindo. Converse com a O6." },
   conteudo: { title: "Conteúdo e Audiovisual | O6 Growth", description: "Pautas, roteiros, carrosséis e vídeos numa direção única de comunicação. Fale com a O6 e produza conteúdo com critério." },
 };
@@ -127,6 +127,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   if (slug === "dashboards" || slug === "videos" || slug === "sprint" || slug === "automacao-atendimento") redirect("/servicos/sistema-o6");
   if (slug === "diagnostico") redirect("/produto/diagnostico");
+  if (slug === "retainer") redirect("/servicos/otimizacao");
   const service = servicePages[slug as ServiceSlug];
   if (!service) notFound();
   const contactUrl = whatsappUrl(`Quero conversar sobre ${service.title} na O6 Growth.`);
