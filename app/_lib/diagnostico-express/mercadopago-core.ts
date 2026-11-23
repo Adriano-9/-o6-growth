@@ -52,6 +52,26 @@ export function paymentMatchesReference(
   );
 }
 
+export function resolveNotificationUrl(
+  origin: string,
+  override?: string,
+): string | null {
+  let url: URL;
+  try {
+    url = new URL(override?.trim() || origin);
+  } catch {
+    return null;
+  }
+  const host = url.hostname;
+  const isLocal =
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "[::1]" ||
+    host.endsWith(".localhost");
+  if (isLocal || url.protocol !== "https:") return null;
+  return `${url.origin}/api/webhooks/mercadopago`;
+}
+
 export function parseSignatureHeader(
   header: string,
 ): { ts: string; v1: string } | null {

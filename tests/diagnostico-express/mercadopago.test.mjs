@@ -7,6 +7,7 @@ import {
   newExternalReference,
   parseSignatureHeader,
   paymentMatchesReference,
+  resolveNotificationUrl,
   verifyMercadoPagoSignature,
 } from "../../app/_lib/diagnostico-express/mercadopago-core.ts";
 import {
@@ -124,6 +125,23 @@ test("associacao pagamento x compra exige referencia identica", () => {
   assert.equal(paymentMatchesReference(p, ""), false);
   assert.equal(paymentMatchesReference(p, undefined), false);
   assert.equal(paymentMatchesReference(payment({ externalReference: null }), null), false);
+});
+
+test("notification_url: so https publico; override tem prioridade", () => {
+  assert.equal(
+    resolveNotificationUrl("https://o6-growth.vercel.app"),
+    "https://o6-growth.vercel.app/api/webhooks/mercadopago",
+  );
+  assert.equal(
+    resolveNotificationUrl("http://localhost:3000", "https://abc.trycloudflare.com/"),
+    "https://abc.trycloudflare.com/api/webhooks/mercadopago",
+  );
+  assert.equal(resolveNotificationUrl("http://localhost:3000"), null);
+  assert.equal(resolveNotificationUrl("http://127.0.0.1:3000"), null);
+  assert.equal(resolveNotificationUrl("http://[::1]:3000"), null);
+  assert.equal(resolveNotificationUrl("http://example.com"), null);
+  assert.equal(resolveNotificationUrl("nao-e-url"), null);
+  assert.equal(resolveNotificationUrl("http://localhost:3000", "http://insegura.example.com"), null);
 });
 
 function validInput(overrides = {}) {

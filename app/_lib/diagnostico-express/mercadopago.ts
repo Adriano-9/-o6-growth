@@ -8,6 +8,7 @@ import {
 import {
   isExpressPayment,
   newExternalReference,
+  resolveNotificationUrl,
   verifyMercadoPagoSignature,
 } from "./mercadopago-core";
 
@@ -51,7 +52,17 @@ export async function createDiagnosisPreference(
   origin: string,
 ): Promise<MercadoPagoPreference> {
   const externalReference = newExternalReference(DIAGNOSTICO_EXPRESS_PRODUCT);
+  const notificationUrl = resolveNotificationUrl(
+    origin,
+    process.env.MERCADOPAGO_NOTIFICATION_BASE_URL,
+  );
+  if (!notificationUrl) {
+    console.warn(
+      "[mercadopago] notification_url omitida: origem local ou sem https. Defina MERCADOPAGO_NOTIFICATION_BASE_URL (tunel https) para testar webhook.",
+    );
+  }
   const body = {
+    ...(notificationUrl ? { notification_url: notificationUrl } : {}),
     items: [
       {
         title: "Diagnóstico Express O6",
