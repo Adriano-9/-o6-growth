@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://o6-growth.vercel.app"),
   title: "O6 Growth",
-  description: "Estratégia e produção digital para marcas e empresas.",
+  description: "Estratégia, marca, site, conteúdo e atendimento para clínicas, consultórios e serviços em Salvador. Comece pelo Diagnóstico Express.",
 };
 
 export default function RootLayout({

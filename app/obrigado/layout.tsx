@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { o6Fonts } from "@/app/_lib/fonts-o6";
 
 export const metadata: Metadata = {
-  title: "Pagamento confirmado | O6 Growth",
+  title: "Obrigado | O6 Growth",
   robots: { index: false, follow: false },
 };
 
 export default function ObrigadoLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <div className={o6Fonts}>{children}</div>;
 }

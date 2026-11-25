@@ -200,11 +200,14 @@ export default function O6Footer() {
             </span>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-8 uppercase">
-            <Link href="/portfolio/index.html" className="hover:text-brand-graphite transition-colors">PORTFÓLIO</Link>
-            <Link href="/servicos/retainer" className="hover:text-brand-graphite transition-colors">RETAINER</Link>
+          <nav aria-label="Rodapé" className="flex flex-wrap justify-center gap-x-8 gap-y-3 uppercase">
+            <Link href="/produto/diagnostico" className="hover:text-brand-graphite transition-colors">Diagnóstico Express</Link>
+            <Link href="/saude" className="hover:text-brand-graphite transition-colors">Para clínicas e consultórios</Link>
+            <Link href="/advocacia" className="hover:text-brand-graphite transition-colors">Para escritórios de advocacia</Link>
+            <Link href="/servicos" className="hover:text-brand-graphite transition-colors">Serviços da O6</Link>
+            <Link href="/portfolio/index.html" className="hover:text-brand-graphite transition-colors">Portfólio de projetos</Link>
             <span>&copy; 2026 O6 Growth. Todos os direitos reservados.</span>
-          </div>
+          </nav>
         </footer>
 
       </div>
