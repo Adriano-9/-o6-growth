@@ -153,7 +153,6 @@ export default function O6Footer() {
                   </button>
 
                   {formState === "error" && <p role="alert" className="text-xs font-semibold text-red-700">Não conseguimos registrar seu contato. Tente novamente; seus dados continuam preenchidos.</p>}
-                  <Link href={briefingHref} className="inline-flex items-center gap-2 text-xs font-bold text-brand-graphite underline underline-offset-4 hover:text-brand-orange">Preencher briefing completo <ArrowRight className="h-4 w-4" /></Link>
                   <p className="text-[9px] text-brand-graphite/40 leading-snug text-center">
                     Usaremos seu e-mail apenas para retornar sobre a solicitação.
                   </p>

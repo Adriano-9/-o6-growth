@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { classifyBriefing } from "@/app/briefing/_lib/router";
+import { notifyTelegram } from "@/app/_lib/telegram";
+import { createLead } from "@/app/crm/_lib/api";
+import { emptyLeadInput } from "@/app/crm/_lib/types";
 import type {
   BriefingAIOutput,
+  BriefingReceipt,
   HybridBriefingInput,
   HybridBriefingResult,
 } from "@/app/briefing/_lib/types";
@@ -20,6 +24,10 @@ function isValidInput(body: unknown): body is HybridBriefingInput {
   if (!body || typeof body !== "object") return false;
   const b = body as Record<string, unknown>;
   return (
+    isString(b.contactName) &&
+    b.contactName.trim().length >= 2 &&
+    isString(b.contactWhatsapp) &&
+    b.contactWhatsapp.replace(/\D/g, "").length >= 10 &&
     isString(b.projectName) &&
     isString(b.companyName) &&
     (b.projectMode === "novo" || b.projectMode === "reforma") &&
@@ -283,7 +291,45 @@ export async function POST(req: NextRequest) {
     aiGenerated: generated !== null,
   };
 
-  return NextResponse.json(result);
+  // A classificação, a faixa de preço e o briefing completo vão só para a O6.
+  // O cliente recebe apenas a confirmação de envio.
+  const escape = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const digits = body.contactWhatsapp.replace(/\D/g, "");
+  const header = [
+    "<b>Novo briefing de projeto</b>",
+    `${escape(body.contactName.trim())} · ${escape(body.companyName.trim() || "empresa não informada")}`,
+    `WhatsApp: https://wa.me/${digits.startsWith("55") ? digits : `55${digits}`}`,
+    `Projeto: ${escape(body.projectName.trim() || "sem nome")}`,
+    `Nível ${routing.level} (${escape(routing.levelLabel)}) · Lane ${routing.lane} · ${escape(routing.architectureLabel)}`,
+    `Faixa interna: ${escape(routing.priceReference)}`,
+    result.aiGenerated ? "Síntese por IA" : "Síntese de fallback (sem IA)",
+    "",
+  ].join("\n");
+  const markdown = escape(result.markdown);
+  const telegram = await notifyTelegram(header + "<pre>" + markdown.slice(0, 3400 - header.length) + "</pre>");
+  if (!telegram.ok) console.error("[briefing/generate] telegram failed", telegram.error);
+
+  // Mesmo padrão de /api/briefing: o briefing também vira lead no CRM, para não depender só do Telegram.
+  let saved = false;
+  try {
+    const lead = await createLead({
+      ...emptyLeadInput("Novo Lead"),
+      nome: body.contactName.trim().slice(0, 120),
+      whatsapp: digits.slice(0, 20),
+      empresa: body.companyName.trim().slice(0, 160),
+      notas: result.markdown.slice(0, 8000),
+      origem: "site_o6_briefing",
+    });
+    saved = Boolean(lead);
+  } catch (error) {
+    console.error("[briefing/generate] createLead failed", error);
+  }
+  if (!saved && !telegram.ok) {
+    return NextResponse.json({ error: "Não conseguimos registrar seu briefing. Tente novamente ou fale pelo WhatsApp." }, { status: 502 });
+  }
+
+  const receipt: BriefingReceipt = { ok: true, notified: telegram.ok };
+  return NextResponse.json(receipt);
 }
 
 export async function GET() {

@@ -1,24 +1,25 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   ArrowRight,
   Check,
-  Clipboard,
-  ExternalLink,
   Loader2,
   Sparkles,
 } from "lucide-react";
 import type {
   ContentFrequency,
   CreativeFreedom,
+  BriefingReceipt,
   HybridBriefingInput,
-  HybridBriefingResult,
   MotionMode,
   ProjectMode,
 } from "./_lib/types";
 
 const initialInput: HybridBriefingInput = {
+  contactName: "",
+  contactWhatsapp: "",
   projectName: "",
   companyName: "",
   projectMode: "novo",
@@ -95,13 +96,14 @@ const inputClass =
 
 export default function HybridBriefingPage() {
   const [input, setInput] = useState<HybridBriefingInput>(initialInput);
-  const [result, setResult] = useState<HybridBriefingResult | null>(null);
+  const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
 
   const completion = useMemo(() => {
     const essentials = [
+      input.contactName,
+      input.contactWhatsapp,
       input.projectName,
       input.companyName,
       input.mainGoal,
@@ -126,7 +128,7 @@ export default function HybridBriefingPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setResult(null);
+    setSent(false);
 
     try {
       const res = await fetch("/api/briefing/generate", {
@@ -134,15 +136,16 @@ export default function HybridBriefingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
       });
-      const data = (await res.json()) as HybridBriefingResult | { error?: string };
+      const data = (await res.json()) as BriefingReceipt | { error?: string };
       if (!res.ok) {
         const message =
           "error" in data && typeof data.error === "string"
             ? data.error
-            : "Não foi possível gerar o briefing.";
+            : "Não foi possível enviar o briefing.";
         throw new Error(message);
       }
-      setResult(data as HybridBriefingResult);
+      setSent(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro inesperado.");
     } finally {
@@ -150,34 +153,23 @@ export default function HybridBriefingPage() {
     }
   }
 
-  async function copyBriefing() {
-    if (!result) return;
-    try {
-      await navigator.clipboard.writeText(result.markdown);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch {
-      setError("Não foi possível copiar automaticamente.");
-    }
-  }
-
   return (
     <main className="min-h-screen bg-[#090909] text-zinc-100 selection:bg-brand-cyan selection:text-zinc-950">
       <header className="border-b border-white/10 bg-black/40 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 md:px-8">
-          <a href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <span className="grid h-9 w-9 place-items-center bg-brand-orange text-xs font-black text-white">
               O6
             </span>
             <div>
               <div className="text-sm font-black uppercase tracking-tight text-white">
-                Briefing Híbrido
+                Briefing de projeto
               </div>
               <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-                O6 Website Router
+                O6 Growth
               </div>
             </div>
-          </a>
+          </Link>
           <div className="text-right">
             <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
               Completude
@@ -194,31 +186,22 @@ export default function HybridBriefingPage() {
           <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
             <div className="lg:sticky lg:top-8 lg:self-start">
               <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-cyan">
-                Intake + decisão técnica
+                Briefing de projeto
               </div>
               <h1 className="mt-4 max-w-2xl text-4xl font-black uppercase leading-[0.95] tracking-[-0.055em] text-white md:text-6xl">
-                O cliente responde.
+                Conte o que você precisa.
                 <br />
-                O sistema organiza.
-                <br />
-                <span className="text-zinc-500">A O6 decide.</span>
+                <span className="text-zinc-500">A O6 monta o caminho.</span>
               </h1>
               <p className="mt-6 max-w-xl text-base leading-relaxed text-zinc-400">
-                O briefing combina informação humana com a régua técnica N1–N4,
-                Lane A–C e síntese assistida por IA. A classificação não é
-                terceirizada para o modelo.
+                Leva uns 10 minutos. Você descreve o negócio, o objetivo e o que já tem.
+                A gente analisa e responde pelo WhatsApp com a recomendação, o escopo e o investimento.
               </p>
-
-              <div className="mt-8 grid grid-cols-3 gap-2">
-                {["N1–N4", "Lane A–C", "CMS / App"].map((item) => (
-                  <div
-                    key={item}
-                    className="border border-white/10 bg-white/[0.025] px-3 py-4 text-center text-[10px] font-bold uppercase tracking-widest text-zinc-400"
-                  >
-                    {item}
-                  </div>
+              <ul className="mt-8 grid gap-2 text-sm text-zinc-400">
+                {["Resposta em até 1 dia útil", "Escopo fechado e duas rodadas de revisão", "Sem compromisso de contratação"].map((item) => (
+                  <li key={item} className="flex items-center gap-2"><Check className="h-4 w-4 text-brand-cyan" />{item}</li>
                 ))}
-              </div>
+              </ul>
             </div>
 
             <div className="space-y-5">
@@ -232,12 +215,32 @@ export default function HybridBriefingPage() {
                   </h2>
                 </div>
                 <div className="grid gap-5 md:grid-cols-2">
+                  <Field label="Seu nome">
+                    <input
+                      className={inputClass}
+                      value={input.contactName}
+                      onChange={(e) => patch("contactName", e.target.value)}
+                      required
+                      autoComplete="name"
+                    />
+                  </Field>
+                  <Field label="WhatsApp" hint="É por aqui que respondemos.">
+                    <input
+                      className={inputClass}
+                      value={input.contactWhatsapp}
+                      onChange={(e) => patch("contactWhatsapp", e.target.value)}
+                      required
+                      inputMode="tel"
+                      autoComplete="tel"
+                      placeholder="(71) 9 9999-9999"
+                    />
+                  </Field>
                   <Field label="Empresa">
                     <input
                       className={inputClass}
                       value={input.companyName}
                       onChange={(e) => patch("companyName", e.target.value)}
-                      placeholder="Ex.: Residencial Vista Mar"
+                      placeholder="Ex.: Clínica Aurora"
                     />
                   </Field>
                   <Field label="Nome do projeto">
@@ -245,7 +248,7 @@ export default function HybridBriefingPage() {
                       className={inputClass}
                       value={input.projectName}
                       onChange={(e) => patch("projectName", e.target.value)}
-                      placeholder="Ex.: LP lançamento Vista Mar"
+                      placeholder="Ex.: Landing page de harmonização facial"
                     />
                   </Field>
                   <Field label="Projeto">
@@ -519,7 +522,7 @@ export default function HybridBriefingPage() {
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4" />
-                    Gerar briefing híbrido
+                    Enviar briefing
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -529,88 +532,21 @@ export default function HybridBriefingPage() {
         </section>
       </form>
 
-      {result ? (
-        <section className="border-t border-white/10 bg-white/[0.02]">
-          <div className="mx-auto max-w-7xl px-5 py-12 md:px-8 md:py-16">
-            <div className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+      {sent ? (
+        <div role="status" className="fixed inset-x-0 top-0 z-50 border-b border-brand-cyan/30 bg-zinc-950/95 backdrop-blur">
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-5 md:flex-row md:items-center md:justify-between md:px-8">
+            <div className="flex items-start gap-3">
+              <Check className="mt-0.5 h-5 w-5 text-brand-cyan" />
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-cyan">
-                  Saída pronta para produção
-                </div>
-                <h2 className="mt-2 text-3xl font-black uppercase tracking-tight text-white md:text-4xl">
-                  {result.routing.level} · {result.routing.levelLabel}
-                </h2>
-                <p className="mt-2 text-sm text-zinc-500">
-                  {result.aiGenerated
-                    ? "Síntese enriquecida por IA + classificação determinística."
-                    : "Classificação determinística + síntese de fallback."}
-                </p>
+                <div className="text-sm font-black uppercase tracking-wide text-white">Briefing recebido</div>
+                <p className="text-sm text-zinc-400">A O6 analisa e responde no seu WhatsApp em até 1 dia útil.</p>
               </div>
-              <button
-                type="button"
-                onClick={copyBriefing}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-xs font-bold uppercase tracking-wider text-zinc-200 hover:bg-white/[0.05]"
-              >
-                {copied ? <Check className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
-                {copied ? "Copiado" : "Copiar briefing"}
-              </button>
             </div>
-
-            <div className="grid gap-3 md:grid-cols-3">
-              {[
-                ["Nível", `${result.routing.level} · ${result.routing.levelLabel}`],
-                ["Lane", `${result.routing.lane} · ${result.routing.laneLabel}`],
-                ["Arquitetura", result.routing.architectureLabel],
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className="rounded-xl border border-white/10 bg-zinc-950/60 p-5"
-                >
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">
-                    {label}
-                  </div>
-                  <div className="mt-2 text-base font-black text-white">{value}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-              <div className="space-y-4">
-                <div className="rounded-xl border border-white/10 bg-zinc-950/60 p-5">
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">
-                    Faixa de referência
-                  </div>
-                  <div className="mt-2 text-2xl font-black text-white">
-                    {result.routing.priceReference}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-white/10 bg-zinc-950/60 p-5">
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">
-                    Próximo passo
-                  </div>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-300">
-                    {result.ai.recommendedNextStep}
-                  </p>
-                </div>
-                {input.currentUrl ? (
-                  <a
-                    href={input.currentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-cyan hover:underline"
-                  >
-                    Abrir referência atual
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                ) : null}
-              </div>
-
-              <pre className="max-h-[720px] overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black p-5 text-xs leading-relaxed text-zinc-300">
-                {result.markdown}
-              </pre>
-            </div>
+            <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-cyan hover:underline">
+              Voltar ao site <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-        </section>
+        </div>
       ) : null}
     </main>
   );

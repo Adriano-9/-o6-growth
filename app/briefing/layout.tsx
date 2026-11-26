@@ -5,6 +5,8 @@ export const metadata: Metadata = {
   title: "Briefing de Projeto | O6 Growth",
   description: "Conte qual site, campanha ou projeto você precisa e receba o próximo passo da O6. Preencha o briefing em poucos minutos.",
   alternates: { canonical: "/briefing" },
+  // Briefing é para quem já decidiu o projeto (link após contato ou em /servicos); a entrada pública é o Express.
+  robots: { index: false, follow: true },
   openGraph: { title: "Briefing de Projeto | O6 Growth", description: "Conte qual site, campanha ou projeto você precisa e receba o próximo passo da O6. Preencha o briefing em poucos minutos.", url: "/briefing", type: "website", locale: "pt_BR", siteName: "O6 Growth", images: [OG_IMAGE] },
 };
 

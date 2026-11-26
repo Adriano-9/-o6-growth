@@ -7,6 +7,8 @@ export type ExperienceLane = "A" | "B" | "C";
 export type ContentArchitecture = "codigo_direto" | "cms_supabase" | "aplicacao";
 
 export type HybridBriefingInput = {
+  contactName: string;
+  contactWhatsapp: string;
   projectName: string;
   companyName: string;
   projectMode: ProjectMode;
@@ -65,3 +67,6 @@ export type HybridBriefingResult = {
   markdown: string;
   aiGenerated: boolean;
 };
+
+/** O que o cliente recebe depois de enviar. A classificação técnica fica só com a O6 (Telegram). */
+export type BriefingReceipt = { ok: true; notified: boolean };
