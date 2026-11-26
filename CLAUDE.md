@@ -209,6 +209,14 @@ Plan → Magic MCP → Build → Review → Update CLAUDE.md
 
 ## Lições aprendidas (append-only)
 
+### 2026-11-25 · Express unificado, diagnóstico com 25 perguntas e design do MVP como padrão
+- **Contexto**: Branch `feat/express-unificado` (preview) junta o checkout MP (`fix/mp-express-hardening`) com o conteúdo do `launch/seo-base` (commit órfão → aplicado como diff, não merge).
+- **Decisão**: Visual da página do Express (direção C: `o6Fonts`, `#f4f2ec`/`#1d2022`/`#f2542d`, `O6Header`) é o padrão das páginas públicas. Home e `/saude` reescritas nele; peças compartilhadas em `app/_lib/site/` (`SiteFooter`, `ContactForm`). Componentes antigos da home (`components/o6/O6Hero|Problem|XSquad|Metrics|Footer`) removidos.
+- **Diagnóstico**: 5 frentes × 5 perguntas + equipe/investimento (inspirado no Search Everywhere da NP Digital). IDs antigos mantidos; respostas em JSONB, sem migration. `report.suggestions` aponta o serviço O6 das 2 frentes mais fracas (conteúdo fraco → Kit).
+- **Anti-padrão evitado**: `/briefing` mostrava régua interna (N1–N4, Lane) e faixa de preço ao visitante e não salvava nada. Classificação técnica agora só vai para Telegram + CRM; cliente vê confirmação.
+- **Pendência**: `/advocacia` e as páginas de serviço `[slug]` ainda não revisadas no visual novo; checkout automático depende de `MERCADOPAGO_ACCESS_TOKEN` no Preview.
+
+
 ### 2026-08-25 · `/offer-book-dashboard` vira peça de conversão (via `/loop-landing`)
 - **Contexto**: Página `app/offer-book-dashboard/page.tsx` era um "Bloomberg terminal" de estratégia interna (readout, KPIs, Market Signal Grid, Revenue Path, Forecast) — zero CTA, headline só filosófica, números de mercado sem citação de fonte.
 - **Decisão**: Tratada como landing de conversão da oferta **Diagnóstico O6 (R$800)**. Reusa o endpoint real `/api/checkout/diagnostico` (Stripe, mesmo `handleCheckout` de `app/produto/diagnostico/page.tsx`) — não inventou WhatsApp link novo. CTA repetido em 3 pontos (hero, card Diagnóstico do Revenue Path, painel "Recommended Decision"), sempre a **mesma ação**; Sprint/Retainer mostram "Liberado após o diagnóstico" em vez de botão para não competir.
