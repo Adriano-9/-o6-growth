@@ -189,3 +189,16 @@ test("guard de entrada continua exigindo consentimento e e-mail valido", () => {
     false,
   );
 });
+
+test("diagnostico tem 5 frentes com 5 perguntas cada", () => {
+  assert.equal(EXPRESS_FRONTS.length, 5);
+  for (const front of EXPRESS_FRONTS) assert.equal(front.checks.length, 5, front.id);
+});
+
+test("perfil (equipe e investimento) aceita valores da lista e rejeita outros", () => {
+  const ok = validInput({ business: { name: "Clinica Aurora", segment: "Estetica", teamSize: "2_5", marketingBudget: "ate_1k" } });
+  assert.equal(isExpressDiagnosisInput(ok), true);
+  const bad = validInput({ business: { name: "Clinica Aurora", segment: "Estetica", teamSize: "300" } });
+  assert.equal(isExpressDiagnosisInput(bad), false);
+});
+

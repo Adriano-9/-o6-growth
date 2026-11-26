@@ -17,7 +17,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { DIAGNOSTICO_EXPRESS_PRICE_LABEL } from "@/app/_lib/diagnostico-express/config";
-import { EXPRESS_FRONTS, type FrontId, type FrontInput } from "@/app/_lib/diagnostico-express/fronts";
+import { EXPRESS_CHECK_COUNT, EXPRESS_FRONTS, MARKETING_BUDGET_LABELS, TEAM_SIZE_LABELS, type FrontId, type FrontInput } from "@/app/_lib/diagnostico-express/fronts";
 import type { ExpressReport } from "@/app/_lib/diagnostico-express/report";
 
 type DiagnosisResponse = {
@@ -392,6 +392,8 @@ function Intake({
         averageTicket: optionalNumber("ticket"),
         monthlyContacts: optionalNumber("monthlyContacts"),
         monthlyConversions: optionalNumber("monthlyConversions"),
+        teamSize: String(form.get("teamSize") ?? "") || undefined,
+        marketingBudget: String(form.get("marketingBudget") ?? "") || undefined,
       },
       fronts,
     };
@@ -444,7 +446,7 @@ function Intake({
             <ClipboardCheck className="mt-1 h-7 w-7 text-[#FF5722]" />
             <div>
               <h2 className="text-xl font-black uppercase">Mapeamento inicial</h2>
-              <p className="mt-1 text-sm text-zinc-400">Cinco frentes, com espaço para contar o contexto de cada uma.</p>
+              <p className="mt-1 text-sm text-zinc-400">Cinco frentes e {EXPRESS_CHECK_COUNT} perguntas rápidas, com espaço para contar o contexto de cada uma. Leva cerca de 12 minutos.</p>
             </div>
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -462,6 +464,20 @@ function Intake({
                 <option value="Fisioterapia ou reabilitação">Fisioterapia ou reabilitação</option>
                 <option value="Escritório de advocacia">Escritório de advocacia</option>
                 <option value="Outro serviço profissional">Outro serviço profissional</option>
+              </select>
+            </label>
+            <label className="text-sm font-bold text-zinc-200">
+              Tamanho da equipe
+              <select name="teamSize" className={inputClass} required defaultValue="">
+                <option value="" disabled>Selecione</option>
+                {Object.entries(TEAM_SIZE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>
+            <label className="text-sm font-bold text-zinc-200">
+              Investimento mensal em marketing
+              <select name="marketingBudget" className={inputClass} required defaultValue="">
+                <option value="" disabled>Selecione</option>
+                {Object.entries(MARKETING_BUDGET_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
             <Field label="Ticket médio aproximado (opcional)" name="ticket" type="number" placeholder="R$" />
@@ -587,6 +603,18 @@ function DiagnosisResult({ result, accessToken }: { result: DiagnosisResponse; a
               </li>
             ))}
           </ol>
+          {result.report.suggestions && result.report.suggestions.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-sm font-black uppercase tracking-widest text-white">Como a O6 pode ajudar</h3>
+              <ul className="mt-4 grid gap-3">
+                {result.report.suggestions.map((item) => (
+                  <li key={item.front} className="border-l-2 border-[#FF5722] pl-4 text-sm leading-relaxed text-zinc-300">
+                    <strong className="text-white">{item.service}</strong> · {item.front}. {item.why}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <p className="mt-7 text-sm text-zinc-300"><strong className="text-white">Próximo passo:</strong> {result.report.nextStep}</p>
           <p className="mt-3 text-xs leading-relaxed text-zinc-500">{result.report.method}</p>
         </section>

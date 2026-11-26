@@ -1,4 +1,4 @@
-import { EXPRESS_FRONTS, type ExpressDiagnosisInput, type FrontId } from "./fronts";
+import { EXPRESS_CHECK_COUNT, EXPRESS_FRONTS, type ExpressDiagnosisInput, type FrontId } from "./fronts";
 
 export type ExpressFrontResult = {
   id: FrontId;
@@ -18,6 +18,17 @@ export type ExpressReport = {
   priorities: Array<{ front: string; action: string; reason: string }>;
   nextStep: string;
   method: string;
+  /** Serviço O6 que resolve cada frente fraca. Sugestão para a revisão humana, não promessa. */
+  suggestions?: Array<{ front: string; service: string; why: string }>;
+};
+
+// Qual serviço da O6 responde a cada frente quando ela fica fraca (nota até 3).
+const SERVICE_BY_FRONT: Record<FrontId, { service: string; why: string }> = {
+  posicionamento: { service: "Fundação estratégica e de marca", why: "Público, diferencial e identidade ainda não estão claros nem consistentes." },
+  oferta: { service: "Fundação estratégica e de marca (oferta)", why: "A oferta e o próximo passo ainda geram dúvida antes da conversa." },
+  presenca: { service: "Site ou landing page", why: "O cliente tem dificuldade de encontrar e entender a empresa na busca e no celular." },
+  aquisicao: { service: "Kit O6 Conteúdo Próprio", why: "Falta rotina e direção de conteúdo; o kit organiza isso para a própria equipe produzir." },
+  conversao: { service: "Sistema O6 (atendimento e retomada)", why: "Contatos esfriam por falta de resposta, acompanhamento ou prova." },
 };
 
 const VALUE = { sim: 5, parcial: 3, nao: 1 } as const;
@@ -46,6 +57,10 @@ export function buildExpressReport(input: ExpressDiagnosisInput): ExpressReport 
     action: front.score === null ? "Coletar evidências antes de definir uma correção." : front.recommendation,
     reason: front.score === null ? "Informação insuficiente para atribuir nota." : `Leitura declarada: ${front.score}/5.`,
   }));
+  const suggestions = ranked
+    .filter((front) => front.score !== null && front.score <= 3)
+    .slice(0, 2)
+    .map((front) => ({ front: front.label, ...SERVICE_BY_FRONT[front.id] }));
   return {
     version: "five-fronts-v1",
     businessName: input.business.name.trim(),
@@ -54,7 +69,8 @@ export function buildExpressReport(input: ExpressDiagnosisInput): ExpressReport 
     fronts,
     priorities,
     nextStep: "A O6 revisa as respostas e os links, valida a prioridade e só então indica uma solução específica ou uma call estratégica. Um site é apenas uma possibilidade.",
-    method: "Autodeclaração estruturada em 15 verificações e cinco relatos de contexto. Sem auditoria automática dos links, cálculo de impacto financeiro ou promessa de resultado.",
+    method: `Autodeclaração estruturada em ${EXPRESS_CHECK_COUNT} verificações e cinco relatos de contexto. Sem auditoria automática dos links, cálculo de impacto financeiro ou promessa de resultado.`,
+    suggestions,
   };
 }
 
@@ -67,6 +83,10 @@ export function formatExpressReport(report: ExpressReport): string {
   }
   lines.push("", "## Três prioridades");
   report.priorities.forEach((item, index) => lines.push(`${index + 1}. **${item.front}:** ${item.action} ${item.reason}`));
+  if (report.suggestions?.length) {
+    lines.push("", "## Serviço sugerido (para revisão)");
+    report.suggestions.forEach((item) => lines.push(`- **${item.front}:** ${item.service}. ${item.why}`));
+  }
   lines.push("", "## Próximo passo", report.nextStep, "", "*Rascunho para revisão humana. Não enviar como diagnóstico final antes da aprovação da O6.*");
   return lines.join("\n");
 }

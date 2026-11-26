@@ -15,7 +15,7 @@ export const LINKS = [
   },
   {
     id: "clinicas",
-    href: "https://id-preview--4992d764-b5ca-4e82-9ebe-879a79ec213e.lovable.app",
+    href: "/saude",
     label: "Para clínicas e consultórios",
     description: "Organize a presença, o primeiro contato e os próximos passos da operação.",
     accent: "bg-brand-graphite text-brand-offwhite border border-white/30",
