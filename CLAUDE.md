@@ -214,7 +214,9 @@ Plan → Magic MCP → Build → Review → Update CLAUDE.md
 - **Decisão**: Visual da página do Express (direção C: `o6Fonts`, `#f4f2ec`/`#1d2022`/`#f2542d`, `O6Header`) é o padrão das páginas públicas. Home e `/saude` reescritas nele; peças compartilhadas em `app/_lib/site/` (`SiteFooter`, `ContactForm`). Componentes antigos da home (`components/o6/O6Hero|Problem|XSquad|Metrics|Footer`) removidos.
 - **Diagnóstico**: 5 frentes × 5 perguntas + equipe/investimento (inspirado no Search Everywhere da NP Digital). IDs antigos mantidos; respostas em JSONB, sem migration. `report.suggestions` aponta o serviço O6 das 2 frentes mais fracas (conteúdo fraco → Kit).
 - **Anti-padrão evitado**: `/briefing` mostrava régua interna (N1–N4, Lane) e faixa de preço ao visitante e não salvava nada. Classificação técnica agora só vai para Telegram + CRM; cliente vê confirmação.
-- **Pendência**: `/advocacia` e as páginas de serviço `[slug]` ainda não revisadas no visual novo; checkout automático depende de `MERCADOPAGO_ACCESS_TOKEN` no Preview.
+- **Revisão 26/11**: briefing reescrito em linguagem de cliente (6 blocos, respostas traduzidas para os campos do router); página do Express lista as 5 frentes reais; portfólio sem notas internas; `/advocacia`, `/links` e fluxo pós-pagamento no visual do MVP; formulário de nicho compartilhado em `app/_lib/site/NicheLeadForm`.
+- **Anti-padrão**: texto de curadoria/status interno ("URL canônica", "deploy pendente", "Repo/Codex") publicado em página de cliente. Toda página pública fala com o cliente; status interno fica no inventário.
+- **Pendência**: checkout automático depende de `MERCADOPAGO_ACCESS_TOKEN` no Preview; `/api/analytics/links/click` (beacon do `/links`) não existe.
 
 
 ### 2026-08-25 · `/offer-book-dashboard` vira peça de conversão (via `/loop-landing`)
