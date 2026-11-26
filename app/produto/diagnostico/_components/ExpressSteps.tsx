@@ -3,12 +3,13 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 
+// As mesmas 5 frentes que o formulário pago avalia (app/_lib/diagnostico-express/fronts.ts), 5 perguntas cada.
 const steps = [
-  { n: "01", title: "Presença", text: "O perfil, o Google e o site explicam o que você faz e para quem.", ask: "Quem me encontra entende em 5 segundos?" },
-  { n: "02", title: "Oferta e mensagem", text: "O valor aparece antes do preço, com o próximo passo claro.", ask: "Por que escolher você e não o vizinho?" },
-  { n: "03", title: "Primeira resposta", text: "Tempo de retorno e o que a mensagem pede para a pessoa fazer.", ask: "Quanto tempo o contato espera?" },
-  { n: "04", title: "Retomada", text: "O que acontece com quem não fechou na primeira conversa.", ask: "Alguém volta a falar com quem disse “vou pensar”?" },
-  { n: "05", title: "Conversão", text: "O caminho até agendar ou fechar, sem atrito desnecessário.", ask: "Agendar é fácil ou dá trabalho?" },
+  { n: "01", title: "Marca e posicionamento", text: "Público certo, diferencial claro e a mesma cara em site, Instagram e Google.", ask: "Quem nunca ouviu falar de você entende por que escolher você?" },
+  { n: "02", title: "Oferta", text: "Serviços, valor e preço explicados, com um próximo passo simples.", ask: "O cliente sabe o que comprar e como começar?" },
+  { n: "03", title: "Presença e busca", text: "Google, Perfil da Empresa, páginas por serviço, celular e respostas do ChatGPT.", ask: "Quem procura o que você faz encontra você?" },
+  { n: "04", title: "Conteúdo e aquisição", text: "Rotina de postagem, conteúdo para quem ainda não segue e de onde vem cada contato.", ask: "Seu conteúdo traz cliente ou só curtida?" },
+  { n: "05", title: "Conversão e reputação", text: "Resposta rápida, acompanhamento, avaliações e retomada de quem disse “vou pensar”.", ask: "Quanto tempo o contato espera e quem volta a falar com ele?" },
 ];
 
 const display = { fontFamily: "var(--font-o6-display)" };
@@ -25,7 +26,7 @@ export function ExpressSteps() {
       <div className="flex flex-col gap-5 lg:sticky lg:top-24 lg:self-start">
         <span className="text-xs uppercase tracking-[0.12em] text-[#f2542d]" style={mono}>Diagnóstico Consultivo Express</span>
         <h2 className="text-[clamp(2.4rem,5vw,4.5rem)] uppercase leading-[0.94]" style={display}>
-          Cinco pontos. Uma <em className="normal-case text-[#f2542d]" style={serif}>ordem</em> para agir.
+          Cinco frentes. Uma <em className="normal-case text-[#f2542d]" style={serif}>ordem</em> para agir.
         </h2>
         <div className="mt-2 hidden items-end gap-4 lg:flex" aria-hidden="true">
           <span className="text-[clamp(6rem,11vw,10.5rem)] leading-[0.8] text-[#f2542d] tabular-nums" style={display}>{steps[active].n}</span>
@@ -35,7 +36,7 @@ export function ExpressSteps() {
           </div>
         </div>
         <p className="max-w-[42ch] text-[#a3a19a]">
-          Analisamos o que é público e o que você conta do atendimento. Você recebe até três prioridades em ordem, revisadas por uma pessoa, antes de gastar com qualquer outra coisa.
+          São 25 perguntas rápidas, 5 por frente, mais o que é público sobre o seu negócio. Você recebe até três prioridades em ordem, revisadas por uma pessoa, antes de gastar com qualquer outra coisa.
         </p>
       </div>
 
@@ -55,7 +56,7 @@ export function ExpressSteps() {
               {i < steps.length - 1 && <span className={`w-px flex-1 ${i < active ? "bg-[#f2542d]" : "bg-white/12"}`} />}
             </div>
             <div className="border-b border-white/12 pb-6 pt-[22px]">
-              <span className="text-xs uppercase tracking-[0.12em] text-[#a3a19a]" style={mono}>Ponto {s.n}</span>
+              <span className="text-xs uppercase tracking-[0.12em] text-[#a3a19a]" style={mono}>Frente {s.n}</span>
               <h3 className="mb-1.5 mt-1.5 text-[22px] font-semibold tracking-[-0.01em]">{s.title}</h3>
               <p className="m-0 max-w-[52ch] text-[#a3a19a]">{s.text}</p>
               <p className="mt-2.5 text-[19px] italic text-[#eceae4]" style={serif}>“{s.ask}”</p>

@@ -4,7 +4,7 @@ import { o6Fonts } from "@/app/_lib/fonts-o6";
 import { O6Header } from "@/app/_lib/O6Header";
 import { SiteFooter } from "@/app/_lib/site/SiteFooter";
 import { EXPRESS_DEADLINE, EXPRESS_PRICE } from "@/app/_lib/express";
-import { SaudeLeadForm } from "./_components/SaudeLeadForm";
+import { NicheLeadForm } from "@/app/_lib/site/NicheLeadForm";
 
 const display = { fontFamily: "var(--font-o6-display)" };
 const serif = { fontFamily: "var(--font-o6-serif)" };
@@ -115,7 +115,15 @@ export default function SaudePage() {
             <p className="max-w-[46ch] text-[17px] text-[#585d5b]">A O6 chama você no WhatsApp para entender a operação e indicar se faz sentido começar pelo diagnóstico ou direto por um projeto.</p>
           </div>
           <div className="border border-[#1d2022]/15">
-            <SaudeLeadForm />
+            <NicheLeadForm
+              origem="site_o6_saude"
+              page="LP saúde"
+              areaLabel="Especialidade"
+              areas={["Odontologia", "Clínica médica", "Estética", "Fisioterapia", "Outra especialidade"]}
+              concerns={["Resposta aos novos contatos", "Agendamento e confirmação", "Retorno após orçamento", "Ser encontrada no Google e no Instagram"]}
+              privacyNote="Não envie dados de pacientes."
+              doneText="Se quiser a leitura completa da clínica agora, o Diagnóstico Express mostra as 3 prioridades em ordem."
+            />
           </div>
         </section>
 

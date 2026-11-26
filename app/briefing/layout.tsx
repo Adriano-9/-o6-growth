@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { OG_IMAGE } from "@/app/_lib/seo/og";
+import { o6Fonts } from "@/app/_lib/fonts-o6";
 
 export const metadata: Metadata = {
   title: "Briefing de Projeto | O6 Growth",
@@ -11,5 +12,5 @@ export const metadata: Metadata = {
 };
 
 export default function BriefingLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <div className={o6Fonts}>{children}</div>;
 }

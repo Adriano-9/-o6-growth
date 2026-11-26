@@ -16,7 +16,7 @@ export default async function DiagnosticoPage({ searchParams }: Props) {
     return (
       <Suspense
         fallback={
-          <main className="grid min-h-screen place-items-center bg-[#0D0D0D] text-sm font-black uppercase tracking-widest text-white">
+          <main className="grid min-h-screen place-items-center bg-[#f4f2ec] text-sm font-bold text-[#1d2022]">
             Carregando diagnóstico...
           </main>
         }

@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { ArrowUpRight, ClipboardCheck, PanelsTopLeft, Stethoscope } from "lucide-react";
+import { ArrowUpRight, ClipboardCheck, PanelsTopLeft, Scale, Stethoscope } from "lucide-react";
 import { captureAttribution } from "@/app/_lib/analytics/attribution";
 import { LINKS } from "./_lib/links";
 
-const icons = { diagnostico: ClipboardCheck, presenca: PanelsTopLeft, clinicas: Stethoscope };
+const icons = { diagnostico: ClipboardCheck, presenca: PanelsTopLeft, clinicas: Stethoscope, advocacia: Scale };
 
 function recordClick(linkId: string) {
   const payload = JSON.stringify({ link_id: linkId, attribution: captureAttribution() });
@@ -22,13 +22,13 @@ export function TrackedLinks() {
       {LINKS.map(({ id, href, label, description, accent }) => {
         const Icon = icons[id];
         return (
-          <a key={id} href={href} onClick={() => recordClick(id)} onAuxClick={(event) => { if (event.button === 1) recordClick(id); }} className="group grid grid-cols-[auto_1fr_auto] items-center gap-4 border border-white/20 bg-white/[0.04] p-4 transition-colors hover:border-brand-orange hover:bg-white/[0.08]">
+          <a key={id} href={href} onClick={() => recordClick(id)} onAuxClick={(event) => { if (event.button === 1) recordClick(id); }} className="group grid grid-cols-[auto_1fr_auto] items-center gap-4 border border-[#1d2022]/15 bg-[#fbfaf6] p-4 transition-colors hover:border-[#f2542d] hover:bg-white">
             <span className={`grid h-11 w-11 place-items-center ${accent}`}><Icon className="h-5 w-5" /></span>
             <span>
-              <span className="block text-sm font-black uppercase">{label}</span>
-              <span className="mt-1 block text-xs leading-relaxed text-white/55">{description}</span>
+              <span className="block text-[17px] font-bold">{label}</span>
+              <span className="mt-1 block text-sm leading-relaxed text-[#585d5b]">{description}</span>
             </span>
-            <ArrowUpRight className="h-5 w-5 text-white/40 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-brand-orange" />
+            <ArrowUpRight className="h-5 w-5 text-[#585d5b] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#f2542d]" />
           </a>
         );
       })}

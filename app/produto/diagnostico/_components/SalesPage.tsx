@@ -9,16 +9,16 @@ const serif = { fontFamily: "var(--font-o6-serif)" };
 const mono = { fontFamily: "var(--font-o6-mono)" };
 
 const report = [
-  { label: "Presença no Instagram e Google", status: "Claro", tone: "ok" },
-  { label: "Oferta e mensagem", status: "Atenção", tone: "mid" },
-  { label: "Primeira resposta no WhatsApp", status: "Prioridade 1", tone: "hot" },
-  { label: "Retomada de quem disse “vou pensar”", status: "Prioridade 2", tone: "hot" },
-  { label: "Caminho até agendar", status: "Atenção", tone: "mid" },
+  { label: "Marca e posicionamento", status: "Claro", tone: "ok" },
+  { label: "Oferta", status: "Atenção", tone: "mid" },
+  { label: "Presença e busca", status: "Atenção", tone: "mid" },
+  { label: "Conteúdo e aquisição", status: "Prioridade 2", tone: "hot" },
+  { label: "Conversão e reputação", status: "Prioridade 1", tone: "hot" },
 ] as const;
 
 const how = [
   { n: "01", title: "Pagamento", text: `${EXPRESS_PRICE} pelo Mercado Pago, no Pix ou no cartão.` },
-  { n: "02", title: "Formulário de 5 minutos", text: "Você conta sobre o negócio e o atendimento. Sem dados de pacientes ou clientes." },
+  { n: "02", title: "Formulário de 12 minutos", text: "25 perguntas rápidas (sim, em parte ou não), mais um espaço curto para contar o contexto. Sem dados de pacientes ou clientes." },
   { n: "03", title: "Análise com revisão humana", text: "Olhamos sua presença pública e o que você descreveu, e ordenamos o que mais trava." },
   { n: "04", title: "Entrega pelo WhatsApp", text: `Até três prioridades em ordem, ${EXPRESS_DEADLINE}.` },
 ];
@@ -82,12 +82,12 @@ export function SalesPage({ autoCheckout }: { autoCheckout: boolean }) {
               </li>
             ))}
           </ul>
-          <p className="border-l-2 border-[#f2542d] pl-3 text-sm text-[#cfccc4]">Comece pela primeira resposta. É o que mais trava agora.</p>
+          <p className="border-l-2 border-[#f2542d] pl-3 text-sm text-[#cfccc4]">Comece pela resposta aos novos contatos. É o que mais trava agora.</p>
           <span className="text-[10.5px] uppercase tracking-[0.08em] text-[#8f8d86]" style={mono}>Exemplo ilustrativo, não é dado de cliente</span>
         </aside>
       </section>
 
-      {/* Cinco pontos (escuro) */}
+      {/* Cinco frentes (escuro) */}
       <section className="bg-[#131517] text-[#eceae4]">
         <div className="mx-auto max-w-[1240px] px-4 py-16 md:px-8 md:py-28">
           <ExpressSteps />

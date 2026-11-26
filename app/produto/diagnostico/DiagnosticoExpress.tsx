@@ -36,7 +36,7 @@ type Buyer = {
 type Stage = "offer" | "checkout" | "verifying" | "intake" | "submitting" | "result";
 
 const inputClass =
-  "mt-2 w-full border border-white/15 bg-[#161616] px-4 py-3 text-sm text-white outline-none focus:border-[#FF5722]";
+  "mt-2 w-full rounded-[2px] border border-[#1d2022]/25 bg-white px-4 py-3 text-[15px] text-[#1d2022] outline-none focus:border-[#f2542d]";
 
 const WHATSAPP_CTA_URL =
   "https://wa.me/5571994054891?text=Recebi%20meu%20Diagn%C3%B3stico%20Express%20e%20quero%20agendar%20uma%20conversa";
@@ -202,53 +202,53 @@ export default function DiagnosticoExpress() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0D0D0D] text-[#F8F9FA]">
+    <main className="min-h-screen bg-[#f4f2ec] text-[#1d2022]">
       <ProductHeader />
-      <section className="border-b border-white/10">
+      <section className="border-b border-[#1d2022]/15">
         <div className="mx-auto grid max-w-6xl gap-12 px-6 py-14 lg:grid-cols-[1.1fr_.9fr] lg:py-20">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
           >
-            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-[#FF5722]">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-[#f2542d]">
               Diagnóstico Express O6
             </p>
-            <h1 className="mt-5 max-w-3xl text-4xl font-black uppercase leading-[1.02] md:text-6xl">
+            <h1 className="mt-5 max-w-3xl text-4xl [font-family:var(--font-o6-display)] font-normal uppercase leading-[1.02] md:text-6xl">
               Como sua empresa é encontrada, percebida e escolhida?
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-zinc-300">
-              Um diagnóstico rápido das 5 frentes que determinam como sua empresa é encontrada, percebida e escolhida.
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[#1d2022]">
+              Um diagnóstico rápido das 5 frentes (25 perguntas) que determinam como sua empresa é encontrada, percebida e escolhida.
             </p>
 
-            <div className="mt-8 grid gap-2 border-y border-white/15 py-5 sm:grid-cols-2">
+            <div className="mt-8 grid gap-2 border-y border-[#1d2022]/15 py-5 sm:grid-cols-2">
               {EXPRESS_FRONTS.map((front, index) => (
-                <div key={front.id} className="flex gap-3 py-2 text-sm text-zinc-200">
-                  <span className="font-mono text-[#FF5722]">0{index + 1}</span>{front.label}
+                <div key={front.id} className="flex gap-3 py-2 text-sm text-[#1d2022]">
+                  <span className="font-mono text-[#f2542d]">0{index + 1}</span>{front.label}
                 </div>
               ))}
             </div>
 
             <div className="mt-9 grid gap-3 sm:grid-cols-2">
               {deliverables.map((item) => (
-                <div key={item} className="flex items-start gap-3 text-sm text-zinc-300">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#FF5722]" />
+                <div key={item} className="flex items-start gap-3 text-sm text-[#1d2022]">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#f2542d]" />
                   <span>{item}</span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-10 flex flex-wrap items-end gap-5 border-t border-white/15 pt-8">
+            <div className="mt-10 flex flex-wrap items-end gap-5 border-t border-[#1d2022]/15 pt-8">
               <div>
-                <p className="text-xs uppercase tracking-widest text-zinc-500">Investimento</p>
-                <p className="mt-2 text-4xl font-black">{DIAGNOSTICO_EXPRESS_PRICE_LABEL}</p>
-                <p className="mt-1 text-xs text-zinc-500">Pix ou cartão · Pagamento único</p>
+                <p className="text-xs uppercase tracking-widest text-[#585d5b]">Investimento</p>
+                <p className="mt-2 text-4xl font-bold">{DIAGNOSTICO_EXPRESS_PRICE_LABEL}</p>
+                <p className="mt-1 text-xs text-[#585d5b]">Pix ou cartão · Pagamento único</p>
               </div>
               <button
                 type="button"
                 onClick={startCheckout}
                 disabled={stage === "checkout"}
-                className="group inline-flex min-h-14 items-center justify-center gap-3 bg-[#FF5722] px-7 text-sm font-black uppercase tracking-widest text-white disabled:opacity-60"
+                className="group inline-flex min-h-14 items-center justify-center gap-3 bg-[#f2542d] px-7 text-sm font-bold text-[#170904] disabled:opacity-60"
               >
                 {stage === "checkout" ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -261,18 +261,18 @@ export default function DiagnosticoExpress() {
             </div>
 
             {(error || checkoutCancelled) && (
-              <p role="alert" className="mt-5 border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
+              <p role="alert" className="mt-5 border border-amber-700/30 bg-amber-400/10 p-4 text-sm text-amber-900">
                 {error || "Pagamento cancelado. Nenhuma cobrança foi concluída."}
               </p>
             )}
           </motion.div>
 
-          <aside className="border border-white/15 bg-[#121212] p-6 md:p-8">
-            <div className="flex items-center gap-3 border-b border-white/10 pb-6">
-              <ShieldCheck className="h-7 w-7 text-[#FF5722]" />
+          <aside className="border border-[#1d2022]/15 bg-[#fbfaf6] p-6 md:p-8">
+            <div className="flex items-center gap-3 border-b border-[#1d2022]/15 pb-6">
+              <ShieldCheck className="h-7 w-7 text-[#f2542d]" />
               <div>
-                <p className="text-sm font-black uppercase">Processo com controle humano</p>
-                <p className="mt-1 text-xs text-zinc-500">Automação sem proposta automática</p>
+                <p className="text-sm font-bold uppercase">Processo com controle humano</p>
+                <p className="mt-1 text-xs text-[#585d5b]">Automação sem proposta automática</p>
               </div>
             </div>
             <ol className="mt-7 space-y-6">
@@ -282,15 +282,15 @@ export default function DiagnosticoExpress() {
                 ["03", "Aprovação O6", "A oferta seguinte só entra no CRM após revisão humana."],
               ].map(([number, title, description]) => (
                 <li key={number} className="grid grid-cols-[auto_1fr] gap-4">
-                  <span className="font-mono text-xs font-bold text-[#FF5722]">{number}</span>
+                  <span className="font-mono text-xs font-bold text-[#f2542d]">{number}</span>
                   <div>
-                    <h2 className="text-sm font-black uppercase">{title}</h2>
-                    <p className="mt-2 text-sm leading-relaxed text-zinc-400">{description}</p>
+                    <h2 className="text-sm [font-family:var(--font-o6-display)] font-normal uppercase">{title}</h2>
+                    <p className="mt-2 text-sm leading-relaxed text-[#585d5b]">{description}</p>
                   </div>
                 </li>
               ))}
             </ol>
-            <div className="mt-8 flex items-start gap-3 border-t border-white/10 pt-6 text-xs leading-relaxed text-zinc-500">
+            <div className="mt-8 flex items-start gap-3 border-t border-[#1d2022]/15 pt-6 text-xs leading-relaxed text-[#585d5b]">
               <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0" />
               Não envie nomes, prontuários ou informações clínicas de pacientes.
             </div>
@@ -305,9 +305,9 @@ export default function DiagnosticoExpress() {
             ["Não é promessa de resultado", "O relatório mostra sinais e caminhos de investigação, não garante receita."],
             ["Não empurra pacote", "Preço e escopo da implementação são definidos somente depois da revisão."],
           ].map(([title, text]) => (
-            <article key={title} className="border-t border-white/20 pt-5">
-              <h2 className="text-lg font-black uppercase">{title}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-zinc-400">{text}</p>
+            <article key={title} className="border-t border-[#1d2022]/25 pt-5">
+              <h2 className="text-lg [font-family:var(--font-o6-display)] font-normal uppercase">{title}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-[#585d5b]">{text}</p>
             </article>
           ))}
         </div>
@@ -318,13 +318,13 @@ export default function DiagnosticoExpress() {
 
 function ProductHeader() {
   return (
-    <header className="border-b border-white/10">
+    <header className="border-b border-[#1d2022]/15">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Link href="/" className="flex items-center gap-3 font-black uppercase tracking-tight">
-          <span className="grid h-9 w-9 place-items-center bg-[#FF5722] text-sm text-white">O6</span>
+        <Link href="/" className="flex items-center gap-3 font-bold uppercase tracking-tight">
+          <span className="grid h-9 w-9 place-items-center bg-[#f2542d] text-sm text-[#170904]">O6</span>
           O6 Growth
         </Link>
-        <a href="/portfolio/index.html#projetos" className="text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white">
+        <a href="/portfolio/index.html#projetos" className="text-xs font-bold uppercase tracking-widest text-[#585d5b] hover:text-[#1d2022]">
           Ver portfólio
         </a>
       </div>
@@ -334,10 +334,10 @@ function ProductHeader() {
 
 function StatusScreen({ text }: { text: string }) {
   return (
-    <main className="grid min-h-screen place-items-center bg-[#0D0D0D] px-6 text-white">
+    <main className="grid min-h-screen place-items-center bg-[#f4f2ec] px-6 text-[#1d2022]">
       <div className="text-center">
-        <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#FF5722]" />
-        <p className="mt-5 text-sm font-black uppercase tracking-widest">{text}</p>
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#f2542d]" />
+        <p className="mt-5 text-sm font-bold">{text}</p>
       </div>
     </main>
   );
@@ -424,29 +424,29 @@ function Intake({
   }
 
   return (
-    <main id="intake" className="min-h-screen bg-[#0D0D0D] text-[#F8F9FA]">
+    <main id="intake" className="min-h-screen bg-[#f4f2ec] text-[#1d2022]">
       <ProductHeader />
       <section className="mx-auto grid max-w-6xl gap-10 px-6 py-12 lg:grid-cols-[.72fr_1.28fr] lg:py-16">
         <div>
-          <div className="inline-flex items-center gap-2 border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-xs font-bold uppercase tracking-widest text-emerald-300">
+          <div className="inline-flex items-center gap-2 border border-emerald-700/30 bg-emerald-600/10 px-3 py-2 text-xs font-bold uppercase tracking-widest text-emerald-800">
             <CheckCircle2 className="h-4 w-4" /> Pagamento confirmado
           </div>
-          <h1 className="mt-6 text-4xl font-black uppercase leading-tight">Vamos entender as cinco frentes do seu negócio.</h1>
-          <p className="mt-5 leading-relaxed text-zinc-400">
+          <h1 className="mt-6 text-4xl [font-family:var(--font-o6-display)] font-normal uppercase leading-tight">Vamos entender as cinco frentes do seu negócio.</h1>
+          <p className="mt-5 leading-relaxed text-[#585d5b]">
             Use dados agregados e estimativas honestas. Quanto mais claro o contexto,
             melhor a priorização.
           </p>
-          <div className="mt-8 border-l-2 border-[#FF5722] pl-5 text-sm leading-relaxed text-zinc-400">
+          <div className="mt-8 border-l-2 border-[#f2542d] pl-5 text-sm leading-relaxed text-[#585d5b]">
             Responda com honestidade. As notas iniciais dependem do que você declarar e serão revisadas antes da entrega.
           </div>
         </div>
 
-        <form onSubmit={submit} className="border border-white/15 bg-[#111111] p-6 shadow-[8px_8px_0_0_#FF5722] md:p-8">
+        <form onSubmit={submit} className="border border-[#1d2022]/15 bg-[#fbfaf6] p-6 border-t-[3px] border-t-[#f2542d] md:p-8">
           <div className="mb-8 flex items-start gap-4">
-            <ClipboardCheck className="mt-1 h-7 w-7 text-[#FF5722]" />
+            <ClipboardCheck className="mt-1 h-7 w-7 text-[#f2542d]" />
             <div>
-              <h2 className="text-xl font-black uppercase">Mapeamento inicial</h2>
-              <p className="mt-1 text-sm text-zinc-400">Cinco frentes e {EXPRESS_CHECK_COUNT} perguntas rápidas, com espaço para contar o contexto de cada uma. Leva cerca de 12 minutos.</p>
+              <h2 className="text-xl [font-family:var(--font-o6-display)] font-normal uppercase">Mapeamento inicial</h2>
+              <p className="mt-1 text-sm text-[#585d5b]">Cinco frentes e {EXPRESS_CHECK_COUNT} perguntas rápidas, com espaço para contar o contexto de cada uma. Leva cerca de 12 minutos.</p>
             </div>
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -454,7 +454,7 @@ function Intake({
             <Field label="E-mail do pagamento" name="email" type="email" required defaultValue={buyer.email} readOnly={Boolean(buyer.email)} />
             <Field label="WhatsApp" name="phone" required defaultValue={buyer.phone} />
             <Field label="Nome do negócio" name="business" required />
-            <label className="text-sm font-bold text-zinc-200">
+            <label className="text-sm font-bold text-[#1d2022]">
               Segmento
               <select name="segment" className={inputClass} required defaultValue="">
                 <option value="" disabled>Selecione</option>
@@ -466,14 +466,14 @@ function Intake({
                 <option value="Outro serviço profissional">Outro serviço profissional</option>
               </select>
             </label>
-            <label className="text-sm font-bold text-zinc-200">
+            <label className="text-sm font-bold text-[#1d2022]">
               Tamanho da equipe
               <select name="teamSize" className={inputClass} required defaultValue="">
                 <option value="" disabled>Selecione</option>
                 {Object.entries(TEAM_SIZE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
-            <label className="text-sm font-bold text-zinc-200">
+            <label className="text-sm font-bold text-[#1d2022]">
               Investimento mensal em marketing
               <select name="marketingBudget" className={inputClass} required defaultValue="">
                 <option value="" disabled>Selecione</option>
@@ -488,16 +488,16 @@ function Intake({
             <Field label="Instagram (opcional)" name="instagramUrl" type="url" placeholder="https://" />
           </div>
           {EXPRESS_FRONTS.map((front, index) => (
-            <fieldset key={front.id} className="mt-9 border-t border-white/15 pt-7">
-              <legend className="pr-4 text-lg font-black uppercase"><span className="mr-3 font-mono text-[#FF5722]">0{index + 1}</span>{front.label}</legend>
-              <p className="mt-2 text-sm text-zinc-400">{front.prompt}</p>
-              <label className="mt-5 block text-sm font-bold text-zinc-200">
+            <fieldset key={front.id} className="mt-9 border-t border-[#1d2022]/15 pt-7">
+              <legend className="pr-4 text-lg font-bold uppercase"><span className="mr-3 font-mono text-[#f2542d]">0{index + 1}</span>{front.label}</legend>
+              <p className="mt-2 text-sm text-[#585d5b]">{front.prompt}</p>
+              <label className="mt-5 block text-sm font-bold text-[#1d2022]">
                 Conte o que acontece hoje
                 <textarea name={`${front.id}_context`} required minLength={8} maxLength={2000} rows={3} className={inputClass} placeholder="Descreva a situação real, sem dados de clientes ou pacientes." />
               </label>
               <div className="mt-5 grid gap-4">
                 {front.checks.map((check) => (
-                  <label key={check.id} className="text-sm text-zinc-200">
+                  <label key={check.id} className="text-sm text-[#1d2022]">
                     {check.label}
                     <select name={`${front.id}_${check.id}`} required defaultValue="" className={inputClass}>
                       <option value="" disabled>Selecione</option>
@@ -511,12 +511,12 @@ function Intake({
               </div>
             </fieldset>
           ))}
-          <label className="mt-6 flex items-start gap-3 text-xs leading-relaxed text-zinc-400">
-            <input type="checkbox" name="consent" required className="mt-1 accent-[#FF5722]" />
+          <label className="mt-6 flex items-start gap-3 text-xs leading-relaxed text-[#585d5b]">
+            <input type="checkbox" name="consent" required className="mt-1 accent-[#f2542d]" />
             Autorizo o uso destes dados para gerar e revisar meu diagnóstico e para a O6 entrar em contato sobre o resultado. Não enviarei dados de pacientes.
           </label>
-          {error && <p role="alert" className="mt-5 border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">{error}</p>}
-          <button disabled={loading} className="mt-7 flex w-full items-center justify-center gap-2 bg-[#FF5722] px-5 py-4 text-sm font-black uppercase tracking-widest text-white disabled:opacity-60">
+          {error && <p role="alert" className="mt-5 border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-800">{error}</p>}
+          <button disabled={loading} className="mt-7 flex w-full items-center justify-center gap-2 bg-[#f2542d] px-5 py-4 text-sm font-bold text-[#170904] disabled:opacity-60">
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
             {loading ? "Registrando respostas..." : "Enviar para análise"}
           </button>
@@ -544,7 +544,7 @@ function Field({
   readOnly?: boolean;
 }) {
   return (
-    <label className="text-sm font-bold text-zinc-200">
+    <label className="text-sm font-bold text-[#1d2022]">
       {label}
       <input
         name={name}
@@ -553,7 +553,7 @@ function Field({
         required={required}
         defaultValue={defaultValue}
         readOnly={readOnly}
-        className={`${inputClass} read-only:text-zinc-400`}
+        className={`${inputClass} read-only:text-[#585d5b]`}
       />
     </label>
   );
@@ -561,74 +561,74 @@ function Field({
 
 function DiagnosisResult({ result, accessToken }: { result: DiagnosisResponse; accessToken: string }) {
   if (!result.report) return (
-    <main className="min-h-screen bg-[#0D0D0D] px-6 py-14 text-[#F8F9FA]">
+    <main className="min-h-screen bg-[#f4f2ec] px-6 py-14 text-[#1d2022]">
       <div className="mx-auto max-w-3xl">
-        <ShieldCheck className="h-8 w-8 text-[#FF5722]" />
-        <h1 className="mt-6 text-4xl font-black uppercase">{result.reviewStatus === "rejected" ? "Sua análise precisa de revisão adicional." : result.reviewStatus === "approved" ? "Seu relatório anterior precisa de atualização." : "Análise recebida para revisão."}</h1>
-        <p className="mt-5 text-lg leading-relaxed text-zinc-300">{result.reviewStatus === "rejected" ? "A O6 vai entrar em contato para esclarecer os dados antes da entrega." : result.reviewStatus === "approved" ? "Este diagnóstico foi criado antes da avaliação das cinco frentes. Entre em contato com a O6 para receber o relatório no formato original." : "Seus dados foram registrados. O relatório ficará disponível nesta página após a aprovação da O6."}</p>
-        {accessToken && <p className="mt-4 text-sm text-zinc-500">Guarde este link para acessar seu resultado: <code className="break-all text-xs text-zinc-400">/produto/diagnostico?token={accessToken}</code></p>}
-        <a href="/links" className="mt-8 inline-flex bg-[#FF5722] px-5 py-3 text-sm font-bold text-white">Voltar aos links</a>
+        <ShieldCheck className="h-8 w-8 text-[#f2542d]" />
+        <h1 className="mt-6 text-4xl [font-family:var(--font-o6-display)] font-normal uppercase">{result.reviewStatus === "rejected" ? "Sua análise precisa de revisão adicional." : result.reviewStatus === "approved" ? "Seu relatório anterior precisa de atualização." : "Análise recebida para revisão."}</h1>
+        <p className="mt-5 text-lg leading-relaxed text-[#1d2022]">{result.reviewStatus === "rejected" ? "A O6 vai entrar em contato para esclarecer os dados antes da entrega." : result.reviewStatus === "approved" ? "Este diagnóstico foi criado antes da avaliação das cinco frentes. Entre em contato com a O6 para receber o relatório no formato original." : "Seus dados foram registrados. O relatório ficará disponível nesta página após a aprovação da O6."}</p>
+        {accessToken && <p className="mt-4 text-sm text-[#585d5b]">Guarde este link para acessar seu resultado: <code className="break-all text-xs text-[#585d5b]">/produto/diagnostico?token={accessToken}</code></p>}
+        <a href="/links" className="mt-8 inline-flex bg-[#f2542d] px-5 py-3 text-sm font-bold text-[#170904]">Voltar aos links</a>
       </div>
     </main>
   );
   return (
-    <main className="min-h-screen bg-[#0D0D0D] px-6 py-14 text-[#F8F9FA]">
+    <main className="min-h-screen bg-[#f4f2ec] px-6 py-14 text-[#1d2022]">
       <div className="mx-auto max-w-4xl">
-        <div className="flex items-center gap-3 text-[#FF5722]">
+        <div className="flex items-center gap-3 text-[#f2542d]">
           <ShieldCheck className="h-7 w-7" />
-          <span className="text-xs font-black uppercase tracking-[0.2em]">Diagnóstico revisado pela O6</span>
+          <span className="text-xs font-bold uppercase tracking-[0.2em]">Diagnóstico revisado pela O6</span>
         </div>
-        <h1 className="mt-5 text-4xl font-black uppercase md:text-5xl">Seu Diagnóstico Express está pronto.</h1>
-        <p className="mt-5 max-w-3xl text-lg leading-relaxed text-zinc-300">{result.report.summary}</p>
+        <h1 className="mt-5 text-4xl [font-family:var(--font-o6-display)] font-normal uppercase md:text-5xl">Seu Diagnóstico Express está pronto.</h1>
+        <p className="mt-5 max-w-3xl text-lg leading-relaxed text-[#1d2022]">{result.report.summary}</p>
         <div className="mt-10 grid gap-5">
           {result.report.fronts.map((front) => (
-            <article key={front.id} className="border border-white/15 bg-[#111111] p-6">
+            <article key={front.id} className="border border-[#1d2022]/15 bg-[#fbfaf6] p-6">
               <div className="flex items-center justify-between gap-4">
-                <h2 className="text-lg font-black uppercase">{front.label}</h2>
-                <span className="shrink-0 font-mono text-xl font-bold text-[#FF5722]">{front.score === null ? "Sem nota" : `${front.score}/5`}</span>
+                <h2 className="text-lg [font-family:var(--font-o6-display)] font-normal uppercase">{front.label}</h2>
+                <span className="shrink-0 font-mono text-xl font-bold text-[#f2542d]">{front.score === null ? "Sem nota" : `${front.score}/5`}</span>
               </div>
-              <p className="mt-3 text-xs text-zinc-500">{front.basis}</p>
-              {front.gaps.length > 0 && <p className="mt-4 text-sm text-zinc-300"><strong className="text-white">Pontos de atenção:</strong> {front.gaps.join("; ")}</p>}
-              <p className="mt-4 border-l-2 border-[#FF5722] pl-4 text-sm text-zinc-400"><strong className="text-white">Ação prática:</strong> {front.recommendation}</p>
+              <p className="mt-3 text-xs text-[#585d5b]">{front.basis}</p>
+              {front.gaps.length > 0 && <p className="mt-4 text-sm text-[#1d2022]"><strong className="text-[#1d2022]">Pontos de atenção:</strong> {front.gaps.join("; ")}</p>}
+              <p className="mt-4 border-l-2 border-[#f2542d] pl-4 text-sm text-[#585d5b]"><strong className="text-[#1d2022]">Ação prática:</strong> {front.recommendation}</p>
             </article>
           ))}
         </div>
-        <section className="mt-10 border-t border-white/15 pt-8">
-          <h2 className="text-xl font-black uppercase">Três prioridades</h2>
+        <section className="mt-10 border-t border-[#1d2022]/15 pt-8">
+          <h2 className="text-xl [font-family:var(--font-o6-display)] font-normal uppercase">Três prioridades</h2>
           <ol className="mt-5 grid gap-4">
             {result.report.priorities.map((priority, index) => (
-              <li key={priority.front} className="flex gap-4 text-sm leading-relaxed text-zinc-300">
-                <span className="font-mono font-bold text-[#FF5722]">0{index + 1}</span>
-                <span><strong className="text-white">{priority.front}:</strong> {priority.action} <span className="text-zinc-500">{priority.reason}</span></span>
+              <li key={priority.front} className="flex gap-4 text-sm leading-relaxed text-[#1d2022]">
+                <span className="font-mono font-bold text-[#f2542d]">0{index + 1}</span>
+                <span><strong className="text-[#1d2022]">{priority.front}:</strong> {priority.action} <span className="text-[#585d5b]">{priority.reason}</span></span>
               </li>
             ))}
           </ol>
           {result.report.suggestions && result.report.suggestions.length > 0 && (
             <div className="mt-8">
-              <h3 className="text-sm font-black uppercase tracking-widest text-white">Como a O6 pode ajudar</h3>
+              <h3 className="text-sm font-bold text-[#1d2022]">Como a O6 pode ajudar</h3>
               <ul className="mt-4 grid gap-3">
                 {result.report.suggestions.map((item) => (
-                  <li key={item.front} className="border-l-2 border-[#FF5722] pl-4 text-sm leading-relaxed text-zinc-300">
-                    <strong className="text-white">{item.service}</strong> · {item.front}. {item.why}
+                  <li key={item.front} className="border-l-2 border-[#f2542d] pl-4 text-sm leading-relaxed text-[#1d2022]">
+                    <strong className="text-[#1d2022]">{item.service}</strong> · {item.front}. {item.why}
                   </li>
                 ))}
               </ul>
             </div>
           )}
-          <p className="mt-7 text-sm text-zinc-300"><strong className="text-white">Próximo passo:</strong> {result.report.nextStep}</p>
-          <p className="mt-3 text-xs leading-relaxed text-zinc-500">{result.report.method}</p>
+          <p className="mt-7 text-sm text-[#1d2022]"><strong className="text-[#1d2022]">Próximo passo:</strong> {result.report.nextStep}</p>
+          <p className="mt-3 text-xs leading-relaxed text-[#585d5b]">{result.report.method}</p>
         </section>
         {/* WhatsApp CTA — Agendar conversa */}
-        <div className="mt-10 border border-[#FF5722]/30 bg-[#FF5722]/[0.06] p-6 md:p-8">
-          <h2 className="text-xl font-black uppercase">Próximo passo</h2>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-300">
+        <div className="mt-10 border border-[#f2542d]/30 bg-[#f2542d]/[0.06] p-6 md:p-8">
+          <h2 className="text-xl [font-family:var(--font-o6-display)] font-normal uppercase">Próximo passo</h2>
+          <p className="mt-3 text-sm leading-relaxed text-[#1d2022]">
             Quer entender o que cada prioridade significa para o seu negócio e como resolver? Agende uma conversa com a O6.
           </p>
           <a
             href={WHATSAPP_CTA_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-5 inline-flex items-center gap-2 bg-[#FF5722] px-6 py-4 text-sm font-black uppercase tracking-widest text-white"
+            className="mt-5 inline-flex items-center gap-2 bg-[#f2542d] px-6 py-4 text-sm font-bold text-[#170904]"
           >
             <MessageCircle className="h-5 w-5" />
             Agendar conversa pelo WhatsApp
@@ -636,13 +636,13 @@ function DiagnosisResult({ result, accessToken }: { result: DiagnosisResponse; a
           </a>
         </div>
 
-        <div className="mt-10 border-t border-white/15 pt-8">
-          <p className="max-w-2xl text-sm leading-relaxed text-zinc-400">
+        <div className="mt-10 border-t border-[#1d2022]/15 pt-8">
+          <p className="max-w-2xl text-sm leading-relaxed text-[#585d5b]">
             A indicação de serviço depende da revisão do contexto. Nenhuma proposta ou mensagem comercial é enviada automaticamente.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a href="/portfolio/index.html#projetos" className="inline-flex items-center gap-2 bg-[#FF5722] px-5 py-3 text-xs font-black uppercase tracking-widest text-white">Ver portfólio <ArrowRight className="h-4 w-4" /></a>
-            <a href="/links" className="inline-flex items-center gap-2 border border-white/20 px-5 py-3 text-xs font-black uppercase tracking-widest text-white"><RotateCcw className="h-4 w-4" /> Voltar aos links</a>
+            <a href="/portfolio/index.html#projetos" className="inline-flex items-center gap-2 bg-[#f2542d] px-5 py-3 text-xs font-bold text-[#170904]">Ver portfólio <ArrowRight className="h-4 w-4" /></a>
+            <a href="/links" className="inline-flex items-center gap-2 border border-[#1d2022]/25 px-5 py-3 text-xs font-bold text-[#1d2022]"><RotateCcw className="h-4 w-4" /> Voltar aos links</a>
           </div>
         </div>
       </div>

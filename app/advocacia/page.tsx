@@ -1,144 +1,125 @@
-"use client";
-
-import Link from "next/link";
-import { FormEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
-import { ArrowDown, ArrowRight, BookOpen, Check, FileText, MessageSquareText, Scale } from "lucide-react";
-import { createLead } from "@/app/crm/_lib/api";
-import { emptyLeadInput } from "@/app/crm/_lib/types";
-import { whatsappUrl } from "@/app/_lib/contato";
-import { getAttribution } from "@/app/briefing/_lib/attribution";
+import Link from "next/link";
+import { o6Fonts } from "@/app/_lib/fonts-o6";
+import { O6Header } from "@/app/_lib/O6Header";
+import { SiteFooter } from "@/app/_lib/site/SiteFooter";
+import { NicheLeadForm } from "@/app/_lib/site/NicheLeadForm";
+import { EXPRESS_DEADLINE, EXPRESS_PRICE } from "@/app/_lib/express";
 
-const findings = {
-  presenca: { title: "Presença e posicionamento", text: "A primeira revisão deve observar se a área de atuação, a localização e os canais de contato estão fáceis de identificar, com comunicação informativa e precisa.", action: "Revisar as páginas públicas pela ótica de quem procura orientação pela primeira vez." },
-  triagem: { title: "Triagem do primeiro contato", text: "Seu ponto de atenção é a passagem entre a dúvida inicial e a avaliação por um profissional. Um processo claro ajuda a registrar o pedido sem antecipar aconselhamento jurídico.", action: "Definir quais informações administrativas podem ser solicitadas no primeiro contato." },
-  propostas: { title: "Acompanhamento de propostas", text: "Quando a proposta é enviada, o próximo passo e o canal de retorno devem estar claros. O acompanhamento pode ser organizado com discrição e respeito à decisão do cliente.", action: "Verificar propostas sem retorno e os prazos de acompanhamento usados hoje." },
-} as const;
-type Finding = keyof typeof findings;
+const display = { fontFamily: "var(--font-o6-display)" };
+const serif = { fontFamily: "var(--font-o6-serif)" };
+const mono = { fontFamily: "var(--font-o6-mono)" };
 
-const heroImages = [
-  { src: "/landing/advocacia-reuniao.png", alt: "Reunião de atendimento em escritório de advocacia" },
-  { src: "/landing/advocacia-atendimento.png", alt: "Advogada ouvindo uma cliente em seu escritório" },
-  { src: "/landing/advocacia-equipe.png", alt: "Equipe jurídica revisando documentos em conjunto" },
-] as const;
-
-gsap.registerPlugin(ScrollTrigger, useGSAP);
+// Texto informativo, sem promessa de resultado nem captação ostensiva (Código de Ética da OAB).
+const points = [
+  { title: "Presença e posicionamento", text: "Área de atuação, localização e canais de contato fáceis de identificar, com comunicação informativa e precisa." },
+  { title: "Triagem do primeiro contato", text: "Um caminho claro entre a dúvida inicial e a avaliação por um profissional, sem antecipar aconselhamento jurídico." },
+  { title: "Acompanhamento de propostas", text: "Depois da proposta, o próximo passo e o canal de retorno ficam claros, com discrição e respeito à decisão do cliente." },
+];
 
 export default function AdvocaciaPage() {
-  const pageRef = useRef<HTMLElement>(null);
-  const heroRef = useRef<HTMLElement>(null);
-  const heroImageRef = useRef<HTMLDivElement>(null);
-  const methodRef = useRef<HTMLElement>(null);
-  const methodProgressRef = useRef<HTMLDivElement>(null);
-  const reduced = useReducedMotion();
-  const [activeImage, setActiveImage] = useState(0);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [practice, setPractice] = useState("Direito de família");
-  const [finding, setFinding] = useState<Finding>("presenca");
-  const [status, setStatus] = useState<"idle" | "saving" | "done" | "error">("idle");
-
-  useEffect(() => {
-    if (reduced) return;
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") setActiveImage((current) => (current + 1) % heroImages.length);
-    }, 2500);
-    return () => window.clearInterval(timer);
-  }, [reduced]);
-
-  useGSAP(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    if (heroImageRef.current && heroRef.current) {
-      gsap.fromTo(heroImageRef.current, { yPercent: -5 }, {
-        yPercent: 10,
-        ease: "none",
-        scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 0.7 },
-      });
-    }
-
-    if (methodProgressRef.current && methodRef.current) {
-      gsap.fromTo(methodProgressRef.current, { scaleX: 0 }, {
-        scaleX: 1,
-        ease: "none",
-        scrollTrigger: { trigger: methodRef.current, start: "top 78%", end: "bottom 32%", scrub: 0.5 },
-      });
-    }
-
-    gsap.utils.toArray<HTMLElement>("section h2").forEach((element) => {
-      gsap.fromTo(element, { autoAlpha: 0, y: 34 }, {
-        autoAlpha: 1,
-        y: 0,
-        duration: 0.85,
-        ease: "power2.out",
-        scrollTrigger: { trigger: element, start: "top 88%", once: true },
-      });
-    });
-  }, { scope: pageRef });
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setStatus("saving");
-    const attribution = getAttribution();
-    try {
-      const lead = await createLead({
-        ...emptyLeadInput("Novo Lead"),
-        nome: name.trim(), email: email.trim(), whatsapp: phone.trim(),
-        nicho: `Advocacia · ${practice}`,
-        origem: "site_o6_advocacia",
-        notas: `Diagnóstico inicial LP advocacia. Área: ${practice}. Ponto declarado: ${findings[finding].title}. Origem: ${attribution.utm_source || "direto"}; mídia: ${attribution.utm_medium || "não informada"}; campanha: ${attribution.utm_campaign || "não informada"}; página: ${attribution.page}.`,
-      });
-      setStatus(lead ? "done" : "error");
-    } catch {
-      setStatus("error");
-    }
-  }
-
-  const insight = findings[finding];
   return (
-    <main ref={pageRef} className="bg-[#e8e8e4] text-[#152132]">
-      <section ref={heroRef} className="relative flex min-h-[650px] flex-col overflow-hidden bg-[#101b2b] text-white md:min-h-[min(770px,90svh)]">
-        <div ref={heroImageRef} className="absolute -top-12 inset-x-0 -bottom-12 will-change-transform">
-          {heroImages.map((item, index) => (
-            <motion.div key={item.src} aria-hidden={index !== activeImage} initial={false} animate={{ opacity: index === activeImage ? 1 : 0, scale: index === activeImage ? 1 : 1.045 }} transition={{ opacity: { duration: reduced ? 0 : 0.9 }, scale: { duration: reduced ? 0 : 2.5 } }} className="absolute inset-0">
-              <Image src={item.src} alt={index === activeImage ? item.alt : ""} fill priority={index === 0} sizes="100vw" className="object-cover object-[62%_center]" />
-            </motion.div>
-          ))}
-        </div>
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,17,30,.95)_0%,rgba(8,17,30,.78)_36%,rgba(8,17,30,.08)_100%)] md:bg-[linear-gradient(90deg,rgba(8,17,30,.95)_0%,rgba(8,17,30,.70)_32%,rgba(8,17,30,.02)_80%)]" />
-        <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between border-b border-white/20 px-6 py-5 md:px-10"><Link href="/" className="text-sm font-black uppercase">O6 <span className="font-normal">Growth</span></Link><a href="#diagnostico" className="border-b border-[#cfb886] pb-1 text-xs font-bold uppercase text-[#eadbb9] transition hover:text-white">Solicitar análise <ArrowRight size={14} className="ml-1 inline" /></a></header>
-        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-6 pb-14 pt-16 md:px-10"><motion.div initial={reduced ? false : { opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .85 }} className="max-w-[850px]"><p className="mb-8 flex items-center gap-3 text-xs font-bold uppercase text-[#d3bd91]"><Scale size={19} /> Comunicação para escritórios de advocacia</p><h1 className="font-serif text-[clamp(3.15rem,6vw,6.2rem)] leading-[.98]">Novos clientes além da <em className="text-[#dcc69a]">indicação.</em></h1><p className="mt-8 max-w-[510px] text-lg leading-relaxed text-white/78">Torne sua atuação mais clara para quem procura um escritório. Organize a informação, o primeiro contato e o acompanhamento com critério.</p><a href="#diagnostico" className="mt-9 inline-flex items-center gap-3 border border-[#cbb381] bg-[#cbb381] px-6 py-4 text-sm font-bold text-[#101b2b] transition hover:bg-white hover:border-white">Analisar meu escritório <ArrowRight size={18} /></a></motion.div></div>
-        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 border-t border-white/20 px-6 py-5 text-xs uppercase text-white/60 md:px-10"><div className="flex items-center gap-3"><span className="font-mono text-[#e2d1ad]">0{activeImage + 1} / 03</span><div className="flex gap-1.5" aria-label="Cenas do escritório">{heroImages.map((item, index) => <button key={item.src} type="button" aria-label={`Ver cena ${index + 1}`} aria-pressed={index === activeImage} onClick={() => setActiveImage(index)} className={`h-1 w-7 transition-colors ${index === activeImage ? "bg-[#d3bd91]" : "bg-white/35 hover:bg-white/70"}`} />)}</div></div><span className="hidden sm:inline">Respeito ao contexto profissional</span><a href="#metodo" className="inline-flex items-center gap-2 text-white">Conheça o método <ArrowDown size={15} /></a></div>
-      </section>
+    <div className={o6Fonts}>
+      <main className="min-h-screen bg-[#f4f2ec] text-[#1d2022]" style={{ fontFamily: "var(--font-o6-sans)" }}>
+        <O6Header />
 
-      <section className="bg-[#e8e8e4] pb-20 pt-10 md:py-28"><div className="mx-auto grid max-w-7xl gap-12 px-6 md:px-10 lg:grid-cols-[.9fr_1.1fr] lg:gap-20"><div><p className="text-xs font-bold uppercase text-[#8d6a36]">O primeiro contato importa</p><h2 className="mt-6 font-serif text-5xl leading-[1.05] md:text-7xl">Quando alguém precisa de orientação, o caminho deve ser claro.</h2></div><div className="border-t border-[#8e9699] pt-8 lg:mt-20"><p className="max-w-xl text-lg leading-relaxed text-[#4c5862]">Uma presença digital séria informa áreas de atuação, permite contato fácil e evita promessas. Ela ajuda a pessoa a entender se deve procurar seu escritório e como iniciar uma conversa.</p><div className="mt-10 grid gap-0 border-t border-[#aab0ae]"><div className="flex items-start gap-5 border-b border-[#aab0ae] py-5"><BookOpen className="shrink-0 text-[#8d6a36]" /><p>Conteúdo claro sobre áreas e formas de atuação</p></div><div className="flex items-start gap-5 border-b border-[#aab0ae] py-5"><MessageSquareText className="shrink-0 text-[#8d6a36]" /><p>Contato organizado e linguagem respeitosa</p></div><div className="flex items-start gap-5 border-b border-[#aab0ae] py-5"><FileText className="shrink-0 text-[#8d6a36]" /><p>Próximo passo definido após cada conversa</p></div></div></div></div></section>
-
-      <section id="metodo" ref={methodRef} className="bg-[linear-gradient(125deg,#101b2b_0%,#172536_58%,#344358_100%)] py-20 text-white md:py-28">
-        <div className="mx-auto max-w-7xl px-6 md:px-10">
-          <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
-            <div><p className="text-xs font-bold uppercase text-[#d3bd91]">Arquitetura de confiança</p><h2 className="mt-5 max-w-2xl font-serif text-5xl md:text-7xl">Da busca à conversa.</h2></div>
-            <p className="max-w-sm leading-relaxed text-white/65">Três pontos para observar na presença do escritório. O trabalho é definido depois da análise do contexto.</p>
+        <section className="mx-auto grid max-w-[1240px] gap-10 px-4 py-12 md:px-8 md:py-20 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:gap-14">
+          <div>
+            <p className="flex items-center gap-2.5 text-xs uppercase tracking-[0.12em] text-[#585d5b]" style={mono}>
+              <span className="h-2 w-2 rounded-full bg-[#f2542d]" />Para escritórios de advocacia
+            </p>
+            <h1 className="mt-4 text-[clamp(2.7rem,6.6vw,6.2rem)] uppercase leading-[0.92]" style={display}>
+              Novos clientes além da <em className="normal-case text-[#f2542d]" style={serif}>indicação</em>.
+            </h1>
+            <p className="mt-6 max-w-[48ch] text-[clamp(1.05rem,1.45vw,1.25rem)] text-[#585d5b]">
+              Torne sua atuação mais clara para quem procura um escritório. <strong className="font-semibold text-[#1d2022]">Organize a informação, o primeiro contato e o acompanhamento com critério.</strong>
+            </p>
+            <div className="mt-7 flex flex-wrap gap-2.5">
+              <Link href="/produto/diagnostico" className="group inline-flex items-center justify-between gap-5 rounded-[2px] bg-[#f2542d] px-5 py-4 text-[15px] font-bold text-[#170904] transition-transform duration-300 hover:-translate-y-0.5">
+                Fazer o Diagnóstico Express · {EXPRESS_PRICE} <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+              </Link>
+              <a href="#conversa" className="inline-flex items-center rounded-[2px] border border-[#1d2022] px-5 py-[15px] text-[15px] font-bold transition-colors hover:bg-[#1d2022] hover:text-[#f4f2ec]">
+                Pedir uma conversa
+              </a>
+            </div>
+            <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs uppercase tracking-[0.1em] text-[#585d5b]" style={mono}>
+              {["Família", "Trabalhista", "Empresarial", "Cível"].map((f) => (
+                <li key={f} className="flex items-center gap-2"><span className="h-[5px] w-[5px] bg-[#f2542d]" />{f}</li>
+              ))}
+            </ul>
           </div>
-          <div className="mt-14 h-px bg-white/25"><div ref={methodProgressRef} className="h-px origin-left bg-[#d3bd91]" /></div>
-          <div className="grid md:grid-cols-3">
-            {[
-              {n:"01",title:"Ser encontrado",text:"Informações consistentes sobre o escritório, as áreas e os canais oficiais."},
-              {n:"02",title:"Ser compreendido",text:"Conteúdo que explica a atuação em linguagem acessível, sem prometer desfechos."},
-              {n:"03",title:"Ser procurado",text:"Formas simples de iniciar o contato e uma rotina de resposta bem definida."},
-            ].map((step,i)=><motion.div key={step.n} initial={reduced ? false : { opacity: 0, y: 35 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .3 }} transition={{ delay: i * .12 }} className="border-b border-white/25 py-8 md:min-h-72 md:border-r md:px-7 md:first:pl-0 md:last:border-r-0"><span className="font-mono text-xs text-[#d3bd91]">{step.n} / 03</span><h3 className="mt-10 font-serif text-3xl">{step.title}</h3><p className="mt-4 max-w-xs leading-relaxed text-white/60">{step.text}</p></motion.div>)}
+          <div className="relative aspect-[4/5] w-full overflow-hidden border-t-[3px] border-[#f2542d] bg-[#131517]">
+            <Image src="/landing/advocacia-atendimento.png" alt="Advogada ouvindo uma cliente em seu escritório" fill priority sizes="(max-width: 1024px) 100vw, 40vw" className="object-cover" />
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="bg-[#d3d9da] py-20 md:py-28"><div className="mx-auto grid max-w-7xl gap-12 px-6 md:px-10 lg:grid-cols-[.8fr_1.2fr] lg:items-center"><div><p className="text-xs font-bold uppercase text-[#8d6a36]">Uma leitura objetiva</p><h2 className="mt-5 font-serif text-5xl md:text-6xl">O que avaliar primeiro?</h2><p className="mt-6 leading-relaxed text-[#4c5862]">Um diagnóstico começa pelo que o visitante consegue entender e pelo que acontece quando decide entrar em contato.</p></div><motion.div initial={reduced ? false : { opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="border border-[#a8b2b3] bg-white/60 p-7 shadow-[0_22px_50px_rgba(17,33,49,.09)] backdrop-blur-md md:p-10"><div className="flex justify-between border-b border-[#b8c1c0] pb-5 text-xs font-bold uppercase"><span>Roteiro de revisão</span><span className="text-[#8d6a36]">01—03</span></div>{["A área de atuação está evidente?","O contato é fácil e discreto?","Existe uma rotina após a primeira conversa?"].map((question,i)=><div key={question} className="flex items-start gap-5 border-b border-[#c7cecc] py-5 last:border-b-0"><span className="font-mono text-xs text-[#8d6a36]">0{i+1}</span><p className="text-lg">{question}</p><Check size={18} className="ml-auto shrink-0 text-[#8d6a36]" /></div>)}<p className="pt-4 text-xs text-[#647178]">Perguntas orientadoras; nenhuma pontuação é presumida sem dados.</p></motion.div></div></section>
+        <section className="border-t border-[#1d2022]/15 bg-[#fbfaf6]">
+          <div className="mx-auto grid max-w-[1240px] gap-10 px-4 py-14 md:px-8 md:py-24 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+            <div className="lg:sticky lg:top-24 lg:self-start">
+              <span className="text-xs uppercase tracking-[0.12em] text-[#585d5b]" style={mono}>O primeiro contato importa</span>
+              <h2 className="mt-3 text-[clamp(2.2rem,4.6vw,4rem)] uppercase leading-[0.95]" style={display}>Da busca à <em className="normal-case text-[#f2542d]" style={serif}>conversa</em>.</h2>
+              <p className="mt-4 max-w-[42ch] text-[17px] text-[#585d5b]">Quando alguém precisa de orientação, o caminho deve ser claro. Uma presença séria informa as áreas de atuação, facilita o contato e evita promessas.</p>
+            </div>
+            <ol className="m-0 list-none border-t border-[#1d2022]/15 p-0">
+              {points.map((s, i) => (
+                <li key={s.title} className="grid grid-cols-[auto_1fr] gap-5 border-b border-[#1d2022]/15 py-7">
+                  <span className="text-[40px] leading-none text-[#f2542d]" style={display}>0{i + 1}</span>
+                  <div>
+                    <h3 className="text-xl font-bold">{s.title}</h3>
+                    <p className="mt-1 max-w-[56ch] text-[15px] text-[#585d5b]">{s.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
 
-      <section id="diagnostico" className="bg-[#f2f2ef] py-20 md:py-28"><div className="mx-auto grid max-w-7xl gap-12 px-6 md:px-10 lg:grid-cols-[.85fr_1.15fr] lg:gap-24"><div><p className="text-xs font-bold uppercase text-[#8d6a36]">Diagnóstico inicial gratuito</p><h2 className="mt-6 font-serif text-5xl leading-tight md:text-6xl">Uma leitura para o seu escritório.</h2><p className="mt-6 max-w-md leading-relaxed text-[#4c5862]">Conte qual parte da presença ou do atendimento precisa de atenção. Você recebe uma orientação inicial e escolhe o próximo passo.</p><div className="mt-10 h-px w-20 bg-[#8d6a36]" /><p className="mt-5 max-w-sm text-sm leading-relaxed text-[#647178]">Não inclua informações sigilosas de clientes, detalhes de casos ou documentos neste formulário.</p></div><div className="border-t-2 border-[#8d6a36] bg-white p-6 shadow-[0_20px_45px_rgba(16,27,43,.07)] md:p-9">{status === "done" ? <div aria-live="polite"><p className="text-xs font-bold uppercase text-[#8d6a36]">Sua leitura inicial</p><h3 className="mt-4 font-serif text-4xl">{insight.title}</h3><p className="mt-6 leading-relaxed text-[#4c5862]">{insight.text}</p><div className="mt-8 border-l-2 border-[#8d6a36] pl-5"><p className="text-xs font-bold uppercase">Primeiro passo</p><p className="mt-2 text-sm leading-relaxed text-[#4c5862]">{insight.action}</p></div><p className="mt-7 text-xs leading-relaxed text-[#647178]">Leitura baseada na prioridade declarada, sem análise de casos ou garantia de resultado. A avaliação completa depende de conversa e dados adicionais.</p><div className="mt-8 grid gap-3 sm:grid-cols-2"><a href="/produto/diagnostico" className="inline-flex items-center justify-center gap-2 bg-[#172536] px-4 py-3 text-center text-sm font-semibold text-white">Diagnóstico Express <ArrowRight size={16} /></a><a href={whatsappUrl("Quero conversar sobre a presença digital do meu escritório")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 border border-[#172536] px-4 py-3 text-center text-sm font-semibold">Agendar conversa <ArrowRight size={16} /></a></div><Link href="/servicos" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold underline underline-offset-4">Ver serviços <ArrowRight size={15} /></Link></div> : <form onSubmit={submit} className="space-y-5"><p className="text-xs font-bold uppercase text-[#8d6a36]">Solicitar leitura inicial</p><label className="block text-sm font-semibold">Seu nome<input required value={name} onChange={e=>setName(e.target.value)} className="mt-2 w-full border border-[#b8c1c0] bg-[#fafaf9] p-3 outline-none focus:border-[#8d6a36]" /></label><div className="grid gap-5 sm:grid-cols-2"><label className="block text-sm font-semibold">E-mail<input required type="email" value={email} onChange={e=>setEmail(e.target.value)} className="mt-2 w-full border border-[#b8c1c0] bg-[#fafaf9] p-3 outline-none focus:border-[#8d6a36]" /></label><label className="block text-sm font-semibold">WhatsApp<input required type="tel" value={phone} onChange={e=>setPhone(e.target.value)} className="mt-2 w-full border border-[#b8c1c0] bg-[#fafaf9] p-3 outline-none focus:border-[#8d6a36]" /></label></div><label className="block text-sm font-semibold">Área principal<select value={practice} onChange={e=>setPractice(e.target.value)} className="mt-2 w-full border border-[#b8c1c0] bg-[#fafaf9] p-3"><option>Direito de família</option><option>Direito trabalhista</option><option>Direito empresarial</option><option>Direito civil</option><option>Outra área</option></select></label><label className="block text-sm font-semibold">O que precisa de atenção?<select value={finding} onChange={e=>setFinding(e.target.value as Finding)} className="mt-2 w-full border border-[#b8c1c0] bg-[#fafaf9] p-3"><option value="presenca">Presença e posicionamento</option><option value="triagem">Triagem do primeiro contato</option><option value="propostas">Acompanhamento de propostas</option></select></label>{status === "error" && <p role="alert" className="text-sm text-red-700">Não conseguimos registrar seus dados. Tente novamente ou entre em contato pelo WhatsApp.</p>}<button disabled={status === "saving"} className="flex w-full items-center justify-center gap-2 bg-[#172536] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#2a4058] disabled:opacity-60">{status === "saving" ? "Preparando leitura..." : "Receber leitura gratuita"}<ArrowRight size={17} /></button><p className="text-xs leading-relaxed text-[#647178]">Usaremos seus dados para retornar sobre a análise. Não envie dados de clientes.</p></form>}</div></div></section>
-      <footer className="bg-[#101b2b] px-6 py-8 text-xs text-white/60"><div className="mx-auto flex max-w-7xl flex-wrap justify-between gap-4"><span>O6 Growth · Advocacia</span><a href="/portfolio/index.html">Ver portfólio</a></div></footer>
-    </main>
+        <section className="mx-auto grid max-w-[1240px] gap-10 px-4 py-14 md:px-8 md:py-24 lg:grid-cols-2 lg:items-center">
+          <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#131517]">
+            <Image src="/landing/advocacia-reuniao.png" alt="Reunião de atendimento em escritório de advocacia" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
+          </div>
+          <div className="flex flex-col gap-4">
+            <span className="text-xs uppercase tracking-[0.12em] text-[#585d5b]" style={mono}>Respeito ao contexto profissional</span>
+            <h2 className="text-[clamp(2rem,4vw,3.4rem)] uppercase leading-[0.95]" style={display}>Comunicação <em className="normal-case text-[#f2542d]" style={serif}>informativa</em>, sem promessa.</h2>
+            <p className="max-w-[48ch] text-[17px] text-[#585d5b]">Conteúdo claro sobre áreas e formas de atuação, contato organizado e um próximo passo definido depois de cada conversa.</p>
+          </div>
+        </section>
+
+        <section className="bg-[#131517] text-[#eceae4]">
+          <div className="mx-auto grid max-w-[1240px] gap-8 px-4 py-12 md:grid-cols-[1fr_auto] md:items-center md:px-8 md:py-16">
+            <div className="flex flex-col gap-3">
+              <span className="text-xs uppercase tracking-[0.12em] text-[#f2542d]" style={mono}>Antes de investir em site ou anúncio</span>
+              <h2 className="text-[clamp(2rem,4vw,3.4rem)] uppercase leading-[0.95]" style={display}>Saiba o que resolver <em className="normal-case text-[#f2542d]" style={serif}>primeiro</em>.</h2>
+              <p className="max-w-[56ch] text-[#a3a19a]">O Diagnóstico Express avalia 5 frentes do escritório e devolve até 3 prioridades em ordem, com revisão humana, {EXPRESS_DEADLINE}. Não analisa casos nem documentos de clientes.</p>
+            </div>
+            <div className="flex flex-col gap-3 md:items-end">
+              <span className="text-[56px] leading-none" style={display}><small className="mr-1.5 align-top text-xs tracking-[0.1em]" style={mono}>R$</small>197</span>
+              <Link href="/produto/diagnostico" className="inline-flex items-center gap-4 rounded-[2px] bg-[#f2542d] px-5 py-3.5 text-[15px] font-bold text-[#170904]">Ver o diagnóstico <span aria-hidden="true">→</span></Link>
+            </div>
+          </div>
+        </section>
+
+        <section id="conversa" className="mx-auto grid max-w-[1240px] gap-10 px-4 py-14 md:px-8 md:py-24 lg:grid-cols-[1fr_0.9fr] lg:items-start">
+          <div className="flex flex-col gap-4">
+            <span className="text-xs uppercase tracking-[0.12em] text-[#f2542d]" style={mono}>Prefere conversar antes?</span>
+            <h2 className="text-[clamp(2.2rem,4.6vw,4rem)] uppercase leading-[0.95]" style={display}>Conte o que precisa de <em className="normal-case text-[#f2542d]" style={serif}>atenção</em>.</h2>
+            <p className="max-w-[46ch] text-[17px] text-[#585d5b]">A O6 chama você no WhatsApp para entender o escritório e indicar se faz sentido começar pelo diagnóstico ou direto por um projeto.</p>
+          </div>
+          <div className="border border-[#1d2022]/15">
+            <NicheLeadForm
+              origem="site_o6_advocacia"
+              page="LP advocacia"
+              areaLabel="Área principal"
+              areas={["Direito de família", "Direito trabalhista", "Direito empresarial", "Direito civil", "Outra área"]}
+              concerns={["Presença e posicionamento", "Triagem do primeiro contato", "Acompanhamento de propostas"]}
+              privacyNote="Não inclua informações sigilosas de clientes ou detalhes de casos."
+              doneText="Se quiser a leitura completa do escritório agora, o Diagnóstico Express mostra as 3 prioridades em ordem."
+            />
+          </div>
+        </section>
+
+        <SiteFooter />
+      </main>
+    </div>
   );
 }

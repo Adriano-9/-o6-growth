@@ -1,149 +1,149 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Check,
-  Loader2,
-  Sparkles,
-} from "lucide-react";
-import type {
-  ContentFrequency,
-  CreativeFreedom,
-  BriefingReceipt,
-  HybridBriefingInput,
-  MotionMode,
-  ProjectMode,
-} from "./_lib/types";
+import type { BriefingReceipt, HybridBriefingInput } from "./_lib/types";
 
-const initialInput: HybridBriefingInput = {
-  contactName: "",
-  contactWhatsapp: "",
-  projectName: "",
-  companyName: "",
-  projectMode: "novo",
-  currentUrl: "",
-  mainGoal: "",
-  primaryCta: "",
-  routesCount: 1,
-  contentTypes: "",
-  contentFrequency: "raro",
-  clientNeedsEditing: false,
-  editableFields: "",
-  motionMode: "leve",
-  needsLogin: false,
-  hasPrivateData: false,
-  needsScheduling: false,
-  needsDashboard: false,
-  hasBusinessRules: false,
-  businessRules: "",
-  existingAssets: "",
-  vibe: "",
-  creativeFreedom: "alta",
-  journey: "",
-  publishDestination: "Vercel",
-  integrations: "",
-  constraints: "",
+const display = { fontFamily: "var(--font-o6-display)" };
+const serif = { fontFamily: "var(--font-o6-serif)" };
+const mono = { fontFamily: "var(--font-o6-mono)" };
+
+// Perguntas em linguagem de cliente. Cada resposta é traduzida para os campos técnicos
+// que a classificação interna (app/briefing/_lib/router.ts) usa; o cliente nunca vê a régua.
+const PROJECT_TYPES = {
+  lp: { label: "Uma página para um serviço ou campanha", routes: 1, mode: "novo" },
+  site: { label: "Um site completo para a empresa", routes: 5, mode: "novo" },
+  reforma: { label: "Melhorar o site que já tenho", routes: 5, mode: "reforma" },
+  sistema: { label: "Um sistema (agenda, área do cliente, painel)", routes: 3, mode: "novo" },
+  naosei: { label: "Ainda não sei, quero uma orientação", routes: 1, mode: "novo" },
+} as const;
+type ProjectType = keyof typeof PROJECT_TYPES;
+
+const ACTIONS = ["Chamar no WhatsApp", "Agendar um horário", "Pedir orçamento", "Comprar online"] as const;
+
+const EXTRAS = {
+  scheduling: "Agendamento online dentro do site",
+  login: "Área com login para clientes ou equipe",
+  dashboard: "Painel para acompanhar números",
+  privateData: "Guardar dados de clientes ou pacientes",
+  payment: "Pagamento online",
+} as const;
+type Extra = keyof typeof EXTRAS;
+
+const ASSETS = ["Logo", "Fotos profissionais", "Textos prontos", "Vídeos", "Domínio (endereço do site)"] as const;
+
+const STYLES = {
+  leve: "Limpo e direto, com movimentos discretos",
+  cinematico: "Marcante, com vídeo e animações ao rolar a página",
+} as const;
+type Style = keyof typeof STYLES;
+
+type Form = {
+  name: string;
+  whatsapp: string;
+  company: string;
+  currentUrl: string;
+  type: ProjectType;
+  action: string;
+  goal: string;
+  content: string;
+  selfEdit: boolean;
+  extras: Extra[];
+  impression: string;
+  style: Style;
+  assets: string[];
+  notes: string;
 };
 
-function Field({
-  label,
-  hint,
-  children,
-  full = false,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-  full?: boolean;
-}) {
+const initial: Form = {
+  name: "", whatsapp: "", company: "", currentUrl: "", type: "lp", action: ACTIONS[0], goal: "", content: "",
+  selfEdit: false, extras: [], impression: "", style: "leve", assets: [], notes: "",
+};
+
+function toInput(f: Form): HybridBriefingInput {
+  const t = PROJECT_TYPES[f.type];
+  const has = (e: Extra) => f.extras.includes(e);
+  return {
+    contactName: f.name,
+    contactWhatsapp: f.whatsapp,
+    projectName: t.label,
+    companyName: f.company,
+    projectMode: t.mode,
+    currentUrl: f.currentUrl,
+    mainGoal: f.goal,
+    primaryCta: f.action,
+    routesCount: t.routes,
+    contentTypes: f.content,
+    contentFrequency: f.selfEdit ? "mensal" : "raro",
+    clientNeedsEditing: f.selfEdit,
+    editableFields: "",
+    motionMode: f.style,
+    needsLogin: has("login"),
+    hasPrivateData: has("privateData"),
+    needsScheduling: has("scheduling"),
+    needsDashboard: has("dashboard"),
+    hasBusinessRules: false,
+    businessRules: "",
+    existingAssets: f.assets.join(", "),
+    vibe: f.impression,
+    creativeFreedom: "media",
+    journey: "",
+    publishDestination: "Vercel",
+    integrations: [has("payment") ? "Pagamento online" : "", f.action === "Chamar no WhatsApp" ? "WhatsApp" : ""].filter(Boolean).join(", "),
+    constraints: f.notes,
+  };
+}
+
+const field = "mt-2 w-full rounded-[2px] border border-[#1d2022]/25 bg-white px-4 py-3.5 text-[15px] text-[#1d2022] outline-none placeholder:text-[#8f8d86] focus:border-[#f2542d]";
+const label = "block text-[15px] font-semibold";
+
+function Step({ n, title, children }: { n: string; title: string; children: React.ReactNode }) {
   return (
-    <label className={`flex flex-col gap-2 ${full ? "md:col-span-2" : ""}`}>
-      <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-400">
-        {label}
-      </span>
+    <fieldset className="grid gap-5 border-t border-[#1d2022]/15 py-8 md:grid-cols-[0.35fr_0.65fr] md:gap-10">
+      <legend className="sr-only">{title}</legend>
+      <div>
+        <span className="text-[34px] leading-none text-[#f2542d]" style={display}>{n}</span>
+        <h2 className="mt-2 text-xl font-bold">{title}</h2>
+      </div>
+      <div className="flex flex-col gap-5">{children}</div>
+    </fieldset>
+  );
+}
+
+function Choice({ checked, onChange, children, type = "checkbox", name }: { checked: boolean; onChange: () => void; children: React.ReactNode; type?: "checkbox" | "radio"; name?: string }) {
+  return (
+    <label className={`flex cursor-pointer items-center gap-3 border px-4 py-3.5 text-[15px] ${checked ? "border-[#f2542d] bg-[#fff4f0]" : "border-[#1d2022]/20 bg-white"}`}>
+      <input type={type} name={name} checked={checked} onChange={onChange} className="h-4 w-4 accent-[#f2542d]" />
       {children}
-      {hint ? <span className="text-xs text-zinc-600">{hint}</span> : null}
     </label>
   );
 }
 
-function Toggle({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.025] px-4 py-3">
-      <span className="text-sm text-zinc-200">{label}</span>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4 accent-cyan-400"
-      />
-    </label>
-  );
-}
-
-const inputClass =
-  "rounded-xl border border-white/10 bg-zinc-950/70 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-700 focus:border-brand-cyan/60 focus:ring-2 focus:ring-brand-cyan/15";
-
-export default function HybridBriefingPage() {
-  const [input, setInput] = useState<HybridBriefingInput>(initialInput);
-  const [sent, setSent] = useState(false);
+export default function BriefingPage() {
+  const [f, setF] = useState<Form>(initial);
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
-  const completion = useMemo(() => {
-    const essentials = [
-      input.contactName,
-      input.contactWhatsapp,
-      input.projectName,
-      input.companyName,
-      input.mainGoal,
-      input.primaryCta,
-      input.contentTypes,
-      input.vibe,
-      input.existingAssets,
-      input.publishDestination,
-    ];
-    const done = essentials.filter((v) => v.trim().length > 0).length;
-    return Math.round((done / essentials.length) * 100);
-  }, [input]);
+  const set = <K extends keyof Form>(key: K, value: Form[K]) => setF((cur) => ({ ...cur, [key]: value }));
+  const toggle = <K extends "extras" | "assets">(key: K, value: Form[K][number]) =>
+    setF((cur) => {
+      const list = cur[key] as string[];
+      return { ...cur, [key]: list.includes(value) ? list.filter((v) => v !== value) : [...list, value] };
+    });
 
-  function patch<K extends keyof HybridBriefingInput>(
-    key: K,
-    value: HybridBriefingInput[K],
-  ) {
-    setInput((current) => ({ ...current, [key]: value }));
-  }
-
-  async function submit(e: FormEvent) {
-    e.preventDefault();
+  async function submit(event: FormEvent) {
+    event.preventDefault();
     setLoading(true);
     setError("");
-    setSent(false);
-
     try {
       const res = await fetch("/api/briefing/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
+        body: JSON.stringify(toInput(f)),
       });
       const data = (await res.json()) as BriefingReceipt | { error?: string };
-      if (!res.ok) {
-        const message =
-          "error" in data && typeof data.error === "string"
-            ? data.error
-            : "Não foi possível enviar o briefing.";
-        throw new Error(message);
-      }
+      if (!res.ok) throw new Error("error" in data && typeof data.error === "string" ? data.error : "Não foi possível enviar.");
       setSent(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
@@ -153,401 +153,104 @@ export default function HybridBriefingPage() {
     }
   }
 
+  if (sent) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-[#f4f2ec] px-4 text-[#1d2022]" style={{ fontFamily: "var(--font-o6-sans)" }}>
+        <div role="status" className="flex max-w-xl flex-col gap-4 border-t-[3px] border-[#f2542d] bg-[#fbfaf6] p-8">
+          <span className="text-xs uppercase tracking-[0.12em] text-[#f2542d]" style={mono}>Recebido</span>
+          <h1 className="text-[clamp(2rem,5vw,3rem)] uppercase leading-[0.95]" style={display}>Obrigado, {f.name.split(" ")[0] || "tudo certo"}.</h1>
+          <p className="text-[17px] text-[#585d5b]">A O6 analisa o que você contou e responde no seu WhatsApp em até 1 dia útil, com a recomendação, o escopo e o investimento.</p>
+          <Link href="/" className="self-start border-b border-[#1d2022] pb-0.5 font-semibold">Voltar ao site</Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-[#090909] text-zinc-100 selection:bg-brand-cyan selection:text-zinc-950">
-      <header className="border-b border-white/10 bg-black/40 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 md:px-8">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center bg-brand-orange text-xs font-black text-white">
-              O6
-            </span>
-            <div>
-              <div className="text-sm font-black uppercase tracking-tight text-white">
-                Briefing de projeto
-              </div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-                O6 Growth
-              </div>
-            </div>
+    <main className="min-h-screen bg-[#f4f2ec] text-[#1d2022]" style={{ fontFamily: "var(--font-o6-sans)" }}>
+      <header className="border-b border-[#1d2022]/15">
+        <div className="mx-auto flex max-w-[1040px] items-center justify-between gap-4 px-4 py-3.5 md:px-8">
+          <Link href="/" className="flex items-center gap-2.5 text-sm font-extrabold tracking-[0.04em]">
+            <span className="grid h-7 w-7 place-items-center bg-[#f2542d] text-[11px] text-[#170904]">O6</span>O6 GROWTH
           </Link>
-          <div className="text-right">
-            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
-              Completude
-            </div>
-            <div className="mt-1 text-sm font-black tabular-nums text-brand-cyan">
-              {completion}%
-            </div>
-          </div>
+          <span className="text-xs uppercase tracking-[0.12em] text-[#585d5b]" style={mono}>Briefing de projeto</span>
         </div>
       </header>
 
-      <form onSubmit={submit}>
-        <section className="mx-auto max-w-7xl px-5 py-12 md:px-8 md:py-16">
-          <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
-            <div className="lg:sticky lg:top-8 lg:self-start">
-              <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-cyan">
-                Briefing de projeto
-              </div>
-              <h1 className="mt-4 max-w-2xl text-4xl font-black uppercase leading-[0.95] tracking-[-0.055em] text-white md:text-6xl">
-                Conte o que você precisa.
-                <br />
-                <span className="text-zinc-500">A O6 monta o caminho.</span>
-              </h1>
-              <p className="mt-6 max-w-xl text-base leading-relaxed text-zinc-400">
-                Leva uns 10 minutos. Você descreve o negócio, o objetivo e o que já tem.
-                A gente analisa e responde pelo WhatsApp com a recomendação, o escopo e o investimento.
-              </p>
-              <ul className="mt-8 grid gap-2 text-sm text-zinc-400">
-                {["Resposta em até 1 dia útil", "Escopo fechado e duas rodadas de revisão", "Sem compromisso de contratação"].map((item) => (
-                  <li key={item} className="flex items-center gap-2"><Check className="h-4 w-4 text-brand-cyan" />{item}</li>
-                ))}
-              </ul>
-            </div>
+      <section className="mx-auto max-w-[1040px] px-4 pb-4 pt-10 md:px-8 md:pt-14">
+        <p className="flex items-center gap-2.5 text-xs uppercase tracking-[0.12em] text-[#585d5b]" style={mono}>
+          <span className="h-2 w-2 rounded-full bg-[#f2542d]" />Leva cerca de 5 minutos
+        </p>
+        <h1 className="mt-4 text-[clamp(2.4rem,6vw,5rem)] uppercase leading-[0.92]" style={display}>
+          Conte o que você precisa. A O6 monta o <em className="normal-case text-[#f2542d]" style={serif}>caminho</em>.
+        </h1>
+        <p className="mt-5 max-w-[52ch] text-[17px] text-[#585d5b]">Não precisa saber termos técnicos. Responda do seu jeito: a gente analisa e responde pelo WhatsApp com a recomendação, o escopo e o investimento.</p>
+      </section>
 
-            <div className="space-y-5">
-              <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-5 md:p-7">
-                <div className="mb-6">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-orange">
-                    01 · Negócio e objetivo
-                  </div>
-                  <h2 className="mt-2 text-xl font-black uppercase text-white">
-                    O que precisa acontecer?
-                  </h2>
-                </div>
-                <div className="grid gap-5 md:grid-cols-2">
-                  <Field label="Seu nome">
-                    <input
-                      className={inputClass}
-                      value={input.contactName}
-                      onChange={(e) => patch("contactName", e.target.value)}
-                      required
-                      autoComplete="name"
-                    />
-                  </Field>
-                  <Field label="WhatsApp" hint="É por aqui que respondemos.">
-                    <input
-                      className={inputClass}
-                      value={input.contactWhatsapp}
-                      onChange={(e) => patch("contactWhatsapp", e.target.value)}
-                      required
-                      inputMode="tel"
-                      autoComplete="tel"
-                      placeholder="(71) 9 9999-9999"
-                    />
-                  </Field>
-                  <Field label="Empresa">
-                    <input
-                      className={inputClass}
-                      value={input.companyName}
-                      onChange={(e) => patch("companyName", e.target.value)}
-                      placeholder="Ex.: Clínica Aurora"
-                    />
-                  </Field>
-                  <Field label="Nome do projeto">
-                    <input
-                      className={inputClass}
-                      value={input.projectName}
-                      onChange={(e) => patch("projectName", e.target.value)}
-                      placeholder="Ex.: Landing page de harmonização facial"
-                    />
-                  </Field>
-                  <Field label="Projeto">
-                    <select
-                      className={inputClass}
-                      value={input.projectMode}
-                      onChange={(e) =>
-                        patch("projectMode", e.target.value as ProjectMode)
-                      }
-                    >
-                      <option value="novo">Site novo</option>
-                      <option value="reforma">Reforma / evolução</option>
-                    </select>
-                  </Field>
-                  <Field label="URL atual" hint="Opcional quando o projeto é novo.">
-                    <input
-                      className={inputClass}
-                      value={input.currentUrl}
-                      onChange={(e) => patch("currentUrl", e.target.value)}
-                      placeholder="https://..."
-                    />
-                  </Field>
-                  <Field label="Objetivo principal" full>
-                    <textarea
-                      className={inputClass}
-                      rows={3}
-                      value={input.mainGoal}
-                      onChange={(e) => patch("mainGoal", e.target.value)}
-                      placeholder="O que o visitante deve entender, sentir ou fazer?"
-                    />
-                  </Field>
-                  <Field label="CTA principal">
-                    <input
-                      className={inputClass}
-                      value={input.primaryCta}
-                      onChange={(e) => patch("primaryCta", e.target.value)}
-                      placeholder="Agendar visita, pedir orçamento..."
-                    />
-                  </Field>
-                  <Field label="Páginas / rotas">
-                    <input
-                      className={inputClass}
-                      type="number"
-                      min={1}
-                      max={50}
-                      value={input.routesCount}
-                      onChange={(e) =>
-                        patch("routesCount", Math.max(1, Number(e.target.value) || 1))
-                      }
-                    />
-                  </Field>
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-5 md:p-7">
-                <div className="mb-6">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-orange">
-                    02 · Conteúdo e autonomia
-                  </div>
-                  <h2 className="mt-2 text-xl font-black uppercase text-white">
-                    O que muda e quem edita?
-                  </h2>
-                </div>
-                <div className="grid gap-5 md:grid-cols-2">
-                  <Field label="Conteúdo publicado" full>
-                    <textarea
-                      className={inputClass}
-                      rows={3}
-                      value={input.contentTypes}
-                      onChange={(e) => patch("contentTypes", e.target.value)}
-                      placeholder="Serviços, preços, fotos, imóveis, cardápio, blog..."
-                    />
-                  </Field>
-                  <Field label="Frequência de atualização">
-                    <select
-                      className={inputClass}
-                      value={input.contentFrequency}
-                      onChange={(e) =>
-                        patch(
-                          "contentFrequency",
-                          e.target.value as ContentFrequency,
-                        )
-                      }
-                    >
-                      <option value="raro">Raramente</option>
-                      <option value="mensal">Mensalmente</option>
-                      <option value="semanal">Semanalmente</option>
-                    </select>
-                  </Field>
-                  <Toggle
-                    label="Cliente precisa editar sem tocar no código"
-                    checked={input.clientNeedsEditing}
-                    onChange={(v) => patch("clientNeedsEditing", v)}
-                  />
-                  {input.clientNeedsEditing ? (
-                    <Field label="Campos editáveis" full>
-                      <textarea
-                        className={inputClass}
-                        rows={2}
-                        value={input.editableFields}
-                        onChange={(e) => patch("editableFields", e.target.value)}
-                        placeholder="Preços, horários, catálogo, equipe..."
-                      />
-                    </Field>
-                  ) : null}
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-5 md:p-7">
-                <div className="mb-6">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-orange">
-                    03 · Experiência e lógica
-                  </div>
-                  <h2 className="mt-2 text-xl font-black uppercase text-white">
-                    Site, cinema ou aplicação?
-                  </h2>
-                </div>
-                <div className="grid gap-5 md:grid-cols-2">
-                  <Field label="Experiência visual">
-                    <select
-                      className={inputClass}
-                      value={input.motionMode}
-                      onChange={(e) =>
-                        patch("motionMode", e.target.value as MotionMode)
-                      }
-                    >
-                      <option value="leve">Motion leve / 2D</option>
-                      <option value="cinematico">Vídeo cinematográfico / scroll</option>
-                      <option value="3d_interativo">3D interativo real</option>
-                    </select>
-                  </Field>
-                  <Field label="Liberdade criativa">
-                    <select
-                      className={inputClass}
-                      value={input.creativeFreedom}
-                      onChange={(e) =>
-                        patch(
-                          "creativeFreedom",
-                          e.target.value as CreativeFreedom,
-                        )
-                      }
-                    >
-                      <option value="alta">Alta</option>
-                      <option value="media">Média</option>
-                      <option value="baixa">Baixa</option>
-                    </select>
-                  </Field>
-                  <Toggle
-                    label="Login / perfis / permissões"
-                    checked={input.needsLogin}
-                    onChange={(v) => patch("needsLogin", v)}
-                  />
-                  <Toggle
-                    label="Dados privados"
-                    checked={input.hasPrivateData}
-                    onChange={(v) => patch("hasPrivateData", v)}
-                  />
-                  <Toggle
-                    label="Agendamento"
-                    checked={input.needsScheduling}
-                    onChange={(v) => patch("needsScheduling", v)}
-                  />
-                  <Toggle
-                    label="Dashboard interno"
-                    checked={input.needsDashboard}
-                    onChange={(v) => patch("needsDashboard", v)}
-                  />
-                  <Toggle
-                    label="Regras de negócio próprias"
-                    checked={input.hasBusinessRules}
-                    onChange={(v) => patch("hasBusinessRules", v)}
-                  />
-                  {input.hasBusinessRules ? (
-                    <Field label="Regras de negócio" full>
-                      <textarea
-                        className={inputClass}
-                        rows={3}
-                        value={input.businessRules}
-                        onChange={(e) => patch("businessRules", e.target.value)}
-                        placeholder="Descreva estados, permissões, cálculos e critérios..."
-                      />
-                    </Field>
-                  ) : null}
-                  <Field label="Vibe em uma linha" full>
-                    <input
-                      className={inputClass}
-                      value={input.vibe}
-                      onChange={(e) => patch("vibe", e.target.value)}
-                      placeholder="Ex.: arquitetura premium, silenciosa, atlântica e contemporânea"
-                    />
-                  </Field>
-                  <Field
-                    label="Jornada / capítulos"
-                    hint="Obrigatório quando a experiência for cinematográfica."
-                    full
-                  >
-                    <textarea
-                      className={inputClass}
-                      rows={3}
-                      value={input.journey}
-                      onChange={(e) => patch("journey", e.target.value)}
-                      placeholder="Hero → contexto → prova → produto → CTA..."
-                    />
-                  </Field>
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-5 md:p-7">
-                <div className="mb-6">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-orange">
-                    04 · Produção
-                  </div>
-                  <h2 className="mt-2 text-xl font-black uppercase text-white">
-                    O que já existe e o que falta?
-                  </h2>
-                </div>
-                <div className="grid gap-5 md:grid-cols-2">
-                  <Field label="Ativos existentes" full>
-                    <textarea
-                      className={inputClass}
-                      rows={3}
-                      value={input.existingAssets}
-                      onChange={(e) => patch("existingAssets", e.target.value)}
-                      placeholder="Logo, brand book, textos, fotos, vídeos, referências..."
-                    />
-                  </Field>
-                  <Field label="Destino de publicação">
-                    <input
-                      className={inputClass}
-                      value={input.publishDestination}
-                      onChange={(e) => patch("publishDestination", e.target.value)}
-                      placeholder="Vercel, domínio do cliente..."
-                    />
-                  </Field>
-                  <Field label="Integrações">
-                    <input
-                      className={inputClass}
-                      value={input.integrations}
-                      onChange={(e) => patch("integrations", e.target.value)}
-                      placeholder="WhatsApp, Stripe, Supabase, Calendar..."
-                    />
-                  </Field>
-                  <Field label="Restrições / riscos" full>
-                    <textarea
-                      className={inputClass}
-                      rows={3}
-                      value={input.constraints}
-                      onChange={(e) => patch("constraints", e.target.value)}
-                      placeholder="Prazo, compliance, assets pendentes, orçamento de mídia..."
-                    />
-                  </Field>
-                </div>
-              </section>
-
-              {error ? (
-                <div className="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200">
-                  {error}
-                </div>
-              ) : null}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex w-full items-center justify-center gap-3 rounded-xl bg-brand-cyan px-6 py-4 text-sm font-black uppercase tracking-[0.13em] text-zinc-950 transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Estruturando briefing
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Enviar briefing
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </button>
-            </div>
+      <form onSubmit={submit} className="mx-auto max-w-[1040px] px-4 pb-16 md:px-8">
+        <Step n="01" title="Quem é você">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className={label}>Seu nome<input required className={field} value={f.name} onChange={(e) => set("name", e.target.value)} autoComplete="name" /></label>
+            <label className={label}>WhatsApp<input required className={field} value={f.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} inputMode="tel" autoComplete="tel" placeholder="(71) 9 9999-9999" /></label>
+            <label className={label}>Nome da empresa<input className={field} value={f.company} onChange={(e) => set("company", e.target.value)} placeholder="Ex.: Clínica Aurora" /></label>
+            <label className={label}>Site ou Instagram atual (opcional)<input className={field} value={f.currentUrl} onChange={(e) => set("currentUrl", e.target.value)} placeholder="Cole o link, se tiver" /></label>
           </div>
-        </section>
-      </form>
+        </Step>
 
-      {sent ? (
-        <div role="status" className="fixed inset-x-0 top-0 z-50 border-b border-brand-cyan/30 bg-zinc-950/95 backdrop-blur">
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-5 md:flex-row md:items-center md:justify-between md:px-8">
-            <div className="flex items-start gap-3">
-              <Check className="mt-0.5 h-5 w-5 text-brand-cyan" />
-              <div>
-                <div className="text-sm font-black uppercase tracking-wide text-white">Briefing recebido</div>
-                <p className="text-sm text-zinc-400">A O6 analisa e responde no seu WhatsApp em até 1 dia útil.</p>
-              </div>
-            </div>
-            <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-cyan hover:underline">
-              Voltar ao site <ArrowRight className="h-4 w-4" />
-            </Link>
+        <Step n="02" title="O que você precisa">
+          <div className="grid gap-2.5">
+            {(Object.keys(PROJECT_TYPES) as ProjectType[]).map((k) => (
+              <Choice key={k} type="radio" name="type" checked={f.type === k} onChange={() => set("type", k)}>{PROJECT_TYPES[k].label}</Choice>
+            ))}
           </div>
+          <label className={label}>Em poucas palavras, o que você quer alcançar?
+            <textarea required rows={3} className={field} value={f.goal} onChange={(e) => set("goal", e.target.value)} placeholder="Ex.: quero que mais pessoas agendem avaliação de harmonização pelo site" />
+          </label>
+        </Step>
+
+        <Step n="03" title="O que o visitante deve fazer">
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            {ACTIONS.map((a) => <Choice key={a} type="radio" name="action" checked={f.action === a} onChange={() => set("action", a)}>{a}</Choice>)}
+          </div>
+          <label className={label}>O que precisa aparecer na página?
+            <textarea rows={3} className={field} value={f.content} onChange={(e) => set("content", e.target.value)} placeholder="Ex.: serviços, equipe, fotos do espaço, depoimentos, endereço" />
+          </label>
+          <Choice checked={f.selfEdit} onChange={() => set("selfEdit", !f.selfEdit)}>Quero conseguir mudar textos e fotos sozinho depois</Choice>
+        </Step>
+
+        <Step n="04" title="Precisa de algo a mais?">
+          <p className="-mt-2 text-sm text-[#585d5b]">Marque só se precisar. Se não souber, deixe em branco.</p>
+          <div className="grid gap-2.5">
+            {(Object.keys(EXTRAS) as Extra[]).map((k) => <Choice key={k} checked={f.extras.includes(k)} onChange={() => toggle("extras", k)}>{EXTRAS[k]}</Choice>)}
+          </div>
+        </Step>
+
+        <Step n="05" title="Como deve parecer">
+          <label className={label}>Que impressão o cliente deve ter ao ver o site?
+            <input className={field} value={f.impression} onChange={(e) => set("impression", e.target.value)} placeholder="Ex.: acolhedor e confiável · sofisticado e discreto" />
+          </label>
+          <div className="grid gap-2.5">
+            {(Object.keys(STYLES) as Style[]).map((k) => <Choice key={k} type="radio" name="style" checked={f.style === k} onChange={() => set("style", k)}>{STYLES[k]}</Choice>)}
+          </div>
+        </Step>
+
+        <Step n="06" title="O que você já tem">
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            {ASSETS.map((a) => <Choice key={a} checked={f.assets.includes(a)} onChange={() => toggle("assets", a)}>{a}</Choice>)}
+          </div>
+          <label className={label}>Algo mais que a gente deva saber? (opcional)
+            <textarea rows={3} className={field} value={f.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Prazo, referência de site que você gosta, orçamento previsto..." />
+          </label>
+        </Step>
+
+        <div className="flex flex-col gap-3 border-t border-[#1d2022]/15 pt-8">
+          {error && <p role="alert" className="text-sm font-semibold text-[#b3321a]">{error}</p>}
+          <button type="submit" disabled={loading} className="inline-flex items-center justify-between gap-5 self-start rounded-[2px] bg-[#f2542d] px-6 py-4 text-[15px] font-bold text-[#170904] disabled:opacity-60">
+            {loading ? "Enviando..." : "Enviar briefing"} <span aria-hidden="true">→</span>
+          </button>
+          <p className="text-xs text-[#585d5b]">Usamos seus dados só para responder sobre este projeto. Não envie dados de pacientes.</p>
         </div>
-      ) : null}
+      </form>
     </main>
   );
 }
